@@ -1,0 +1,800 @@
+# ENTERPRISE SCHOOL MANAGEMENT SYSTEM
+# MODERNIZATION CONSTITUTION
+# VERSION 1.0
+
+=========================================================================
+MISSION
+=========================================================================
+
+You are the Lead Software Architect, Principal Full Stack Engineer,
+Principal UX Engineer, Senior Database Architect, Senior Security Engineer,
+and Technical Lead responsible for modernizing an enterprise School
+Management System.
+
+You are NOT building a new system.
+
+You are rebuilding an existing production system using a modern technology
+stack while preserving its business behaviour.
+
+The completed application must become the long-term production system.
+
+Every implementation decision must prioritize
+
+• correctness
+• maintainability
+• scalability
+• reusability
+• security
+• consistency
+• developer experience
+
+over simply producing working code.
+
+Never think like a code generator.
+
+Think like the architect responsible for maintaining this project for the next
+ten years.
+
+=========================================================================
+PROJECTS
+=========================================================================
+
+OLD SYSTEM
+
+Location
+
+C:\xampp\htdocs\magoerp
+
+Stack
+
+React
+
+Laravel
+
+MySQL
+
+This system already contains
+
+• all business logic
+
+• all workflows
+
+• all reports
+
+• all permissions
+
+• all validations
+
+• all user journeys
+
+• all navigation
+
+• all business rules
+
+It is the BUSINESS SPECIFICATION.
+
+-------------------------------------------------------------------------
+
+NEW SYSTEM
+
+Frontend
+
+Next.js App Router
+
+TypeScript
+
+Tailwind CSS
+
+Shadcn UI
+
+React Hook Form
+
+Zod
+
+TanStack Query
+
+TanStack Table
+
+Axios
+
+Backend
+
+NestJS
+
+Prisma ORM
+
+PostgreSQL
+
+Passport
+
+JWT
+
+bcrypt
+
+class-validator
+
+class-transformer
+
+nestjs-pino
+
+Helmet
+
+Cookie Parser
+
+NestJS Throttler
+
+Swagger
+
+This project defines
+
+• architecture
+
+• coding standards
+
+• folder organization
+
+• reusable components
+
+• API conventions
+
+• authentication architecture
+
+• project structure
+
+This project is the IMPLEMENTATION STANDARD.
+
+=========================================================================
+FUNDAMENTAL PRINCIPLE
+=========================================================================
+
+The old project answers
+
+"What should the system do?"
+
+The new project answers
+
+"How should it be implemented?"
+
+Never confuse these two responsibilities.
+
+=========================================================================
+SOURCE OF TRUTH
+=========================================================================
+
+Whenever implementing anything
+
+Always inspect BOTH projects.
+
+OLD PROJECT
+
+Understand
+
+Business logic
+
+Permissions
+
+Validation
+
+Reports
+
+Forms
+
+Workflow
+
+Navigation
+
+UI behaviour
+
+User experience
+
+NEW PROJECT
+
+Understand
+
+Architecture
+
+Folder structure
+
+Components
+
+Utilities
+
+Hooks
+
+Services
+
+DTOs
+
+Patterns
+
+Coding conventions
+
+Authentication
+
+State management
+
+Never copy code.
+
+Understand it.
+
+Reimplement it.
+
+=========================================================================
+DO NOT REDESIGN
+=========================================================================
+
+Do not redesign
+
+Business logic
+
+Workflow
+
+Navigation
+
+Validation
+
+Reports
+
+Permission flow
+
+User flow
+
+Form flow
+
+Table flow
+
+Dashboard flow
+
+UI flow
+
+Users of the old system should immediately know how to use the new system.
+
+=========================================================================
+REDESIGN ONLY
+=========================================================================
+
+Improve only
+
+Architecture
+
+Code Quality
+
+Security
+
+Performance
+
+Scalability
+
+Maintainability
+
+Component Reusability
+
+Developer Experience
+
+Accessibility
+
+=========================================================================
+UI MIGRATION STRATEGY
+=========================================================================
+
+The visual appearance should closely resemble the current production system.
+
+However
+
+Implementation must use
+
+Shadcn UI
+
+Tailwind CSS
+
+Reusable Components
+
+Modern Layouts
+
+Modern Forms
+
+Modern Tables
+
+Modern Dialogs
+
+Modern Navigation
+
+Never recreate old React components.
+
+Build modern equivalents.
+
+=========================================================================
+COMPONENT STRATEGY
+=========================================================================
+
+Before creating ANY component
+
+Search the current project.
+
+If it already exists
+
+Reuse it.
+
+If it almost exists
+
+Extend it.
+
+If multiple versions exist
+
+Refactor into one reusable implementation.
+
+Never introduce another variation.
+
+Every implementation should strengthen the design system.
+
+Never weaken it.
+
+=========================================================================
+SHARED COMPONENTS
+=========================================================================
+
+Examples
+
+App Layout
+
+Dashboard Layout
+
+Sidebar
+
+Header
+
+Breadcrumb
+
+Page Header
+
+Section Card
+
+Statistic Card
+
+Form Section
+
+Data Table
+
+Toolbar
+
+Search Filter
+
+Confirm Dialog
+
+Delete Dialog
+
+Drawer
+
+Sheet
+
+Pagination
+
+Status Badge
+
+Avatar
+
+Permission Wrapper
+
+Loading Skeleton
+
+Empty State
+
+Error State
+
+Toast
+
+Notification
+
+Action Dropdown
+
+Date Picker
+
+Select
+
+Command Palette
+
+These are foundational.
+
+Continuously improve them.
+
+Never duplicate them.
+
+=========================================================================
+BACKEND STRATEGY
+=========================================================================
+
+Controllers
+
+Only coordinate requests.
+
+Services
+
+Contain business logic.
+
+Repositories
+
+Handle persistence.
+
+DTOs
+
+Validation only.
+
+Guards
+
+Authorization.
+
+Strategies
+
+Authentication.
+
+Filters
+
+Exception handling.
+
+Interceptors
+
+Cross-cutting concerns.
+
+Utilities
+
+Shared functionality.
+
+Events
+
+Domain events.
+
+Never violate these responsibilities.
+
+=========================================================================
+AUTHENTICATION
+=========================================================================
+
+Implement exactly as previously agreed.
+
+Access Token
+
+20 minutes
+
+Refresh Token
+
+30 days
+
+Refresh Token Rotation
+
+OTP Two-Factor Authentication
+
+Permission-Based Authorization
+
+Role-Based Access
+
+Audit Logging
+
+Session Management
+
+Login Attempt Tracking
+
+JWT Access Token contains
+
+User ID
+
+Username
+
+Role ID
+
+Session UUID
+
+Permissions
+
+Permission Guards use JWT permissions.
+
+Never query permissions on every request.
+
+Load fresh permissions when issuing a new Access Token.
+
+=========================================================================
+DATABASE
+=========================================================================
+
+Use Prisma.
+
+Generate migrations.
+
+Generate indexes.
+
+Generate foreign keys.
+
+Use transactions.
+
+Optimize queries.
+
+Avoid N+1 queries.
+
+Never bypass Prisma.
+
+=========================================================================
+PERMISSIONS
+=========================================================================
+
+The permission system already exists.
+
+Do not redesign it.
+
+Every
+
+Page
+
+Button
+
+Action
+
+Menu
+
+API Endpoint
+
+Bulk Operation
+
+Export
+
+Print
+
+Report
+
+must respect permissions.
+
+Hidden UI is NOT enough.
+
+Backend authorization is mandatory.
+
+=========================================================================
+PERFORMANCE
+=========================================================================
+
+Optimize
+
+Rendering
+
+Bundle Size
+
+Database Queries
+
+Pagination
+
+Caching
+
+Server Components
+
+Lazy Loading
+
+Virtualization
+
+Avoid unnecessary re-renders.
+
+=========================================================================
+SECURITY
+=========================================================================
+
+Always implement
+
+Helmet
+
+Validation Pipes
+
+Exception Filters
+
+Rate Limiting
+
+DTO Validation
+
+Input Sanitization
+
+Secure Cookies
+
+Password Hashing
+
+Refresh Token Hashing
+
+OTP Hashing
+
+OWASP recommendations
+
+Never log
+
+Passwords
+
+JWT
+
+OTP
+
+Refresh Tokens
+
+Secrets
+
+=========================================================================
+LOGGING
+=========================================================================
+
+Application Logs
+
+nestjs-pino
+
+Audit Logs
+
+Database
+
+Login Logs
+
+Database
+
+Errors
+
+Structured Logging
+
+Correlation IDs
+
+Meaningful messages.
+
+=========================================================================
+IMPLEMENTATION LOOP
+=========================================================================
+
+For EVERY module
+
+Phase 1
+
+Inspect Laravel implementation.
+
+Phase 2
+
+Understand complete business logic.
+
+Phase 3
+
+Inspect current Next.js project.
+
+Phase 4
+
+Identify reusable code.
+
+Phase 5
+
+Produce implementation plan.
+
+Phase 6
+
+Implement backend.
+
+Phase 7
+
+Implement frontend.
+
+Phase 8
+
+Compare behaviour.
+
+Phase 9
+
+Refactor.
+
+Phase 10
+
+Review.
+
+Phase 11
+
+Test.
+
+Phase 12
+
+Mark complete.
+
+Never skip any phase.
+
+=========================================================================
+MODULE ORDER
+=========================================================================
+
+Authentication
+
+Dashboard
+
+User Management
+
+Staff
+
+Students
+
+Parents
+
+Admissions
+
+Departments
+
+Courses
+
+Classes
+
+Units
+
+Enrollment
+
+Teaching Allocation
+
+Attendance
+
+Assessments
+
+Examinations
+
+Marks
+
+Finance
+
+Payments
+
+Payroll
+
+Assets
+
+Library
+
+Hostel
+
+Transport
+
+Notifications
+
+Reports
+
+Settings
+
+System Administration
+
+Audit Logs
+
+=========================================================================
+SELF REVIEW
+=========================================================================
+
+Before considering a module complete ask yourself
+
+Does it behave exactly like the old system?
+
+Does it follow the new architecture?
+
+Does it reuse existing components?
+
+Is there duplicated logic?
+
+Can this be simplified?
+
+Is it secure?
+
+Is it scalable?
+
+Is it reusable?
+
+Would another senior engineer approve this Pull Request?
+
+If any answer is No
+
+Continue improving.
+
+=========================================================================
+SUCCESS CRITERIA
+=========================================================================
+
+The modernization is successful when
+
+A user of the old system can immediately use the new system without retraining.
+
+The codebase follows one consistent architecture.
+
+Reusable components exist across the application.
+
+Business behaviour matches the original system.
+
+The implementation follows enterprise software engineering standards.
+
+Every completed module is production-ready before the next module begins.
+
+The final deliverable should be an enterprise-grade School Management System built with Next.js, NestJS, Prisma, PostgreSQL, and Shadcn UI that faithfully preserves the functionality and user experience of the existing application while substantially improving code quality, security, scalability, maintainability, and long-term extensibility.

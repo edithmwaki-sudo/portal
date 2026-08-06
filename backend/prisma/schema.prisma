@@ -1,0 +1,636 @@
+// Prisma schema — Apex ERP backend
+// DB: PostgreSQL. Existing RBAC tables are preserved (roles, permissions, permission_role)
+// and extended with the auth subsystem tables from backend/prompt.txt.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// =============================================================
+// EXISTING RBAC TABLES (kept as-is, only indexed/relations added)
+// =============================================================
+
+model Role {
+  id          Int                @id @default(autoincrement())
+  name        String             @unique @db.VarChar(50)
+  displayName String             @map("display_name") @db.VarChar(100)
+  createdAt   DateTime           @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt   DateTime           @updatedAt @map("updated_at") @db.Timestamptz(6)
+  users       User[]
+  rolePermissions RolePermission[]
+
+  @@map("roles")
+}
+
+model Permission {
+  id          Int                @id @default(autoincrement())
+  name        String             @unique @db.VarChar(100)
+  description String?            @db.Text
+  createdAt   DateTime           @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt   DateTime           @updatedAt @map("updated_at") @db.Timestamptz(6)
+  rolePermissions RolePermission[]
+
+  @@map("permissions")
+}
+
+model RolePermission {
+  roleId       Int           @map("role_id")
+  permissionId Int           @map("permission_id")
+  role         Role       @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  permission   Permission @relation(fields: [permissionId], references: [id], onDelete: Cascade)
+
+  @@id([roleId, permissionId])
+  @@index([permissionId])
+  @@map("permission_role")
+}
+
+// =============================================================
+// USERS + STAFF (from prompt.txt existing tables)
+// =============================================================
+
+enum UserStatus {
+  ACTIVE
+  INACTIVE
+  SUSPENDED
+  LOCKED
+}
+
+enum Gender {
+  MALE
+  FEMALE
+  OTHER
+}
+
+model User {
+  id                      Int        @id @default(autoincrement())
+  roleId                  Int?       @map("role_id")
+  username                String     @unique @db.VarChar(100)
+  email                   String     @unique @db.VarChar(255)
+  phone                   String?    @db.VarChar(50)
+  password                String     @db.VarChar(255)
+  name                    String     @db.VarChar(255)
+  firstName               String?    @map("first_name") @db.VarChar(100)
+  middleName              String?    @map("middle_name") @db.VarChar(100)
+  lastName                String?    @map("last_name") @db.VarChar(100)
+  gender                  Gender?    @default(OTHER)
+  dateOfBirth             DateTime?  @map("date_of_birth") @db.Date
+  nationality             String?    @db.VarChar(100)
+  county                  String?    @db.VarChar(100)
+  placeOfBirth            String?    @map("place_of_birth") @db.VarChar(100)
+  religion                String?    @db.VarChar(100)
+  address                 String?    @db.Text
+  city                    String?    @db.VarChar(100)
+  postalCode              String?    @map("postal_code") @db.VarChar(20)
+  profilePicture          String?    @map("profile_picture") @db.Text
+  alternativePhoneNumber  String?    @map("alternative_phone_number") @db.VarChar(50)
+  isPwd                   Boolean    @default(false) @map("is_pwd")
+  disabilityType          String?    @map("disability_type") @db.VarChar(100)
+  disabilityDescription   String?    @map("disability_description") @db.Text
+  mustResetPassword       Boolean    @default(false) @map("must_reset_password")
+  refreshTokenHash        String?    @map("refresh_token_hash") @db.Text
+  passwordChangedAt       DateTime?  @map("password_changed_at") @db.Timestamptz(6)
+  failedLoginAttempts     Int        @default(0) @map("failed_login_attempts")
+  lastFailedLoginAt       DateTime?  @map("last_failed_login_at") @db.Timestamptz(6)
+  lockedUntil             DateTime?  @map("locked_until") @db.Timestamptz(6)
+  twoFactorEnabled        Boolean    @default(false) @map("two_factor_enabled")
+  status                  UserStatus @default(ACTIVE)
+  lastLoginAt             DateTime?  @map("last_login_at") @db.Timestamptz(6)
+  lastLoginIp             String?    @map("last_login_ip") @db.VarChar(50)
+  lastLoginUserAgent      String?    @map("last_login_user_agent") @db.Text
+  emailVerifiedAt         DateTime?  @map("email_verified_at") @db.Timestamptz(6)
+  createdBy               Int?       @map("created_by")
+  updatedBy               Int?       @map("updated_by")
+  deletedAt               DateTime?  @map("deleted_at") @db.Timestamptz(6)
+  createdAt               DateTime   @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt               DateTime   @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  role        Role?        @relation(fields: [roleId], references: [id])
+  staffProfile StaffProfile?
+  studentProfile StudentProfile?
+  sessions    Session[]
+  loginAttempts LoginAttempt[]
+  auditLogs   AuditLog[]
+  otpCodes    OtpCode[]
+  attendanceAsStudent ClassAttendance[] @relation("StudentAttendance")
+  attendanceAsTrainer ClassAttendance[] @relation("TrainerAttendance")
+
+  @@index([roleId])
+  @@index([status])
+  @@map("users")
+}
+
+model StaffProfile {
+  id                   Int       @id @default(autoincrement())
+  userId               Int       @unique @map("user_id")
+  employeeNumber       String?   @unique @map("employee_number") @db.VarChar(50)
+  nationalId           String?   @map("national_id") @db.VarChar(50)
+  kraPin                String?   @map("kra_pin") @db.VarChar(50)
+  nhifNumber            String?   @map("nhif_number") @db.VarChar(50)
+  nssfNumber            String?   @map("nssf_number") @db.VarChar(50)
+  departmentId          Int?      @map("department_id")
+  supervisorId          Int?      @map("supervisor_id")
+  jobTitle              String?   @map("job_title") @db.VarChar(100)
+  employmentType        String?   @map("employment_type") @db.VarChar(50)
+  employmentStatus      String?   @map("employment_status") @db.VarChar(50)
+  dateJoined            DateTime? @map("date_joined") @db.Date
+  confirmationDate      DateTime? @map("confirmation_date") @db.Date
+  contractEndDate       DateTime? @map("contract_end_date") @db.Date
+  terminationDate       DateTime? @map("termination_date") @db.Date
+  terminationReason     String?   @map("termination_reason") @db.Text
+  basicSalary           Decimal?  @map("basic_salary") @db.Decimal(12, 2)
+  workEmail             String?   @map("work_email") @db.VarChar(255)
+  workPhone             String?   @map("work_phone") @db.VarChar(50)
+  officeLocation        String?   @map("office_location") @db.VarChar(100)
+  isTeachingStaff       Boolean   @default(false) @map("is_teaching_staff")
+  trainerNumber         String?   @map("trainer_number") @db.VarChar(50)
+  highestQualification  String?   @map("highest_qualification") @db.VarChar(100)
+  specialization        String?   @db.VarChar(255)
+  nextOfKinFirstName    String?   @map("next_of_kin_first_name") @db.VarChar(100)
+  nextOfKinLastName     String?   @map("next_of_kin_last_name") @db.VarChar(100)
+  nextOfKinPhone        String?   @map("next_of_kin_phone") @db.VarChar(50)
+  nextOfKinAltPhone     String?   @map("next_of_kin_alt_phone") @db.VarChar(50)
+  nextOfKinEmail        String?   @map("next_of_kin_email") @db.VarChar(255)
+  nextOfKinRelationship String?   @map("next_of_kin_relationship") @db.VarChar(100)
+  nextOfKinName         String?   @map("next_of_kin_name") @db.VarChar(255)
+  createdBy             Int?      @map("created_by")
+  updatedBy             Int?      @map("updated_by")
+  deletedAt             DateTime? @map("deleted_at") @db.Timestamptz(6)
+  createdAt             DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt             DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  department Department? @relation("StaffDepartment", fields: [departmentId], references: [id], onDelete: SetNull)
+  headOfDepartments Department[] @relation("DepartmentHead")
+  timetables AcademicTimetable[] @relation("TrainerTimetables")
+
+  @@index([departmentId])
+  @@map("staff_profiles")
+}
+
+// Academic setup: institutional departments (legacy: departments table).
+model Department {
+  id                 Int       @id @default(autoincrement())
+  code               String    @unique @map("code") @db.VarChar(50)
+  name               String    @unique @map("name") @db.VarChar(255)
+  headOfDepartmentId Int?      @map("head_of_department_id")
+  description        String?   @map("description") @db.Text
+  createdBy          Int?      @map("created_by")
+  updatedBy          Int?      @map("updated_by")
+  deletedAt          DateTime? @map("deleted_at") @db.Timestamptz(6)
+  createdAt          DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt          DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  headOfDepartment StaffProfile? @relation("DepartmentHead", fields: [headOfDepartmentId], references: [id], onDelete: SetNull)
+  staff            StaffProfile[] @relation("StaffDepartment")
+  courses          Course[] @relation("DepartmentCourses")
+
+  @@index([headOfDepartmentId])
+  @@index([name])
+  @@map("departments")
+}
+
+// Academic setup: certification authorities & their levels/grades
+// (legacy: certification_authorities / certification_levels /
+// certification_authority_grades tables).
+model CertificationAuthority {
+  id          Int       @id @default(autoincrement())
+  code        String    @unique @map("code") @db.VarChar(50)
+  name        String    @unique @map("name") @db.VarChar(255)
+  description String?   @map("description") @db.Text
+  isActive    Boolean   @default(true) @map("is_active")
+  createdBy   Int?      @map("created_by")
+  updatedBy   Int?      @map("updated_by")
+  createdAt   DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt   DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  levels CertificationLevel[] @relation("AuthorityLevels")
+  grades CertificationAuthorityGrade[] @relation("AuthorityGrades")
+  curriculums Curriculum[] @relation("AuthorityCurricula")
+  courses Course[] @relation("AuthorityCourses")
+
+  @@index([isActive])
+  @@index([name])
+  @@map("certification_authorities")
+}
+
+model CertificationLevel {
+  id                       Int      @id @default(autoincrement())
+  certificationAuthorityId Int      @map("certification_authority_id")
+  code                     String   @map("code") @db.VarChar(50)
+  name                     String   @map("name") @db.VarChar(100)
+  entryGrade               String?  @map("entry_grade") @db.VarChar(100)
+  description              String?  @map("description") @db.Text
+  isActive                 Boolean  @default(true) @map("is_active")
+  createdBy                Int?     @map("created_by")
+  updatedBy                Int?     @map("updated_by")
+  createdAt                DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt                DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  authority CertificationAuthority @relation("AuthorityLevels", fields: [certificationAuthorityId], references: [id], onDelete: Cascade)
+  courses Course[] @relation("LevelCourses")
+
+  @@unique([certificationAuthorityId, code])
+  @@unique([certificationAuthorityId, name])
+  @@index([certificationAuthorityId, isActive])
+  @@map("certification_levels")
+}
+
+model CertificationAuthorityGrade {
+  id                       Int     @id @default(autoincrement())
+  certificationAuthorityId Int     @map("certification_authority_id")
+  grade                    String  @map("grade") @db.VarChar(50)
+  gradeStart               Decimal @map("grade_start") @db.Decimal(5, 2)
+  gradeEnd                 Decimal @map("grade_end") @db.Decimal(5, 2)
+  remark                   String? @map("remark") @db.Text
+  isActive                 Boolean @default(true) @map("is_active")
+  createdBy                Int?    @map("created_by")
+  updatedBy                Int?    @map("updated_by")
+  createdAt                DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt                DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  authority CertificationAuthority @relation("AuthorityGrades", fields: [certificationAuthorityId], references: [id], onDelete: Cascade)
+
+  @@unique([certificationAuthorityId, grade])
+  @@index([certificationAuthorityId, isActive])
+  @@map("certification_authority_grades")
+}
+
+// Academic setup: curricula tied to an exam body (authority). A curriculum
+// is activated/deactivated via an active toggle; startedAt / endedAt are
+// generated server-side on activation/deactivation.
+model Curriculum {
+  id                       Int      @id @default(autoincrement())
+  certificationAuthorityId Int      @map("certification_authority_id")
+  cycleName                String   @unique @map("cycle_name") @db.VarChar(100)
+  isActive                 Boolean  @default(false) @map("is_active")
+  startedAt                DateTime? @map("started_at") @db.Timestamptz(6)
+  endedAt                  DateTime? @map("ended_at") @db.Timestamptz(6)
+  createdBy                Int?     @map("created_by")
+  updatedBy                Int?     @map("updated_by")
+  createdAt                DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt                DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  authority CertificationAuthority @relation("AuthorityCurricula", fields: [certificationAuthorityId], references: [id], onDelete: Cascade)
+
+  courseCurricula CourseCurriculum[] @relation("CurriculumCourseCurricula")
+  units           Unit[]            @relation("CurriculumUnits")
+
+  @@index([certificationAuthorityId, isActive])
+  @@map("curriculum")
+}
+
+// Academic setup: courses tied to a certification authority/level and a home
+// department. Courses are soft-deleted; a course is offered only through an
+// active course_curricula mapping.
+model Course {
+  id                       Int       @id @default(autoincrement())
+  code                     String    @unique @map("code") @db.VarChar(50)
+  initials                 String    @map("initials") @db.VarChar(20)
+  name                     String    @map("name") @db.VarChar(255)
+  durationMonths           Int?      @map("duration_months")
+  description              String?   @map("description") @db.Text
+  isActive                 Boolean   @default(true) @map("is_active")
+  certificationAuthorityId Int?      @map("certification_authority_id")
+  certificationLevelId     Int?      @map("certification_level_id")
+  departmentId             Int?      @map("department_id")
+  createdBy                Int?      @map("created_by")
+  updatedBy                Int?      @map("updated_by")
+  deletedAt                DateTime? @map("deleted_at") @db.Timestamptz(6)
+  createdAt                DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt                DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  authority CertificationAuthority? @relation("AuthorityCourses", fields: [certificationAuthorityId], references: [id], onDelete: SetNull)
+  level     CertificationLevel?      @relation("LevelCourses", fields: [certificationLevelId], references: [id], onDelete: SetNull)
+  department Department?             @relation("DepartmentCourses", fields: [departmentId], references: [id], onDelete: SetNull)
+
+  courseCurricula CourseCurriculum[] @relation("CourseCurricula")
+  units           Unit[]            @relation("CourseUnits")
+
+  @@index([departmentId, isActive, name])
+  @@index([certificationAuthorityId, certificationLevelId, isActive])
+  @@index([isActive, name])
+  @@map("courses")
+}
+
+// Join between a course and a curriculum version. A course is "offered"
+// through an active mapping; the unique pair guards against duplicates.
+model CourseCurriculum {
+  id           Int      @id @default(autoincrement())
+  courseId     Int      @map("course_id")
+  curriculumId Int      @map("curriculum_id")
+  isActive     Boolean  @default(true) @map("is_active")
+  createdBy    Int?     @map("created_by")
+  updatedBy    Int?     @map("updated_by")
+  createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt    DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  course     Course     @relation("CourseCurricula", fields: [courseId], references: [id], onDelete: Cascade)
+  curriculum Curriculum @relation("CurriculumCourseCurricula", fields: [curriculumId], references: [id], onDelete: Cascade)
+
+  @@unique([courseId, curriculumId])
+  @@index([courseId, isActive])
+  @@index([curriculumId, isActive])
+  @@map("course_curricula")
+}
+
+// Academic setup: units taught under a specific course + curriculum
+// combination. A unit code is unique per (course, curriculum) pair, so the
+// same unit can be re-created under another course+curriculum to share it.
+model Unit {
+  id            Int       @id @default(autoincrement())
+  courseId      Int       @map("course_id")
+  curriculumId  Int       @map("curriculum_id")
+  code          String    @map("code") @db.VarChar(50)
+  name          String    @map("name") @db.VarChar(255)
+  description   String?   @map("description") @db.Text
+  modulesTaught Int?      @map("modules_taught")
+  taughtHours   Int?      @map("taught_hours")
+  creditFactor  Decimal?  @map("credit_factor") @db.Decimal(10, 2)
+  isActive      Boolean   @default(true) @map("is_active")
+  createdBy     Int?      @map("created_by")
+  updatedBy     Int?      @map("updated_by")
+  createdAt     DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt     DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  course     Course     @relation("CourseUnits", fields: [courseId], references: [id], onDelete: Cascade)
+  curriculum Curriculum @relation("CurriculumUnits", fields: [curriculumId], references: [id], onDelete: Cascade)
+
+  timetables AcademicTimetable[] @relation("UnitTimetables")
+  attendanceRecords ClassAttendance[] @relation("UnitAttendance")
+
+  @@unique([courseId, curriculumId, code])
+  @@index([courseId, curriculumId, isActive])
+  @@index([isActive, name])
+  @@map("units")
+}
+
+// =============================================================
+
+model StudentProfile {
+  id            Int       @id @default(autoincrement())
+  userId        Int       @unique @map("user_id")
+  admissionNumber String? @unique @map("admission_number") @db.VarChar(50)
+  courseId      Int?      @map("course_id")
+  level         Int?      @default(1)
+  admDate       DateTime? @map("adm_date") @db.Date
+  status        String?   @map("status") @db.VarChar(20)
+  createdBy     Int?      @map("created_by")
+  updatedBy     Int?      @map("updated_by")
+  deletedAt     DateTime? @map("deleted_at") @db.Timestamptz(6)
+  createdAt     DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt     DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("student_profiles")
+}
+
+// =============================================================
+// CALENDAR & CLASSES (academic years/sessions, calendar events,
+// timetables, lecture rooms, attendance)
+// =============================================================
+
+model AcademicYear {
+  id          Int       @id @default(autoincrement())
+  code        String    @unique @map("code") @db.VarChar(50)
+  name        String    @map("name") @db.VarChar(255)
+  startDate   DateTime? @map("start_date") @db.Date
+  endDate     DateTime? @map("end_date") @db.Date
+  description String?   @map("description") @db.Text
+  isActive    Boolean   @default(false) @map("is_active")
+  createdBy   Int?      @map("created_by")
+  updatedBy   Int?      @map("updated_by")
+  createdAt   DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt   DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  sessions AcademicSession[] @relation("YearSessions")
+  calendarEvents CalendarEvent[] @relation("YearCalendarEvents")
+
+  @@index([isActive])
+  @@map("academic_years")
+}
+
+model AcademicSession {
+  id             Int       @id @default(autoincrement())
+  academicYearId Int       @map("academic_year_id")
+  code           String    @map("code") @db.VarChar(50)
+  name           String    @map("name") @db.VarChar(255)
+  startDate      DateTime? @map("start_date") @db.Date
+  endDate        DateTime? @map("end_date") @db.Date
+  description    String?   @map("description") @db.Text
+  isActive       Boolean   @default(false) @map("is_active")
+  createdBy      Int?      @map("created_by")
+  updatedBy      Int?      @map("updated_by")
+  createdAt      DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt      DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  year          AcademicYear        @relation("YearSessions", fields: [academicYearId], references: [id], onDelete: Cascade)
+  calendarEvents CalendarEvent[]    @relation("SessionCalendarEvents")
+  timetables    AcademicTimetable[] @relation("SessionTimetables")
+
+  @@unique([academicYearId, code])
+  @@index([academicYearId, isActive])
+  @@map("academic_sessions")
+}
+
+model CalendarEventType {
+  id        Int      @id @default(autoincrement())
+  code      String   @unique @map("code") @db.VarChar(50)
+  label     String   @map("label") @db.VarChar(100)
+  colorHex  String   @map("color_hex") @db.VarChar(20)
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  events CalendarEvent[] @relation("EventTypeEvents")
+
+  @@map("calendar_event_types")
+}
+
+model CalendarEvent {
+  id                Int       @id @default(autoincrement())
+  academicYearId    Int       @map("academic_year_id")
+  academicSessionId Int       @map("academic_session_id")
+  eventTypeId       Int       @map("event_type_id")
+  title             String    @map("title") @db.VarChar(255)
+  description       String?   @map("description") @db.Text
+  startDate         DateTime  @map("start_date") @db.Date
+  endDate           DateTime  @map("end_date") @db.Date
+  source            String    @default("manual") @map("source") @db.VarChar(30)
+  isLocked          Boolean   @default(false) @map("is_locked")
+  createdBy         Int?      @map("created_by")
+  updatedBy         Int?      @map("updated_by")
+  createdAt         DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt         DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  year      AcademicYear      @relation("YearCalendarEvents", fields: [academicYearId], references: [id], onDelete: Cascade)
+  session   AcademicSession   @relation("SessionCalendarEvents", fields: [academicSessionId], references: [id], onDelete: Cascade)
+  eventType CalendarEventType @relation("EventTypeEvents", fields: [eventTypeId], references: [id], onDelete: Restrict)
+
+  @@index([academicYearId, startDate])
+  @@index([academicSessionId, startDate])
+  @@index([eventTypeId])
+  @@map("calendar_events")
+}
+
+model LectureRoom {
+  id          Int       @id @default(autoincrement())
+  name        String    @unique @map("name") @db.VarChar(255)
+  code        String    @unique @map("code") @db.VarChar(50)
+  capacity    Int?      @map("capacity")
+  location    String?   @map("location") @db.VarChar(255)
+  description String?   @map("description") @db.Text
+  isActive    Boolean   @default(true) @map("is_active")
+  createdBy   Int?      @map("created_by")
+  updatedBy   Int?      @map("updated_by")
+  deletedAt   DateTime? @map("deleted_at") @db.Timestamptz(6)
+  createdAt   DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt   DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  timetables AcademicTimetable[] @relation("RoomTimetables")
+
+  @@index([isActive])
+  @@map("lecture_rooms")
+}
+
+model AcademicTimetable {
+  id                Int       @id @default(autoincrement())
+  academicSessionId Int       @map("academic_session_id")
+  unitId            Int       @map("unit_id")
+  trainerStaffId    Int?      @map("trainer_staff_id")
+  lectureRoomId     Int?      @map("lecture_room_id")
+  dayOfWeek         Int       @map("day_of_week")
+  startTime         DateTime  @map("start_time") @db.Time(6)
+  endTime           DateTime  @map("end_time") @db.Time(6)
+  type              String    @default("lecture") @map("type") @db.VarChar(30)
+  recurrence        String    @default("weekly") @map("recurrence") @db.VarChar(30)
+  date              DateTime? @map("date") @db.Date
+  notes             String?   @map("notes") @db.Text
+  createdBy         Int?      @map("created_by")
+  updatedBy         Int?      @map("updated_by")
+  deletedAt         DateTime? @map("deleted_at") @db.Timestamptz(6)
+  createdAt         DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt         DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  session      AcademicSession @relation("SessionTimetables", fields: [academicSessionId], references: [id], onDelete: Cascade)
+  unit         Unit            @relation("UnitTimetables", fields: [unitId], references: [id], onDelete: Cascade)
+  trainerStaff StaffProfile?   @relation("TrainerTimetables", fields: [trainerStaffId], references: [id], onDelete: SetNull)
+  room         LectureRoom?    @relation("RoomTimetables", fields: [lectureRoomId], references: [id], onDelete: SetNull)
+
+  @@index([academicSessionId, dayOfWeek])
+  @@index([trainerStaffId, dayOfWeek])
+  @@index([lectureRoomId, dayOfWeek])
+  @@index([unitId, academicSessionId])
+  @@map("academic_timetables")
+}
+
+model ClassAttendance {
+  id            Int       @id @default(autoincrement())
+  unitId        Int       @map("unit_id")
+  studentUserId Int?      @map("student_user_id")
+  trainerUserId Int?      @map("trainer_user_id")
+  sessionDate   DateTime  @map("session_date") @db.Date
+  startTime     DateTime  @map("start_time") @db.Time(6)
+  status        String    @map("status") @db.VarChar(20)
+  remarks       String?   @map("remarks") @db.Text
+  createdBy     Int?      @map("created_by")
+  updatedBy     Int?      @map("updated_by")
+  createdAt     DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt     DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  unit        Unit @relation("UnitAttendance", fields: [unitId], references: [id], onDelete: Cascade)
+  studentUser User? @relation("StudentAttendance", fields: [studentUserId], references: [id], onDelete: SetNull)
+  trainerUser User? @relation("TrainerAttendance", fields: [trainerUserId], references: [id], onDelete: SetNull)
+
+  @@unique([studentUserId, sessionDate, startTime])
+  @@index([unitId, sessionDate])
+  @@map("class_attendances")
+}
+
+// =============================================================
+// AUTH: sessions, login attempts, otp, audit (new tables)
+// =============================================================
+
+model Session {
+  id             Int       @id @default(autoincrement())
+  sessionUuid    String    @unique @map("session_uuid") @db.Uuid
+  userId         Int       @map("user_id")
+  refreshTokenHash String? @map("refresh_token_hash") @db.Text
+  deviceName     String?   @map("device_name") @db.VarChar(255)
+  browser        String?   @db.VarChar(100)
+  operatingSystem String?  @map("operating_system") @db.VarChar(100)
+  ipAddress      String?   @map("ip_address") @db.VarChar(50)
+  expiresAt      DateTime  @map("expires_at") @db.Timestamptz(6)
+  lastUsedAt     DateTime? @map("last_used_at") @db.Timestamptz(6)
+  revokedAt      DateTime? @map("revoked_at") @db.Timestamptz(6)
+  createdAt      DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([sessionUuid])
+  @@index([expiresAt])
+  @@map("sessions")
+}
+
+model LoginAttempt {
+  id           Int       @id @default(autoincrement())
+  userId       Int?      @map("user_id")
+  username     String    @db.VarChar(100)
+  successful   Boolean   @default(false)
+  ipAddress    String?   @map("ip_address") @db.VarChar(50)
+  userAgent    String?   @map("user_agent") @db.Text
+  failureReason String?  @map("failure_reason") @db.VarChar(255)
+  createdAt    DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([userId])
+  @@index([username])
+  @@map("login_attempts")
+}
+
+model AuditLog {
+  id          Int      @id @default(autoincrement())
+  userId      Int?     @map("user_id")
+  action      String   @db.VarChar(100)
+  entityType  String?  @map("entity_type") @db.VarChar(100)
+  entityId    String?  @map("entity_id") @db.VarChar(100)
+  oldValues   Json?    @map("old_values")
+  newValues   Json?    @map("new_values")
+  ipAddress   String?  @map("ip_address") @db.VarChar(50)
+  userAgent   String?  @map("user_agent") @db.Text
+  requestId   String?  @map("request_id") @db.VarChar(100)
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([userId])
+  @@index([action])
+  @@index([entityType, entityId])
+  @@map("audit_logs")
+}
+
+model OtpCode {
+  id             Int        @id @default(autoincrement())
+  userId         Int        @map("user_id")
+  codeHash       String     @map("code_hash") @db.VarChar(255)
+  purpose        String     @db.VarChar(50)
+  deliveryMethod String?    @map("delivery_method") @db.VarChar(50)
+  destination    String?    @db.VarChar(255)
+  attempts       Int        @default(0)
+  maxAttempts    Int        @default(5)
+  expiresAt      DateTime   @map("expires_at") @db.Timestamptz(6)
+  verifiedAt     DateTime?  @map("verified_at") @db.Timestamptz(6)
+  createdAt      DateTime   @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, purpose])
+  @@index([expiresAt])
+  @@map("otp_codes")
+}
