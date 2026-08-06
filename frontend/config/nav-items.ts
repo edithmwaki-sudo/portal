@@ -13,13 +13,16 @@ import {
   Landmark,
   Layers,
   LayoutDashboard,
+  ListChecks,
   Lock,
   NotebookText,
+  ReceiptText,
   ScrollText,
   Settings,
   Shield,
   ShieldCheck,
   Users,
+  Wallet,
   type LucideIcon,
 } from "lucide-react"
 
@@ -170,6 +173,24 @@ export const navItems: NavItem[] = [
         href: "/attendance",
         icon: CalendarCheck,
         permissions: ["attendance.view", "attendance.mark"],
+      },
+    ],
+  },
+  {
+    label: "Fees",
+    icon: Wallet,
+    children: [
+      {
+        label: "Fee Structures",
+        href: "/fees/structures",
+        icon: ReceiptText,
+        permissions: ["fee_structure.view"],
+      },
+      {
+        label: "Course Fee Assignments",
+        href: "/fees/assignments",
+        icon: ListChecks,
+        permissions: ["fee_assignment.view"],
       },
     ],
   },
