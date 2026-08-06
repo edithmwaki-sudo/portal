@@ -1,5 +1,9 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { BadRequestException, ForbiddenException, UnauthorizedException } from '@nestjs/common';
+import {
+  BadRequestException,
+  ForbiddenException,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import { AuthService } from './auth.service';
@@ -118,7 +122,9 @@ describe('AuthService', () => {
     const dto: LoginDto = { usernameOrEmail: 'admin', password: 'password123' };
 
     it('logs in a valid user and issues tokens', async () => {
-      usersServiceMock.findAuthUserByUsernameOrEmail.mockResolvedValue(baseUser);
+      usersServiceMock.findAuthUserByUsernameOrEmail.mockResolvedValue(
+        baseUser,
+      );
       prismaMock.$transaction.mockResolvedValue([{ id: 1 }]);
       const result = await service.login(dto, req);
       expect(result.requiresTwoFactor).toBe(false);
@@ -129,7 +135,14 @@ describe('AuthService', () => {
           data: expect.objectContaining({ failedLoginAttempts: 0 }),
         }),
       );
-      expect(auditMock.log).toHaveBeenCalledWith('auth.login', 1, null, null, null, expect.anything());
+      expect(auditMock.log).toHaveBeenCalledWith(
+        'auth.login',
+        1,
+        null,
+        null,
+        null,
+        expect.anything(),
+      );
     });
 
     it('rejects an unknown user without revealing that the account exists', async () => {
@@ -208,7 +221,10 @@ describe('AuthService', () => {
         loginToken: 'challenge',
       });
       const result = await service.login(dto, req);
-      expect(result).toEqual({ requiresTwoFactor: true, loginToken: 'challenge' });
+      expect(result).toEqual({
+        requiresTwoFactor: true,
+        loginToken: 'challenge',
+      });
       expect(otpMock.requestLoginChallenge).toHaveBeenCalledWith(1);
       expect(jwtMock.sign).not.toHaveBeenCalled();
     });
@@ -231,7 +247,9 @@ describe('AuthService', () => {
         revokedAt: null,
         expiresAt: new Date(Date.now() + 60_000),
       });
-      usersServiceMock.findAuthUserByUsernameOrEmailById.mockResolvedValue(baseUser);
+      usersServiceMock.findAuthUserByUsernameOrEmailById.mockResolvedValue(
+        baseUser,
+      );
       prismaMock.$transaction.mockResolvedValue([{ id: 1 }]);
     });
 
@@ -241,7 +259,9 @@ describe('AuthService', () => {
       expect(result.refreshToken).toBeDefined();
       expect(prismaMock.session.update).toHaveBeenCalledWith(
         expect.objectContaining({
-          data: expect.objectContaining({ refreshTokenHash: expect.any(String) }),
+          data: expect.objectContaining({
+            refreshTokenHash: expect.any(String),
+          }),
         }),
       );
     });
@@ -320,7 +340,14 @@ describe('AuthService', () => {
         where: { sessionUuid: 'session-1', revokedAt: null },
         data: { revokedAt: expect.any(Date) },
       });
-      expect(auditMock.log).toHaveBeenCalledWith('auth.logout', 1, null, null, null, expect.anything());
+      expect(auditMock.log).toHaveBeenCalledWith(
+        'auth.logout',
+        1,
+        null,
+        null,
+        null,
+        expect.anything(),
+      );
     });
   });
 
@@ -342,14 +369,20 @@ describe('AuthService', () => {
 
     it('rejects a wrong current password', async () => {
       verifyPasswordMock.mockResolvedValue(false);
-      prismaMock.user.findUnique.mockResolvedValue({ ...baseUser, password: 'hashed' });
-      await expect(service.changePassword(currentUser, dto, req)).rejects.toBeInstanceOf(
-        BadRequestException,
-      );
+      prismaMock.user.findUnique.mockResolvedValue({
+        ...baseUser,
+        password: 'hashed',
+      });
+      await expect(
+        service.changePassword(currentUser, dto, req),
+      ).rejects.toBeInstanceOf(BadRequestException);
     });
 
     it('updates the password and revokes every other session', async () => {
-      prismaMock.user.findUnique.mockResolvedValue({ ...baseUser, password: 'hashed' });
+      prismaMock.user.findUnique.mockResolvedValue({
+        ...baseUser,
+        password: 'hashed',
+      });
       prismaMock.user.update.mockResolvedValue({});
       prismaMock.session.updateMany.mockResolvedValue({ count: 3 });
       await service.changePassword(currentUser, dto, req);

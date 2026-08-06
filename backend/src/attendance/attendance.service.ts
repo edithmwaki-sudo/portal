@@ -51,10 +51,7 @@ type EntryRecord = {
 };
 
 function toTimeString(value: Date): string {
-  const date =
-    value instanceof Date
-      ? value
-      : new Date(value);
+  const date = value instanceof Date ? value : new Date(value);
   return `${String(date.getUTCHours()).padStart(2, '0')}:${String(
     date.getUTCMinutes(),
   ).padStart(2, '0')}`;
@@ -76,7 +73,8 @@ function toView(row: EntryRecord) {
       ? {
           id: row.studentUser.id,
           name: row.studentUser.firstName || row.studentUser.name,
-          admissionNumber: row.studentUser.studentProfile?.admissionNumber ?? null,
+          admissionNumber:
+            row.studentUser.studentProfile?.admissionNumber ?? null,
         }
       : null,
   };
@@ -198,54 +196,66 @@ export class AttendanceService {
 
     const uniqueIds = [...new Set(dto.studentUserIds)];
     const students = await this.prisma.user.findMany({
-      where: { id: { in: uniqueIds }, deletedAt: null, studentProfile: { isNot: null } },
+      where: {
+        id: { in: uniqueIds },
+        deletedAt: null,
+        studentProfile: { isNot: null },
+      },
       select: { id: true },
     });
     if (students.length !== uniqueIds.length) {
-      throw new BadRequestException('One or more selected students do not exist');
+      throw new BadRequestException(
+        'One or more selected students do not exist',
+      );
     }
 
-    let marked = 0;
-    for (const studentUserId of uniqueIds) {
-      const existing = await this.prisma.classAttendance.findUnique({
-        where: {
-          studentUserId_sessionDate_startTime: {
-            studentUserId,
-            sessionDate,
-            startTime,
-          },
-        },
-        select: { id: true },
-      });
+    const existingRows = await this.prisma.classAttendance.findMany({
+      where: {
+        studentUserId: { in: uniqueIds },
+        sessionDate,
+        startTime,
+      },
+      select: { id: true, studentUserId: true },
+    });
 
-      if (existing) {
-        await this.prisma.classAttendance.update({
-          where: { id: existing.id },
-          data: {
-            unitId: dto.unitId,
-            trainerUserId: dto.trainerUserId ?? null,
-            status: dto.status,
-            remarks: dto.remarks ?? null,
-            updatedBy: actorUserId,
-          },
-        });
-      } else {
-        await this.prisma.classAttendance.create({
-          data: {
-            unitId: dto.unitId,
-            studentUserId,
-            trainerUserId: dto.trainerUserId ?? null,
-            sessionDate,
-            startTime,
-            status: dto.status,
-            remarks: dto.remarks ?? null,
-            createdBy: actorUserId,
-            updatedBy: actorUserId,
-          },
-        });
-      }
-      marked += 1;
-    }
+    const existingByStudent = new Map(
+      existingRows.map((row) => [row.studentUserId, row.id]),
+    );
+    const toCreate = uniqueIds.filter((id) => !existingByStudent.has(id));
+    const existingIds = uniqueIds
+      .filter((id) => existingByStudent.has(id))
+      .map((id) => existingByStudent.get(id)!);
+
+    const updateData = {
+      unitId: dto.unitId,
+      trainerUserId: dto.trainerUserId ?? null,
+      status: dto.status,
+      remarks: dto.remarks ?? null,
+      updatedBy: actorUserId,
+    };
+
+    await this.prisma.$transaction([
+      this.prisma.classAttendance.createMany({
+        data: toCreate.map((studentUserId) => ({
+          unitId: dto.unitId,
+          studentUserId,
+          trainerUserId: dto.trainerUserId ?? null,
+          sessionDate,
+          startTime,
+          status: dto.status,
+          remarks: dto.remarks ?? null,
+          createdBy: actorUserId,
+          updatedBy: actorUserId,
+        })),
+        skipDuplicates: true,
+      }),
+      this.prisma.classAttendance.updateMany({
+        where: { id: { in: existingIds } },
+        data: updateData,
+      }),
+    ]);
+
+    const marked = uniqueIds.length;
 
     await this.audit.log(
       'attendance.mark',
@@ -272,7 +282,9 @@ export class AttendanceService {
       select: { id: true, isActive: true },
     });
     if (!unit || !unit.isActive) {
-      throw new BadRequestException('Selected unit does not exist or is inactive');
+      throw new BadRequestException(
+        'Selected unit does not exist or is inactive',
+      );
     }
   }
 }

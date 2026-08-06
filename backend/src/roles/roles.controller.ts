@@ -81,7 +81,10 @@ export class RolesController {
   @RequirePermission(Permissions.canManagePermissions)
   @ApiOperation({ summary: 'Create a role' })
   @ApiCreatedResponse({ type: RoleResponseDto })
-  async create(@Body() dto: CreateRoleDto, @CurrentUser() actor: AuthenticatedUser) {
+  async create(
+    @Body() dto: CreateRoleDto,
+    @CurrentUser() actor: AuthenticatedUser,
+  ) {
     const role = await this.rolesService.create(dto, actor.userId);
     return plainToInstance(RoleResponseDto, role, {
       excludeExtraneousValues: true,
@@ -123,7 +126,11 @@ export class RolesController {
     @Param('permissionName') permissionName: string,
     @CurrentUser() actor: AuthenticatedUser,
   ) {
-    const role = await this.rolesService.attachPermission(id, permissionName, actor.userId);
+    const role = await this.rolesService.attachPermission(
+      id,
+      permissionName,
+      actor.userId,
+    );
     return plainToInstance(RoleResponseDto, role, {
       excludeExtraneousValues: true,
     });

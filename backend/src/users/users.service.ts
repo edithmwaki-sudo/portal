@@ -136,7 +136,7 @@ export class UsersService {
   }
 
   async update(id: number, dto: UpdateUserDto, actorId: number) {
-    await this.findOneById(id);
+    const before = await this.findOneById(id);
 
     if (dto.username !== undefined) {
       const conflict = await this.prisma.user.findFirst({
@@ -158,21 +158,31 @@ export class UsersService {
       }
     }
 
-    const before = await this.findOneById(id);
-    const updated = await this.prisma.user.update({
-      where: { id },
-      data: {
-        username: dto.username,
-        email: dto.email,
-        name: dto.name,
-        roleId: dto.roleId,
-        phone: dto.phone,
-        gender: dto.gender,
-        status: dto.status,
-        mustResetPassword: dto.mustResetPassword,
-        updatedBy: actorId,
-      },
-      select: PUBLIC_USER_SELECT,
+    const updated = await this.prisma.$transaction(async (tx) => {
+      const record = await tx.user.update({
+        where: { id },
+        data: {
+          username: dto.username,
+          email: dto.email,
+          name: dto.name,
+          roleId: dto.roleId,
+          phone: dto.phone,
+          gender: dto.gender,
+          status: dto.status,
+          mustResetPassword: dto.mustResetPassword,
+          updatedBy: actorId,
+        },
+        select: PUBLIC_USER_SELECT,
+      });
+
+      if (record.status !== 'ACTIVE') {
+        await tx.session.updateMany({
+          where: { userId: id, revokedAt: null },
+          data: { revokedAt: new Date() },
+        });
+      }
+
+      return record;
     });
 
     await this.audit.log('user.update', actorId, 'User', id, {
@@ -199,19 +209,23 @@ export class UsersService {
   async resetPassword(id: number, dto: ResetUserPasswordDto, actorId: number) {
     await this.findOneById(id);
 
-    const updated = await this.prisma.user.update({
-      where: { id },
-      data: {
-        password: await hashPassword(dto.newPassword),
-        mustResetPassword: true,
-        updatedBy: actorId,
-      },
-      select: PUBLIC_USER_SELECT,
-    });
+    const updated = await this.prisma.$transaction(async (tx) => {
+      const record = await tx.user.update({
+        where: { id },
+        data: {
+          password: await hashPassword(dto.newPassword),
+          mustResetPassword: true,
+          updatedBy: actorId,
+        },
+        select: PUBLIC_USER_SELECT,
+      });
 
-    await this.prisma.session.updateMany({
-      where: { userId: id, revokedAt: null },
-      data: { revokedAt: new Date() },
+      await tx.session.updateMany({
+        where: { userId: id, revokedAt: null },
+        data: { revokedAt: new Date() },
+      });
+
+      return record;
     });
 
     await this.audit.log('user.password_reset', actorId, 'User', id, {
@@ -221,13 +235,19 @@ export class UsersService {
     return updated;
   }
 
-  /** Soft delete — keeps history/audit integrity. */
+  /** Soft delete — keeps history/audit integrity. Revokes all sessions immediately. */
   async remove(id: number, actorId: number): Promise<void> {
     const user = await this.findOneById(id);
-    await this.prisma.user.update({
-      where: { id },
-      data: { deletedAt: new Date() },
-    });
+    await this.prisma.$transaction([
+      this.prisma.user.update({
+        where: { id },
+        data: { deletedAt: new Date() },
+      }),
+      this.prisma.session.updateMany({
+        where: { userId: id, revokedAt: null },
+        data: { revokedAt: new Date() },
+      }),
+    ]);
     await this.audit.log('user.delete', actorId, 'User', id, {
       oldValues: { username: user.username, email: user.email },
     });

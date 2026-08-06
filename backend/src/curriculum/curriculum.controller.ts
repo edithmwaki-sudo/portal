@@ -111,7 +111,11 @@ export class CurriculumController {
     @Body() dto: UpdateCurriculumDto,
     @CurrentUser() actor: AuthenticatedUser,
   ) {
-    const curriculum = await this.curriculumService.update(id, dto, actor.userId);
+    const curriculum = await this.curriculumService.update(
+      id,
+      dto,
+      actor.userId,
+    );
     return plainToInstance(CurriculumResponseDto, curriculum, {
       excludeExtraneousValues: true,
     });
@@ -120,14 +124,18 @@ export class CurriculumController {
   @Patch(':id/toggle-active')
   @RequirePermission(Permissions.canManageCurriculum)
   @ApiOperation({
-    summary: 'Toggle a curriculum active state (server-side started/ended dates)',
+    summary:
+      'Toggle a curriculum active state (server-side started/ended dates)',
   })
   @ApiOkResponse({ type: CurriculumResponseDto })
   async toggleActive(
     @Param('id', ParseIntPipe) id: number,
     @CurrentUser() actor: AuthenticatedUser,
   ) {
-    const curriculum = await this.curriculumService.toggleActive(id, actor.userId);
+    const curriculum = await this.curriculumService.toggleActive(
+      id,
+      actor.userId,
+    );
     return plainToInstance(CurriculumResponseDto, curriculum, {
       excludeExtraneousValues: true,
     });

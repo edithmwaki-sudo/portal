@@ -1,5 +1,4 @@
 import {
-  BadRequestException,
   ConflictException,
   Injectable,
   NotFoundException,
@@ -136,14 +135,27 @@ export class AcademicYearsService {
         });
       }
 
-      await this.createDefaultSessions(tx, created.id, code, created, sessionsPerYear, actorId);
+      await this.createDefaultSessions(
+        tx,
+        created.id,
+        code,
+        created,
+        sessionsPerYear,
+        actorId,
+      );
 
       return created;
     });
 
-    await this.audit.log('academic_year.create', actorId, 'AcademicYear', year.id, {
-      newValues: { code: year.code, name: year.name },
-    });
+    await this.audit.log(
+      'academic_year.create',
+      actorId,
+      'AcademicYear',
+      year.id,
+      {
+        newValues: { code: year.code, name: year.name },
+      },
+    );
 
     return this.findOneById(year.id);
   }
@@ -191,7 +203,13 @@ export class AcademicYearsService {
   async remove(id: number, actorId: number): Promise<void> {
     await this.findOneById(id);
     await this.prisma.academicYear.delete({ where: { id } });
-    await this.audit.log('academic_year.delete', actorId, 'AcademicYear', id, {});
+    await this.audit.log(
+      'academic_year.delete',
+      actorId,
+      'AcademicYear',
+      id,
+      {},
+    );
   }
 
   /** Split a year's date range into `count` sequential session ranges. */
@@ -227,28 +245,22 @@ export class AcademicYearsService {
   ) {
     if (count < 1) return;
     const ranges = this.buildSessionDates(year.startDate, year.endDate, count);
-    for (let index = 0; index < count; index += 1) {
-      const label = index + 1;
-      const sessionCode = `${yearCode}-S${label}`;
-      const existing = await tx.academicSession.findFirst({
-        where: { academicYearId: yearId, code: sessionCode },
-        select: { id: true },
-      });
-      if (!existing) {
-        await tx.academicSession.create({
-          data: {
-            academicYearId: yearId,
-            code: sessionCode,
-            name: `Session ${label}`,
-            startDate: ranges[index].startDate,
-            endDate: ranges[index].endDate,
-            isActive: index === 0,
-            createdBy: actorId,
-            updatedBy: actorId,
-          },
-        });
-      }
-    }
+    await tx.academicSession.createMany({
+      data: ranges.map((range, index) => {
+        const label = index + 1;
+        return {
+          academicYearId: yearId,
+          code: `${yearCode}-S${label}`,
+          name: `Session ${label}`,
+          startDate: range.startDate,
+          endDate: range.endDate,
+          isActive: index === 0,
+          createdBy: actorId,
+          updatedBy: actorId,
+        };
+      }),
+      skipDuplicates: true,
+    });
   }
 
   private async assertUniqueCode(code: string, excludeId?: number) {
@@ -260,7 +272,9 @@ export class AcademicYearsService {
       select: { id: true },
     });
     if (existing) {
-      throw new ConflictException('An academic year with this code already exists');
+      throw new ConflictException(
+        'An academic year with this code already exists',
+      );
     }
   }
 }

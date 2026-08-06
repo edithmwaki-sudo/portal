@@ -75,6 +75,11 @@ export const Permissions = {
 
   canViewAppLogs: 'logs.view',
   canViewAuditLogs: 'audit.view',
+
+  canViewFeeStructure: 'fee_structure.view',
+  canManageFeeStructure: 'fee_structure.manage',
+  canViewFeeAssignment: 'fee_assignment.view',
+  canManageFeeAssignment: 'fee_assignment.manage',
 } as const;
 
 export type PermissionName = (typeof Permissions)[keyof typeof Permissions];
@@ -143,4 +148,9 @@ export const PERMISSION_DESCRIPTIONS: Record<PermissionName, string> = {
 
   'logs.view': 'View application logs',
   'audit.view': 'View audit logs',
+
+  'fee_structure.view': 'View fee structures',
+  'fee_structure.manage': 'Create, edit and deactivate fee structures',
+  'fee_assignment.view': 'View course fee assignments',
+  'fee_assignment.manage': 'Assign fee structures to courses',
 };

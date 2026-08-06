@@ -61,6 +61,28 @@ const STAFF_SELECT = {
   department: { select: { id: true, name: true, code: true } },
 } satisfies Prisma.StaffProfileSelect;
 
+const STAFF_LIST_SELECT = {
+  id: true,
+  employeeNumber: true,
+  departmentId: true,
+  jobTitle: true,
+  createdAt: true,
+  updatedAt: true,
+  user: {
+    select: {
+      id: true,
+      email: true,
+      roleId: true,
+      firstName: true,
+      middleName: true,
+      lastName: true,
+      status: true,
+      role: { select: { id: true, name: true, displayName: true } },
+    },
+  },
+  department: { select: { id: true, name: true, code: true } },
+} satisfies Prisma.StaffProfileSelect;
+
 type StaffRow = {
   id: number;
   employeeNumber: string | null;
@@ -234,8 +256,12 @@ export class StaffService {
               { employeeNumber: { contains: search, mode: 'insensitive' } },
               { jobTitle: { contains: search, mode: 'insensitive' } },
               { user: { email: { contains: search, mode: 'insensitive' } } },
-              { user: { firstName: { contains: search, mode: 'insensitive' } } },
-              { user: { middleName: { contains: search, mode: 'insensitive' } } },
+              {
+                user: { firstName: { contains: search, mode: 'insensitive' } },
+              },
+              {
+                user: { middleName: { contains: search, mode: 'insensitive' } },
+              },
               { user: { lastName: { contains: search, mode: 'insensitive' } } },
             ],
           }
@@ -249,11 +275,16 @@ export class StaffService {
         orderBy: { id: 'asc' },
         skip: (page - 1) * limit,
         take: limit,
-        select: STAFF_SELECT,
+        select: STAFF_LIST_SELECT,
       }),
     ]);
 
-    return { items: rows.map((row) => this.serialize(row)), total, page, limit };
+    return {
+      items: rows.map((row) => this.serializeList(row)),
+      total,
+      page,
+      limit,
+    };
   }
 
   async findOneById(id: number) {
@@ -272,7 +303,11 @@ export class StaffService {
 
     if (dto.email !== undefined && dto.email !== before.email) {
       const dup = await this.prisma.user.findFirst({
-        where: { deletedAt: null, email: dto.email, NOT: { id: before.userId } },
+        where: {
+          deletedAt: null,
+          email: dto.email,
+          NOT: { id: before.userId },
+        },
         select: { id: true },
       });
       if (dup) {
@@ -299,8 +334,8 @@ export class StaffService {
               ? this.buildFullName(
                   dto.firstName ?? before.firstName ?? '',
                   dto.middleName !== undefined
-                    ? dto.middleName ?? undefined
-                    : before.middleName ?? undefined,
+                    ? (dto.middleName ?? undefined)
+                    : (before.middleName ?? undefined),
                   dto.lastName ?? before.lastName ?? '',
                 )
               : undefined,
@@ -415,37 +450,29 @@ export class StaffService {
     tx: Prisma.TransactionClient,
   ): Promise<string> {
     const yy = new Date().getFullYear().toString().slice(-2);
-    const rows = await tx.staffProfile.findMany({
-      where: { employeeNumber: { startsWith: 'EMP/' } },
-      select: { employeeNumber: true },
-    });
-
-    let maxSeq = 0;
-    for (const row of rows) {
-      const match = row.employeeNumber?.match(/^EMP\/(\d{3})\/(\d{2})$/);
-      if (match) {
-        maxSeq = Math.max(maxSeq, parseInt(match[1], 10));
-      }
-    }
-
+    const rows = await tx.$queryRaw<{ maxSeq: number }[]>`
+      SELECT COALESCE(
+        MAX(CAST((regexp_match(employee_number, '^EMP/([0-9]{3})/[0-9]{2}$'))[1] AS int)),
+        0
+      )::int AS "maxSeq"
+      FROM staff_profiles
+      WHERE employee_number LIKE 'EMP/%'
+    `;
+    const maxSeq = rows[0]?.maxSeq ?? 0;
     return `EMP/${String(maxSeq + 1).padStart(3, '0')}/${yy}`;
   }
 
   private async previewEmployeeNumber(): Promise<string> {
     const yy = new Date().getFullYear().toString().slice(-2);
-    const rows = await this.prisma.staffProfile.findMany({
-      where: { employeeNumber: { startsWith: 'EMP/' } },
-      select: { employeeNumber: true },
-    });
-
-    let maxSeq = 0;
-    for (const row of rows) {
-      const match = row.employeeNumber?.match(/^EMP\/(\d{3})\/(\d{2})$/);
-      if (match) {
-        maxSeq = Math.max(maxSeq, parseInt(match[1], 10));
-      }
-    }
-
+    const rows = await this.prisma.$queryRaw<{ maxSeq: number }[]>`
+      SELECT COALESCE(
+        MAX(CAST((regexp_match(employee_number, '^EMP/([0-9]{3})/[0-9]{2}$'))[1] AS int)),
+        0
+      )::int AS "maxSeq"
+      FROM staff_profiles
+      WHERE employee_number LIKE 'EMP/%'
+    `;
+    const maxSeq = rows[0]?.maxSeq ?? 0;
     return `EMP/${String(maxSeq + 1).padStart(3, '0')}/${yy}`;
   }
 
@@ -469,6 +496,53 @@ export class StaffService {
     return [firstName, middleName, lastName].filter(Boolean).join(' ');
   }
 
+  private serializeList(row: {
+    id: number;
+    employeeNumber: string | null;
+    departmentId: number | null;
+    jobTitle: string | null;
+    createdAt: Date;
+    updatedAt: Date;
+    user: {
+      id: number;
+      email: string;
+      roleId: number | null;
+      firstName: string | null;
+      middleName: string | null;
+      lastName: string | null;
+      status: UserStatus;
+      role: { id: number; name: string; displayName: string } | null;
+    };
+    department: { id: number; name: string; code: string } | null;
+  }) {
+    const u = row.user;
+    const department = row.department;
+    return {
+      id: row.id,
+      userId: u.id,
+      email: u.email,
+      roleId: u.roleId,
+      roleName: u.role?.name ?? null,
+      employeeNumber: row.employeeNumber,
+      firstName: u.firstName,
+      middleName: u.middleName,
+      lastName: u.lastName,
+      fullName:
+        this.buildFullName(
+          u.firstName ?? '',
+          u.middleName ?? '',
+          u.lastName ?? '',
+        ) || null,
+      departmentId: row.departmentId,
+      departmentName: department?.name ?? null,
+      departmentCode: department?.code ?? null,
+      jobTitle: row.jobTitle,
+      status: u.status === 'ACTIVE',
+      createdAt: row.createdAt,
+      updatedAt: row.updatedAt,
+    };
+  }
+
   private serialize(row: StaffRow) {
     const u = row.user;
     const department = row.department;
@@ -483,8 +557,11 @@ export class StaffService {
       middleName: u.middleName,
       lastName: u.lastName,
       fullName:
-        this.buildFullName(u.firstName ?? '', u.middleName ?? '', u.lastName ?? '') ||
-        null,
+        this.buildFullName(
+          u.firstName ?? '',
+          u.middleName ?? '',
+          u.lastName ?? '',
+        ) || null,
       gender: u.gender ? u.gender.toLowerCase() : null,
       dateOfBirth: u.dateOfBirth,
       nationality: u.nationality,

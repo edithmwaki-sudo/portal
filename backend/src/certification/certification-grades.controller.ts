@@ -147,10 +147,6 @@ export class CertificationGradesController {
     @Param('id', ParseIntPipe) id: number,
     @CurrentUser() actor: AuthenticatedUser,
   ): Promise<void> {
-    await this.gradesService.remove(
-      certificationAuthorityId,
-      id,
-      actor.userId,
-    );
+    await this.gradesService.remove(certificationAuthorityId, id, actor.userId);
   }
 }

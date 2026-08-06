@@ -90,11 +90,22 @@ function parseLogLine(line: string): ParsedLog | null {
 }
 
 /** Reads only the last `tailBytes` bytes of a file (cheap enough for /logs). */
+const tailCache = new Map<
+  string,
+  { mtimeMs: number; size: number; content: string }
+>();
+
 async function readTail(
   filePath: string,
   tailBytes = 4 * 1024 * 1024,
 ): Promise<string> {
-  const { size } = statSync(filePath);
+  const { size, mtimeMs } = statSync(filePath);
+
+  const cached = tailCache.get(filePath);
+  if (cached && cached.mtimeMs === mtimeMs && cached.size === size) {
+    return cached.content;
+  }
+
   const start = Math.max(0, size - tailBytes);
   const stream = createReadStream(filePath, { start, encoding: 'utf8' });
   const rl = createInterface({ input: stream, crlfDelay: Infinity });
@@ -110,6 +121,8 @@ async function readTail(
     const firstNewline = content.indexOf('\n');
     if (firstNewline !== -1) content = content.slice(firstNewline + 1);
   }
+
+  tailCache.set(filePath, { mtimeMs, size, content });
   return content;
 }
 

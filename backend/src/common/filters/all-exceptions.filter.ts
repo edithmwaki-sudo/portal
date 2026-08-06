@@ -24,8 +24,9 @@ export class AllExceptionsFilter implements ExceptionFilter {
         message = res;
       } else if (res && typeof res === 'object') {
         const m = (res as Record<string, unknown>).message;
-        message =
-          Array.isArray(m) ? (m as string[]) : String(m ?? exception.message);
+        message = Array.isArray(m)
+          ? (m as string[])
+          : String(m ?? exception.message);
       }
     }
 
@@ -34,7 +35,8 @@ export class AllExceptionsFilter implements ExceptionFilter {
       message,
       path: request.url,
       timestamp: new Date().toISOString(),
-      requestId: (request.headers['x-request-id'] as string | undefined) ?? null,
+      requestId:
+        (request.headers['x-request-id'] as string | undefined) ?? null,
     });
   }
 }

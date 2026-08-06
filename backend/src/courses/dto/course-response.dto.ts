@@ -23,7 +23,9 @@ export class CourseResponseDto {
   @Expose() certificationLevelName: string | null;
   @Expose() departmentId: number | null;
   @Expose() departmentName: string | null;
-  @Expose() @Type(() => CourseCurriculumItemDto) curricula: CourseCurriculumItemDto[];
+  @Expose()
+  @Type(() => CourseCurriculumItemDto)
+  curricula: CourseCurriculumItemDto[];
   @Expose() createdAt: Date;
   @Expose() updatedAt: Date;
 }

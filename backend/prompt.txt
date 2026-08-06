@@ -1,768 +1,278 @@
-```text
-You are a Principal Software Architect and Senior Backend Engineer specializing in enterprise-grade NestJS applications.
+------------------------------------------------------------
+# IMPROVED DATABASE DESIGN
+------------------------------------------------------------
 
-Your responsibility is to design and implement a COMPLETE production-ready Authentication and Authorization module for a large School Management System.
+The Fees module must follow a reusable template architecture.
 
-This is NOT a prototype.
+A Fee Structure is a reusable template.
 
-The code must be production-ready, secure, scalable, maintainable, extensible and follow enterprise software engineering standards.
+It should NEVER be duplicated simply because another course uses the same fee.
 
-Think like a Senior Engineer responsible for software that will be used by more than 50,000 users and sustain high concurrent traffic.
+Instead, a Fee Structure is assigned to one or many academic contexts through the CourseFeeAssignment table.
 
-=====================================================================
-AGENTIC EXECUTION MODEL
-=====================================================================
+This ensures normalization and prevents duplicated fee definitions.
 
-DO NOT immediately start coding.
+------------------------------------------------------------
+## FeeStructure
 
-For EVERY feature, perform the following loop.
+Represents a reusable fee template.
 
-1. Analyze the requirements.
-2. Identify dependencies.
-3. Identify security risks.
-4. Identify edge cases.
-5. Produce an implementation plan.
-6. Implement.
-7. Review your own implementation.
-8. Refactor if necessary.
-9. Verify against best practices.
-10. Run through possible failure scenarios.
-11. Continue to the next task only after the current one is production ready.
+Examples
 
-Never skip validation.
-
-Always prefer long-term maintainability over short-term convenience.
-
-=====================================================================
-TECHNOLOGY STACK
-=====================================================================
-
-Backend
-
-• NestJS (latest stable)
-• Prisma ORM
-• PostgreSQL
-• Passport
-• Passport-JWT
-• @nestjs/jwt
-• bcrypt
-• class-validator
-• class-transformer
-• nestjs-pino
-• Helmet
-• Cookie Parser
-• NestJS Throttler
-• Swagger
-
-=====================================================================
-ARCHITECTURE
-=====================================================================
-
-Use modular architecture.
-
-Follow SOLID principles.
-
-Follow Clean Architecture where practical within NestJS.
-
-Business logic MUST NOT exist inside controllers.
-
-Organize the project into appropriate modules, for example:
-
-- auth
-- users
-- sessions
-- otp
-- audit
-- roles
-- permissions
-
-Within modules use:
-
-- controllers
-- services
-- repositories
-- dto
-- entities
-- interfaces
-- constants
-- decorators
-- guards
-- interceptors
-- filters
-- strategies
-- utils
-- events
-- enums
-
-Use dependency injection correctly.
-
-Avoid duplicated code.
-
-Avoid magic strings.
-
-Prefer reusable components.
-
-=====================================================================
-DATABASE
-=====================================================================
-
-Use Prisma ORM.
-
-Generate proper migrations.
-
-Generate indexes.
-
-Generate foreign keys.
-
-Use proper ON DELETE behavior.
-
-Use transactions where required.
-
-Optimize queries.
-
-=====================================================================
-EXISTING TABLES
-=====================================================================
-
-The following tables already exist.
-
-DO NOT redesign them unless absolutely necessary.
-
-USERS
-
-- id
-- role_id
-- username
-- email
-- phone
-- password
-- name
-- gender
-- date_of_birth
-- nationality
-- county
-- place_of_birth
-- religion
-- address
-- city
-- postal_code
-- profile_picture
-- alternative_phone_number
-- is_pwd
-- disability_type
-- disability_description
-- must_reset_password
-- refresh_token_hash
-- password_changed_at
-- failed_login_attempts
-- last_failed_login_at
-- locked_until
-- two_factor_enabled
-- status
-- last_login_at
-- last_login_ip
-- last_login_user_agent
-- email_verified_at
-- created_by
-- updated_by
-- deleted_at
-- created_at
-- updated_at
-
-STAFF_PROFILES
-
-- id
-- user_id
-- employee_number
-- national_id
-- kra_pin
-- shif_number
-- nssf_number
-- department_id
-- supervisor_id
-- job_title
-- employment_type
-- employment_status
-- date_joined
-- confirmation_date
-- contract_end_date
-- termination_date
-- termination_reason
-- basic_salary
-- work_email
-- work_phone
-- office_location
-- is_teaching_staff
-- trainer_number
-- highest_qualification
-- specialization
-- next_of_kin_name
-- next_of_kin_phone
-- next_of_kin_email
-- next_of_kin_relationship
-- created_by
-- updated_by
-- deleted_at
-- created_at
-- updated_at
-
-The following RBAC tables already exist.
-
-- roles
-- permissions
-- role_permissions
-
-=====================================================================
-NEW TABLES TO CREATE
-=====================================================================
-
-sessions
+- Diploma Regular Fee
+- Certificate Fee
+- January Intake Fee
+- Engineering Fee
+- International Students Fee
 
 Fields
 
 - id
-- session_uuid
-- user_id
-- refresh_token_hash
-- device_name
-- browser
-- operating_system
-- ip_address
-- expires_at
-- last_used_at
-- revoked_at
-- created_at
+- feeName (Unique)
+- description (Optional)
+- startDate
+- endDate
+- status (Active/Inactive)
+- createdBy
+- updatedBy
+- createdAt
+- updatedAt
+- deletedAt (Soft Delete)
 
------------------------------------------------------
+Relationships
 
-login_attempts
+FeeStructure
 
-Fields
+hasMany FeeItems
 
-- id
-- user_id
-- username
-- successful
-- ip_address
-- user_agent
-- failure_reason
-- created_at
+hasMany CourseFeeAssignments
 
------------------------------------------------------
+------------------------------------------------------------
+## FeeItem
 
-audit_logs
+Represents one charge within a Fee Structure.
 
-Fields
+Examples
 
-- id
-- user_id
-- action
-- entity_type
-- entity_id
-- old_values (JSONB)
-- new_values (JSONB)
-- ip_address
-- user_agent
-- request_id
-- created_at
+Tuition
 
------------------------------------------------------
+Library
 
-otp_codes
+ICT
+
+Medical
+
+Registration
+
+Examination
+
+Internet
+
+Attachment Fee
 
 Fields
 
 - id
-- user_id
-- code_hash
-- purpose
-- delivery_method
-- destination
-- attempts
-- max_attempts
-- expires_at
-- verified_at
-- created_at
+- feeStructureId
+- itemName
+- amount
+- displayOrder
+- createdAt
+- updatedAt
 
-OTP values MUST NEVER be stored in plain text.
+Relationship
 
-Hash every OTP using bcrypt.
+Many FeeItems belong to one FeeStructure.
 
-=====================================================================
-AUTHENTICATION FEATURES
-=====================================================================
+------------------------------------------------------------
+## CourseFeeAssignment
 
-Implement
+Represents where a Fee Structure is used.
 
-✓ Login
+Fields
 
-✓ Logout
+- id
+- courseId
+- curriculumId
+- academicYearId
+- academicSessionId
+- feeStructureId
+- effectiveFrom
+- effectiveTo (Nullable)
+- remarks (Optional)
+- status (Active/Inactive)
+- createdBy
+- updatedBy
+- createdAt
+- updatedAt
+- deletedAt
 
-✓ Refresh Token
+Relationships
 
-✓ Password Change
+Belongs To
 
-✓ Current User
+Course
 
-✓ Session Management
+Curriculum
 
-✓ Remember Me
+AcademicYear
 
-✓ Failed Login Tracking
+AcademicSession
 
-✓ Account Locking
+FeeStructure
 
-✓ Soft Delete Support
+------------------------------------------------------------
+# NORMALIZATION RULES
 
-✓ OTP Two Factor Authentication
+Fee Structures are reusable templates.
 
-✓ RBAC
+Do NOT duplicate a Fee Structure simply because another Course uses it.
 
-✓ Permission Authorization
+Multiple Courses may reference the same Fee Structure.
 
-✓ Audit Logging
+Only the assignment changes.
 
-=====================================================================
-LOGIN FLOW
-=====================================================================
+------------------------------------------------------------
+# UNIQUE CONSTRAINTS
 
-1.
+FeeStructure
 
-Validate credentials.
+Unique
 
-2.
+feeName
 
-Reject deleted users.
+------------------------------------------------------------
 
-3.
+CourseFeeAssignment
 
-Reject inactive users.
+Unique Composite Index
 
-4.
+(
+courseId,
+curriculumId,
+academicYearId,
+academicSessionId,
+status
+)
 
-Reject suspended users.
+Only ONE Active Fee Structure can exist for the same academic context.
 
-5.
+------------------------------------------------------------
+# BUSINESS RULES
 
-Reject locked accounts.
+A Fee Structure
 
-6.
+• must contain at least one Fee Item.
 
-Increment failed login attempts.
+Fee Item amount
 
-7.
+• cannot be negative.
 
-Lock account after configurable number of failed attempts.
+Item Name
 
-8.
+• cannot be duplicated within the same Fee Structure.
 
-Reset failed attempts after successful login.
+Deleting a Fee Structure
 
-9.
+• is prohibited if Active Course Fee Assignments exist.
 
-Update
+Instead
 
-- last_login_at
-- last_login_ip
-- last_login_user_agent
+Deactivate it.
 
-10.
+Historical records must remain intact.
 
-If two_factor_enabled is FALSE
+Fee Structures should never be permanently deleted.
 
-continue with login.
+Soft Delete only.
 
-If TRUE
+Course Fee Assignments are versioned.
 
-generate OTP.
+If a Fee changes for the next Academic Year,
 
-11.
+Create a NEW Assignment.
 
-Hash OTP.
+Do NOT overwrite previous assignments.
 
-12.
+Students already billed must continue referencing the historical Fee Structure.
 
-Store hashed OTP.
-
-13.
-
-Set expiry.
-
-14.
-
-Send OTP using an abstraction layer.
-
-15.
-
-Do NOT generate JWT until OTP is verified.
-
-=====================================================================
-OTP FLOW
-=====================================================================
-
-Generate a six-digit numeric OTP.
-
-OTP expires after five minutes.
-
-OTP is single-use.
-
-OTP must be hashed using bcrypt.
-
-Maximum attempts must be configurable.
-
-Support multiple delivery methods.
-
-- Email
-- SMS
-
-OTP providers must be abstracted behind an interface.
-
-No provider should be hardcoded.
-
-Verification endpoint shall
-
-- validate OTP
-
-- reject expired OTP
-
-- reject reused OTP
-
-- reject incorrect OTP
-
-- increment attempt counter
-
-- invalidate OTP after successful verification
-
-After successful verification
-
-continue with authentication.
-
-=====================================================================
-JWT TOKEN STRATEGY
-=====================================================================
-
-Implement a dual-token authentication strategy.
-
-ACCESS TOKEN
-
-Lifetime
-
-20 minutes
-
-Contains
-
-- user id
-- username
-- role id
-- session uuid
-- permissions
-
-Permissions must be embedded as an array of permission names.
+------------------------------------------------------------
+# VERSIONING
 
 Example
 
-[
-    "student.create",
-    "student.update",
-    "student.view",
-    "finance.receipt.create"
-]
+Fee Structure
 
-Access Tokens are never stored in the database.
+Diploma Regular Fee
 
-REFRESH TOKEN
+contains
 
-Lifetime
+Tuition
+Library
+ICT
+Medical
 
-30 days
+Assignment 1
 
-Store ONLY the bcrypt hash.
+Diploma ICT
 
-Never store plain refresh tokens.
+Curriculum 2026
 
-Never include permissions inside Refresh Tokens.
+Academic Year 2026
 
-=====================================================================
-REFRESH TOKEN FLOW
-=====================================================================
+Semester 1
 
-When an Access Token expires
+↓
 
-1.
+Diploma Regular Fee
 
-Validate Refresh Token.
+Assignment 2
 
-2.
+Diploma Business
 
-Validate session.
+Curriculum 2026
 
-3.
+Academic Year 2026
 
-Ensure session has not been revoked.
+Semester 1
 
-4.
+↓
 
-Ensure session has not expired.
+Diploma Regular Fee
 
-5.
+The Fee Structure is shared.
 
-Load latest user.
+Only assignments differ.
 
-6.
+------------------------------------------------------------
+# FUTURE EXTENSIBILITY
 
-Load latest role.
+Design the module so future additions require minimal changes.
 
-7.
+Examples
 
-Load latest permissions.
+✔ Student-specific Discounts
 
-8.
+✔ Scholarships
 
-Generate NEW Access Token.
+✔ Bursaries
 
-9.
+✔ Installment Plans
 
-Generate NEW Refresh Token.
+✔ Penalties
 
-10.
+✔ Late Payment Charges
 
-Replace stored Refresh Token hash.
+✔ Sponsorships
 
-11.
+✔ Different Fees for Local vs International Students
 
-Return new tokens.
+✔ Per-unit Charges
 
-Every new Access Token MUST always contain the user's latest permissions.
+✔ Hostel Fees
 
-=====================================================================
-AUTHORIZATION
-=====================================================================
+✔ Transport Fees
 
-Authorization is permission-based.
+✔ Department-specific Charges
 
-Permission Guards MUST validate permissions directly from the Access Token.
-
-Do NOT query the database for permissions on every request.
-
-Provide decorators including:
-
-@Permissions()
-
-@Public()
-
-Implement reusable PermissionGuard.
-
-If the permission is missing
-
-return HTTP 403 Forbidden.
-
-=====================================================================
-PASSWORDS
-=====================================================================
-
-Passwords must
-
-- use bcrypt
-
-- configurable rounds
-
-Never expose passwords.
-
-Never log passwords.
-
-=====================================================================
-LOGGING
-=====================================================================
-
-Use nestjs-pino.
-
-Log
-
-- requests
-
-- responses
-
-- execution time
-
-- errors
-
-- warnings
-
-- startup
-
-- shutdown
-
-Never log
-
-- passwords
-
-- OTP
-
-- refresh tokens
-
-- JWT
-
-- secrets
-
-=====================================================================
-AUDIT LOGGING
-=====================================================================
-
-Automatically record
-
-- Login
-
-- Logout
-
-- Password Change
-
-- User Creation
-
-- User Update
-
-- User Delete
-
-- Role Changes
-
-- Permission Changes
-
-- Sensitive Operations
-
-Capture
-
-- user
-
-- action
-
-- entity
-
-- previous values
-
-- new values
-
-- IP
-
-- browser
-
-- timestamp
-
-=====================================================================
-SECURITY
-=====================================================================
-
-Implement
-
-Helmet
-
-Global Validation Pipe
-
-Rate Limiting
-
-DTO Validation
-
-Input Sanitization
-
-Exception Filters
-
-Secure Cookie support
-
-Timing-safe comparisons
-
-Prevent user enumeration.
-
-Prevent brute-force attacks.
-
-Prevent replay attacks.
-
-Follow OWASP recommendations.
-
-=====================================================================
-ERROR HANDLING
-=====================================================================
-
-Create centralized exception filters.
-
-Return consistent API responses.
-
-Never expose stack traces.
-
-Never expose internal implementation details.
-
-=====================================================================
-SWAGGER
-=====================================================================
-
-Document every endpoint.
-
-Document DTOs.
-
-Provide response examples.
-
-Document authentication.
-
-Document authorization.
-
-=====================================================================
-TESTING
-=====================================================================
-
-Generate
-
-Unit Tests
-
-Integration Tests
-
-Authentication Tests
-
-Permission Tests
-
-OTP Tests
-
-Session Tests
-
-Guard Tests
-
-=====================================================================
-CODE QUALITY
-=====================================================================
-
-Follow
-
-SOLID
-
-DRY
-
-KISS
-
-Clean Code
-
-Prefer composition over inheritance.
-
-Strong typing everywhere.
-
-No duplicated logic.
-
-No unnecessary abstractions.
-
-=====================================================================
-EXPECTED OUTPUT
-=====================================================================
-
-Work iteratively.
-
-At the completion of each milestone provide:
-
-1. Summary of what was implemented.
-
-2. Security review.
-
-3. Performance considerations.
-
-4. Potential improvements.
-
-5. Any assumptions made.
-
-Do not stop unless a fundamental architectural decision requires user confirmation.
-
-The final deliverable must be an enterprise-grade authentication and authorization subsystem suitable for a high-volume School Management System built with NestJS, Prisma and PostgreSQL, capable of supporting secure JWT authentication, OTP-based two-factor authentication, permission-based authorization, refresh-token rotation, session management, audit logging, and long-term maintainability.
-```
+The architecture should support these without redesigning the database.

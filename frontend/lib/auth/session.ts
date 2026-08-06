@@ -1,28 +1,28 @@
 import type { AuthUser } from "@/lib/api/auth";
 
-const ACCESS_TOKEN_KEY = "apex.accessToken";
-const REFRESH_TOKEN_KEY = "apex.refreshToken";
 const USER_KEY = "apex.user";
+
+// The access token is intentionally kept in memory only (never localStorage):
+// it is short-lived (10 min) and any XSS that can read memory can already act
+// as the user. The refresh token is never exposed to JS at all — it lives in
+// an httpOnly cookie set by the backend, so XSS cannot exfiltrate it.
+let memoryAccessToken: string | null = null;
+
+export function setAccessToken(token: string | null): void {
+  memoryAccessToken = token;
+}
 
 export function saveSession(session: {
   accessToken: string;
-  refreshToken: string;
   user: AuthUser;
 }): void {
   if (typeof window === "undefined") return;
-  localStorage.setItem(ACCESS_TOKEN_KEY, session.accessToken);
-  localStorage.setItem(REFRESH_TOKEN_KEY, session.refreshToken);
+  setAccessToken(session.accessToken);
   localStorage.setItem(USER_KEY, JSON.stringify(session.user));
 }
 
 export function getAccessToken(): string | null {
-  if (typeof window === "undefined") return null;
-  return localStorage.getItem(ACCESS_TOKEN_KEY);
-}
-
-export function getRefreshToken(): string | null {
-  if (typeof window === "undefined") return null;
-  return localStorage.getItem(REFRESH_TOKEN_KEY);
+  return memoryAccessToken;
 }
 
 export function getCachedUser(): AuthUser | null {
@@ -38,7 +38,6 @@ export function getCachedUser(): AuthUser | null {
 
 export function clearSession(): void {
   if (typeof window === "undefined") return;
-  localStorage.removeItem(ACCESS_TOKEN_KEY);
-  localStorage.removeItem(REFRESH_TOKEN_KEY);
+  setAccessToken(null);
   localStorage.removeItem(USER_KEY);
 }

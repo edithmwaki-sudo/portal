@@ -121,6 +121,7 @@ model User {
 
   @@index([roleId])
   @@index([status])
+  @@index([deletedAt])
   @@map("users")
 }
 
@@ -169,6 +170,8 @@ model StaffProfile {
   timetables AcademicTimetable[] @relation("TrainerTimetables")
 
   @@index([departmentId])
+  @@index([deletedAt])
+  @@index([createdAt])
   @@map("staff_profiles")
 }
 
@@ -191,6 +194,7 @@ model Department {
 
   @@index([headOfDepartmentId])
   @@index([name])
+  @@index([deletedAt])
   @@map("departments")
 }
 
@@ -215,6 +219,7 @@ model CertificationAuthority {
 
   @@index([isActive])
   @@index([name])
+  @@index([createdAt])
   @@map("certification_authorities")
 }
 
@@ -237,6 +242,7 @@ model CertificationLevel {
   @@unique([certificationAuthorityId, code])
   @@unique([certificationAuthorityId, name])
   @@index([certificationAuthorityId, isActive])
+  @@index([createdAt])
   @@map("certification_levels")
 }
 
@@ -257,6 +263,8 @@ model CertificationAuthorityGrade {
 
   @@unique([certificationAuthorityId, grade])
   @@index([certificationAuthorityId, isActive])
+  @@index([certificationAuthorityId, gradeStart, gradeEnd])
+  @@index([createdAt])
   @@map("certification_authority_grades")
 }
 
@@ -279,8 +287,10 @@ model Curriculum {
 
   courseCurricula CourseCurriculum[] @relation("CurriculumCourseCurricula")
   units           Unit[]            @relation("CurriculumUnits")
+  feeAssignments  CourseFeeAssignment[] @relation("CurriculumFeeAssignments")
 
   @@index([certificationAuthorityId, isActive])
+  @@index([createdAt])
   @@map("curriculum")
 }
 
@@ -310,10 +320,13 @@ model Course {
 
   courseCurricula CourseCurriculum[] @relation("CourseCurricula")
   units           Unit[]            @relation("CourseUnits")
+  feeAssignments  CourseFeeAssignment[] @relation("CourseFeeAssignments")
 
   @@index([departmentId, isActive, name])
   @@index([certificationAuthorityId, certificationLevelId, isActive])
   @@index([isActive, name])
+  @@index([deletedAt])
+  @@index([createdAt])
   @@map("courses")
 }
 
@@ -366,6 +379,7 @@ model Unit {
   @@unique([courseId, curriculumId, code])
   @@index([courseId, curriculumId, isActive])
   @@index([isActive, name])
+  @@index([createdAt])
   @@map("units")
 }
 
@@ -387,6 +401,8 @@ model StudentProfile {
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
+  @@index([courseId])
+  @@index([deletedAt])
   @@map("student_profiles")
 }
 
@@ -410,8 +426,10 @@ model AcademicYear {
 
   sessions AcademicSession[] @relation("YearSessions")
   calendarEvents CalendarEvent[] @relation("YearCalendarEvents")
+  feeAssignments CourseFeeAssignment[] @relation("YearFeeAssignments")
 
   @@index([isActive])
+  @@index([isActive, startDate])
   @@map("academic_years")
 }
 
@@ -432,9 +450,12 @@ model AcademicSession {
   year          AcademicYear        @relation("YearSessions", fields: [academicYearId], references: [id], onDelete: Cascade)
   calendarEvents CalendarEvent[]    @relation("SessionCalendarEvents")
   timetables    AcademicTimetable[] @relation("SessionTimetables")
+  feeAssignments CourseFeeAssignment[] @relation("SessionFeeAssignments")
 
   @@unique([academicYearId, code])
   @@index([academicYearId, isActive])
+  @@index([academicYearId, isActive, startDate])
+  @@index([startDate])
   @@map("academic_sessions")
 }
 
@@ -473,6 +494,7 @@ model CalendarEvent {
 
   @@index([academicYearId, startDate])
   @@index([academicSessionId, startDate])
+  @@index([academicSessionId, startDate, source, eventTypeId])
   @@index([eventTypeId])
   @@map("calendar_events")
 }
@@ -494,6 +516,7 @@ model LectureRoom {
   timetables AcademicTimetable[] @relation("RoomTimetables")
 
   @@index([isActive])
+  @@index([deletedAt])
   @@map("lecture_rooms")
 }
 
@@ -522,8 +545,11 @@ model AcademicTimetable {
   room         LectureRoom?    @relation("RoomTimetables", fields: [lectureRoomId], references: [id], onDelete: SetNull)
 
   @@index([academicSessionId, dayOfWeek])
+  @@index([academicSessionId, dayOfWeek, startTime])
   @@index([trainerStaffId, dayOfWeek])
+  @@index([trainerStaffId, dayOfWeek, startTime, endTime])
   @@index([lectureRoomId, dayOfWeek])
+  @@index([lectureRoomId, dayOfWeek, startTime, endTime])
   @@index([unitId, academicSessionId])
   @@map("academic_timetables")
 }
@@ -548,6 +574,7 @@ model ClassAttendance {
 
   @@unique([studentUserId, sessionDate, startTime])
   @@index([unitId, sessionDate])
+  @@index([unitId, sessionDate, startTime])
   @@map("class_attendances")
 }
 
@@ -572,8 +599,9 @@ model Session {
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
-  @@index([sessionUuid])
+  @@index([userId, revokedAt, expiresAt])
   @@index([expiresAt])
+  @@index([lastUsedAt])
   @@map("sessions")
 }
 
@@ -612,6 +640,7 @@ model AuditLog {
   @@index([userId])
   @@index([action])
   @@index([entityType, entityId])
+  @@index([createdAt])
   @@map("audit_logs")
 }
 
@@ -633,4 +662,84 @@ model OtpCode {
   @@index([userId, purpose])
   @@index([expiresAt])
   @@map("otp_codes")
+}
+
+// =============================================================
+// FEES: reusable fee structures, their items, and per-course
+// assignments (backend/prompt.txt). A FeeStructure is a reusable
+// template; the CourseFeeAssignment table is the only thing that
+// changes when a course/curriculum/year/session picks it up.
+// =============================================================
+
+enum FeeStatus {
+  ACTIVE
+  INACTIVE
+}
+
+model FeeStructure {
+  id          Int        @id @default(autoincrement())
+  feeName     String     @unique @map("fee_name") @db.VarChar(255)
+  description String?    @map("description") @db.Text
+  startDate   DateTime   @map("start_date") @db.Date
+  endDate     DateTime?  @map("end_date") @db.Date
+  status      FeeStatus  @default(ACTIVE)
+  createdBy   Int?       @map("created_by")
+  updatedBy   Int?       @map("updated_by")
+  createdAt   DateTime   @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt   DateTime   @updatedAt @map("updated_at") @db.Timestamptz(6)
+  deletedAt   DateTime?  @map("deleted_at") @db.Timestamptz(6)
+
+  items       FeeItem[]              @relation("FeeStructureItems")
+  assignments CourseFeeAssignment[]  @relation("FeeStructureAssignments")
+
+  @@index([status])
+  @@index([startDate, endDate])
+  @@index([deletedAt])
+  @@map("fee_structures")
+}
+
+model FeeItem {
+  id             Int      @id @default(autoincrement())
+  feeStructureId Int      @map("fee_structure_id")
+  itemName       String   @map("item_name") @db.VarChar(255)
+  amount         Decimal  @db.Decimal(12, 2)
+  displayOrder   Int      @default(0) @map("display_order")
+  createdAt      DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt      DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  feeStructure FeeStructure @relation("FeeStructureItems", fields: [feeStructureId], references: [id], onDelete: Cascade)
+
+  @@unique([feeStructureId, itemName])
+  @@index([feeStructureId, displayOrder])
+  @@map("fee_items")
+}
+
+model CourseFeeAssignment {
+  id                Int       @id @default(autoincrement())
+  courseId          Int       @map("course_id")
+  curriculumId      Int       @map("curriculum_id")
+  academicYearId    Int       @map("academic_year_id")
+  academicSessionId Int       @map("academic_session_id")
+  feeStructureId    Int       @map("fee_structure_id")
+  effectiveFrom     DateTime  @map("effective_from") @db.Date
+  effectiveTo       DateTime? @map("effective_to") @db.Date
+  remarks           String?   @map("remarks") @db.Text
+  status            FeeStatus @default(ACTIVE)
+  createdBy         Int?      @map("created_by")
+  updatedBy         Int?      @map("updated_by")
+  createdAt         DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt         DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
+  deletedAt         DateTime? @map("deleted_at") @db.Timestamptz(6)
+
+  course          Course          @relation("CourseFeeAssignments", fields: [courseId], references: [id], onDelete: Restrict)
+  curriculum      Curriculum      @relation("CurriculumFeeAssignments", fields: [curriculumId], references: [id], onDelete: Restrict)
+  academicYear    AcademicYear    @relation("YearFeeAssignments", fields: [academicYearId], references: [id], onDelete: Restrict)
+  academicSession AcademicSession @relation("SessionFeeAssignments", fields: [academicSessionId], references: [id], onDelete: Restrict)
+  feeStructure    FeeStructure    @relation("FeeStructureAssignments", fields: [feeStructureId], references: [id], onDelete: Restrict)
+
+  @@unique([courseId, curriculumId, academicYearId, academicSessionId, status])
+  @@index([feeStructureId, status])
+  @@index([academicSessionId, status])
+  @@index([deletedAt])
+  @@map("course_fee_assignments")
 }

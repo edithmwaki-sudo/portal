@@ -34,7 +34,10 @@ export class TimetablesController {
   constructor(private readonly timetablesService: TimetablesService) {}
 
   @Get('sessions/:sessionId/entries')
-  @RequirePermission(Permissions.canViewTimetable, Permissions.canViewMyTimetable)
+  @RequirePermission(
+    Permissions.canViewTimetable,
+    Permissions.canViewMyTimetable,
+  )
   @ApiOperation({ summary: 'List timetable entries for a session' })
   @ApiOkResponse({ description: 'Flat list of timetable entries' })
   async listForSession(@Param('sessionId', ParseIntPipe) sessionId: number) {
@@ -47,7 +50,9 @@ export class TimetablesController {
   @Get('sessions/:sessionId/available-units')
   @RequirePermission(Permissions.canAddTimetable)
   @ApiOperation({ summary: 'Units without a timetable entry in the session' })
-  async listAvailableUnits(@Param('sessionId', ParseIntPipe) sessionId: number) {
+  async listAvailableUnits(
+    @Param('sessionId', ParseIntPipe) sessionId: number,
+  ) {
     return this.timetablesService.listAvailableUnits(sessionId);
   }
 
@@ -59,7 +64,10 @@ export class TimetablesController {
   }
 
   @Get(':id')
-  @RequirePermission(Permissions.canViewTimetable, Permissions.canViewMyTimetable)
+  @RequirePermission(
+    Permissions.canViewTimetable,
+    Permissions.canViewMyTimetable,
+  )
   @ApiOperation({ summary: 'Get a single timetable entry' })
   @ApiOkResponse({ type: TimetableEntryDto })
   async findOne(@Param('id', ParseIntPipe) id: number) {

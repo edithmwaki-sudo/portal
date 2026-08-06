@@ -27,6 +27,7 @@ import { CalendarModule } from './calendar/calendar.module';
 import { LectureRoomsModule } from './lecture-rooms/lecture-rooms.module';
 import { TimetablesModule } from './timetables/timetables.module';
 import { AttendanceModule } from './attendance/attendance.module';
+import { FeesModule } from './fees/fees.module';
 // NOTE: request-body audit capture is deferred — revisit later.
 // import { RequestContextModule } from './common/request-context/request-context.module';
 import { getLogFilePath } from './logs/log-file';
@@ -109,16 +110,17 @@ import { getLogFilePath } from './logs/log-file';
     StaffModule,
     DepartmentsModule,
     CertificationModule,
-CurriculumModule,
-CoursesModule,
-UnitsModule,
-AcademicYearsModule,
-AcademicSessionsModule,
-CalendarModule,
-LectureRoomsModule,
-TimetablesModule,
-AttendanceModule,
-LogsModule,
+    CurriculumModule,
+    CoursesModule,
+    UnitsModule,
+    AcademicYearsModule,
+    AcademicSessionsModule,
+    CalendarModule,
+    LectureRoomsModule,
+    TimetablesModule,
+    AttendanceModule,
+    FeesModule,
+    LogsModule,
     // NOTE: request-body audit capture is deferred — revisit later.
     // RequestContextModule,
   ],

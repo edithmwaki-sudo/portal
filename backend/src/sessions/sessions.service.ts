@@ -43,10 +43,12 @@ export class SessionsService {
       throw new NotFoundException('Session not found');
     }
     if (session.userId !== user.userId) {
-      throw new ForbiddenException('You cannot revoke another user\'s session');
+      throw new ForbiddenException("You cannot revoke another user's session");
     }
     if (session.sessionUuid === user.sessionUuid) {
-      throw new ForbiddenException('Revoke your current session via logout instead');
+      throw new ForbiddenException(
+        'Revoke your current session via logout instead',
+      );
     }
     await this.prisma.session.update({
       where: { id: session.id },

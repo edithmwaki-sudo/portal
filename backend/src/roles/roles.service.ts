@@ -18,6 +18,24 @@ type RoleWithPermissions = {
   permissions: { id: number; name: string; description: string | null }[];
 };
 
+type RoleRow = {
+  id: number;
+  name: string;
+  displayName: string;
+  createdAt: Date;
+  updatedAt: Date;
+  rolePermissions: {
+    permission: { id: number; name: string; description: string | null };
+  }[];
+};
+
+const ROLE_WITH_PERMISSIONS_INCLUDE = {
+  rolePermissions: {
+    include: { permission: true },
+    orderBy: { permission: { id: 'asc' } },
+  },
+} satisfies Prisma.RoleInclude;
+
 @Injectable()
 export class RolesService {
   constructor(
@@ -34,7 +52,9 @@ export class RolesService {
     });
 
     if (existing) {
-      throw new ConflictException(`A role named '${normalizedName}' already exists`);
+      throw new ConflictException(
+        `A role named '${normalizedName}' already exists`,
+      );
     }
 
     const row = await this.prisma.role.create({
@@ -44,15 +64,18 @@ export class RolesService {
       },
     });
 
-    await this.audit.log(
-      'role.create',
-      actorId,
-      'Role',
-      row.id,
-      { newValues: { name: row.name, displayName: row.displayName } },
-    );
+    await this.audit.log('role.create', actorId, 'Role', row.id, {
+      newValues: { name: row.name, displayName: row.displayName },
+    });
 
-    return this.toRoleWithPermissions({ ...row, permissions: [] });
+    return {
+      id: row.id,
+      name: row.name,
+      displayName: row.displayName,
+      createdAt: row.createdAt,
+      updatedAt: row.updatedAt,
+      permissions: [],
+    };
   }
 
   async findAll(page = 1, limit = 25, search?: string) {
@@ -72,22 +95,26 @@ export class RolesService {
         orderBy: { id: 'asc' },
         skip: (page - 1) * limit,
         take: limit,
+        include: ROLE_WITH_PERMISSIONS_INCLUDE,
       }),
     ]);
 
-    const items = await Promise.all(rows.map((r) => this.loadPermissions(r)));
+    const items = rows.map((row) => this.toRoleWithPermissions(row));
 
     return { items, total, page, limit };
   }
 
   async findOneById(id: number): Promise<RoleWithPermissions> {
-    const row = await this.prisma.role.findUnique({ where: { id } });
+    const row = await this.prisma.role.findUnique({
+      where: { id },
+      include: ROLE_WITH_PERMISSIONS_INCLUDE,
+    });
 
     if (!row) {
       throw new NotFoundException(`Role with id '${id}' not found`);
     }
 
-    return this.loadPermissions(row);
+    return this.toRoleWithPermissions(row);
   }
 
   async update(id: number, dto: UpdateRoleDto, actorId: number) {
@@ -116,30 +143,25 @@ export class RolesService {
       },
     });
 
-    await this.audit.log(
-      'role.update',
-      actorId,
-      'Role',
-      row.id,
-      {
-        oldValues: { name: row.name, displayName: row.displayName },
-        newValues: { name: updated.name, displayName: updated.displayName },
-      },
-    );
+    await this.audit.log('role.update', actorId, 'Role', row.id, {
+      oldValues: { name: row.name, displayName: row.displayName },
+      newValues: { name: updated.name, displayName: updated.displayName },
+    });
 
-    return this.loadPermissions(updated);
+    return {
+      ...row,
+      name: updated.name,
+      displayName: updated.displayName,
+      updatedAt: updated.updatedAt,
+    };
   }
 
   async remove(id: number, actorId: number): Promise<void> {
     const row = await this.findOneById(id);
     await this.prisma.role.delete({ where: { id } });
-    await this.audit.log(
-      'role.delete',
-      actorId,
-      'Role',
-      id,
-      { oldValues: { name: row.name, displayName: row.displayName } },
-    );
+    await this.audit.log('role.delete', actorId, 'Role', id, {
+      oldValues: { name: row.name, displayName: row.displayName },
+    });
   }
 
   async attachPermission(
@@ -184,7 +206,7 @@ export class RolesService {
       { newValues: { roleId, permissionName: permission.name } },
     );
 
-    return this.loadPermissions(role);
+    return role;
   }
 
   async detachPermission(
@@ -224,22 +246,14 @@ export class RolesService {
     return name.trim().toLowerCase().replace(/\s+/g, '_');
   }
 
-  private async loadPermissions(
-    role: { id: number; name: string; displayName: string; createdAt: Date; updatedAt: Date },
-  ): Promise<RoleWithPermissions> {
-    const attached = await this.prisma.rolePermission.findMany({
-      where: { roleId: role.id },
-      include: { permission: true },
-      orderBy: { permission: { id: 'asc' } },
-    });
-
-    return this.toRoleWithPermissions({
-      ...role,
-      permissions: attached.map((a) => a.permission),
-    });
-  }
-
-  private toRoleWithPermissions(role: RoleWithPermissions): RoleWithPermissions {
-    return role;
+  private toRoleWithPermissions(role: RoleRow): RoleWithPermissions {
+    return {
+      id: role.id,
+      name: role.name,
+      displayName: role.displayName,
+      createdAt: role.createdAt,
+      updatedAt: role.updatedAt,
+      permissions: role.rolePermissions.map((a) => a.permission),
+    };
   }
 }

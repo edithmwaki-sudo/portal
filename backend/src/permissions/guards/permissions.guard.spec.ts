@@ -30,7 +30,10 @@ describe('PermissionsGuard', () => {
   });
 
   it('allows a user holding any of the required permissions (OR semantics)', () => {
-    reflectorMock.getAllAndOverride.mockReturnValue(['staff.view', 'roles.view']);
+    reflectorMock.getAllAndOverride.mockReturnValue([
+      'staff.view',
+      'roles.view',
+    ]);
     const user: AuthenticatedUser = {
       userId: 1,
       username: 'admin',
@@ -56,7 +59,9 @@ describe('PermissionsGuard', () => {
       mustResetPassword: false,
       twoFactorEnabled: false,
     };
-    expect(() => guard.canActivate(makeContext(user))).toThrow(ForbiddenException);
+    expect(() => guard.canActivate(makeContext(user))).toThrow(
+      ForbiddenException,
+    );
   });
 
   it('throws 403 when no authenticated user is attached', () => {

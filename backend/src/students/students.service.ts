@@ -165,7 +165,7 @@ export class StudentsService {
   }
 
   async update(id: number, dto: UpdateStudentDto, actorId: number) {
-    await this.findOneById(id);
+    const before = await this.findOneById(id);
 
     if (dto.admissionNumber !== undefined) {
       const dupAdm = await this.prisma.studentProfile.findUnique({
@@ -178,8 +178,6 @@ export class StudentsService {
         );
       }
     }
-
-    const before = await this.findOneById(id);
 
     const profile = await this.prisma.$transaction(async (tx) => {
       if (dto.username !== undefined || dto.email !== undefined) {

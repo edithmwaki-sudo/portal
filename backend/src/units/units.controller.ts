@@ -41,7 +41,9 @@ export class UnitsController {
    */
   @Get()
   @RequirePermission(Permissions.canViewUnit, Permissions.canHodViewUnit)
-  @ApiOperation({ summary: 'List units (admin: all, HOD: own department only)' })
+  @ApiOperation({
+    summary: 'List units (admin: all, HOD: own department only)',
+  })
   @ApiOkResponse({ description: 'Paginated unit list' })
   async findAll(
     @CurrentUser() actor: AuthenticatedUser,
@@ -101,8 +103,9 @@ export class UnitsController {
     if (actor.permissions.includes(Permissions.canViewUnit)) {
       return;
     }
-    const hodDepartmentId =
-      await this.unitsService.resolveHodDepartmentId(actor.userId);
+    const hodDepartmentId = await this.unitsService.resolveHodDepartmentId(
+      actor.userId,
+    );
     if (hodDepartmentId === null || hodDepartmentId === undefined) {
       throw new NotFoundException(`Unit with id '${id}' not found`);
     }
@@ -125,8 +128,9 @@ export class UnitsController {
     if (actor.permissions.includes(Permissions.canViewUnit)) {
       return;
     }
-    const hodDepartmentId =
-      await this.unitsService.resolveHodDepartmentId(actor.userId);
+    const hodDepartmentId = await this.unitsService.resolveHodDepartmentId(
+      actor.userId,
+    );
     const departmentId =
       await this.unitsService.getCourseDepartmentId(courseId);
     if (
@@ -155,7 +159,9 @@ export class UnitsController {
 
   @Post()
   @RequirePermission(Permissions.canAddUnit)
-  @ApiOperation({ summary: 'Create a unit assigned to a course and curriculum' })
+  @ApiOperation({
+    summary: 'Create a unit assigned to a course and curriculum',
+  })
   @ApiCreatedResponse({ type: UnitResponseDto })
   async create(
     @Body() dto: CreateUnitDto,

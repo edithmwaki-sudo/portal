@@ -53,7 +53,9 @@ export class CurriculumService {
         ? {
             OR: [
               { cycleName: { contains: search, mode: 'insensitive' } },
-              { authority: { name: { contains: search, mode: 'insensitive' } } },
+              {
+                authority: { name: { contains: search, mode: 'insensitive' } },
+              },
             ],
           }
         : {}),
@@ -65,7 +67,9 @@ export class CurriculumService {
         authority: { name: params.sortDirection === 'asc' ? 'asc' : 'desc' },
       });
     } else if (params.sortBy === 'cycleName') {
-      orderBy.push({ cycleName: params.sortDirection === 'asc' ? 'asc' : 'desc' });
+      orderBy.push({
+        cycleName: params.sortDirection === 'asc' ? 'asc' : 'desc',
+      });
     } else {
       orderBy.push({ createdAt: 'desc' });
     }
@@ -107,7 +111,9 @@ export class CurriculumService {
       select: { id: true },
     });
     if (!authority) {
-      throw new BadRequestException('Selected certification authority does not exist');
+      throw new BadRequestException(
+        'Selected certification authority does not exist',
+      );
     }
 
     await this.assertUnique(dto.cycleName);
@@ -123,13 +129,9 @@ export class CurriculumService {
       select: CURRICULUM_SELECT,
     });
 
-    await this.audit.log(
-      'curriculum.create',
-      actorId,
-      'Curriculum',
-      row.id,
-      { newValues: { cycleName: row.cycleName } },
-    );
+    await this.audit.log('curriculum.create', actorId, 'Curriculum', row.id, {
+      newValues: { cycleName: row.cycleName },
+    });
 
     return this.toView(row);
   }
@@ -143,7 +145,9 @@ export class CurriculumService {
         select: { id: true },
       });
       if (!authority) {
-        throw new BadRequestException('Selected certification authority does not exist');
+        throw new BadRequestException(
+          'Selected certification authority does not exist',
+        );
       }
     }
 
@@ -196,7 +200,11 @@ export class CurriculumService {
       id,
       {
         oldValues: { isActive: existing.isActive },
-        newValues: { isActive: row.isActive, startedAt: row.startedAt, endedAt: row.endedAt },
+        newValues: {
+          isActive: row.isActive,
+          startedAt: row.startedAt,
+          endedAt: row.endedAt,
+        },
       },
     );
 
@@ -234,7 +242,10 @@ export class CurriculumService {
     };
   }
 
-  private async assertUnique(cycleName: string, excludeId?: number): Promise<void> {
+  private async assertUnique(
+    cycleName: string,
+    excludeId?: number,
+  ): Promise<void> {
     const existing = await this.prisma.curriculum.findFirst({
       where: {
         cycleName: { equals: cycleName.trim(), mode: 'insensitive' },
@@ -243,7 +254,9 @@ export class CurriculumService {
       select: { id: true },
     });
     if (existing) {
-      throw new ConflictException('A curriculum cycle with this name already exists');
+      throw new ConflictException(
+        'A curriculum cycle with this name already exists',
+      );
     }
   }
 }

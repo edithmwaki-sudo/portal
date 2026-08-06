@@ -35,6 +35,24 @@ const COURSE_SELECT = {
   updatedAt: true,
 } satisfies Prisma.CourseSelect;
 
+const COURSE_LIST_SELECT = {
+  id: true,
+  code: true,
+  initials: true,
+  name: true,
+  durationMonths: true,
+  description: true,
+  isActive: true,
+  certificationAuthorityId: true,
+  authority: { select: { code: true, name: true } },
+  certificationLevelId: true,
+  level: { select: { code: true, name: true } },
+  departmentId: true,
+  department: { select: { name: true } },
+  createdAt: true,
+  updatedAt: true,
+} satisfies Prisma.CourseSelect;
+
 type CourseRecord = {
   id: number;
   code: string;
@@ -112,7 +130,15 @@ export class CoursesService {
     },
     departmentScopeId?: number | null,
   ) {
-    const { page, limit, search, status, certificationAuthorityId, certificationLevelId, curriculumId } = params;
+    const {
+      page,
+      limit,
+      search,
+      status,
+      certificationAuthorityId,
+      certificationLevelId,
+      curriculumId,
+    } = params;
 
     const where: Prisma.CourseWhereInput = {
       deletedAt: null,
@@ -121,9 +147,7 @@ export class CoursesService {
         : {}),
       ...(certificationAuthorityId ? { certificationAuthorityId } : {}),
       ...(certificationLevelId ? { certificationLevelId } : {}),
-      ...(curriculumId
-        ? { courseCurricula: { some: { curriculumId } } }
-        : {}),
+      ...(curriculumId ? { courseCurricula: { some: { curriculumId } } } : {}),
       ...(status === 'active'
         ? { isActive: true }
         : status === 'inactive'
@@ -150,7 +174,9 @@ export class CoursesService {
       params.sortBy === 'initials' ||
       params.sortBy === 'name'
     ) {
-      orderBy.push({ [params.sortBy]: params.sortDirection === 'asc' ? 'asc' : 'desc' });
+      orderBy.push({
+        [params.sortBy]: params.sortDirection === 'asc' ? 'asc' : 'desc',
+      });
     } else {
       orderBy.push({ createdAt: 'desc' });
     }
@@ -163,12 +189,12 @@ export class CoursesService {
         orderBy,
         skip: (page - 1) * limit,
         take: limit,
-        select: COURSE_SELECT,
+        select: COURSE_LIST_SELECT,
       }),
     ]);
 
     return {
-      items: rows.map(toView),
+      items: rows.map((row) => toView({ ...row, courseCurricula: [] })),
       total,
       page,
       limit,
@@ -188,7 +214,11 @@ export class CoursesService {
 
   async create(dto: CreateCourseDto, actorId: number) {
     await this.assertUnique(dto.code);
-    await this.assertRelations(dto.certificationAuthorityId, dto.certificationLevelId, dto.departmentId);
+    await this.assertRelations(
+      dto.certificationAuthorityId,
+      dto.certificationLevelId,
+      dto.departmentId,
+    );
     await this.assertCurriculumBelongsToAuthority(
       dto.curriculumId,
       dto.certificationAuthorityId,
@@ -222,8 +252,13 @@ export class CoursesService {
           },
         });
       } catch (err) {
-        if (err instanceof Prisma.PrismaClientKnownRequestError && err.code === 'P2002') {
-          throw new ConflictException('This curriculum is already linked to the course');
+        if (
+          err instanceof Prisma.PrismaClientKnownRequestError &&
+          err.code === 'P2002'
+        ) {
+          throw new ConflictException(
+            'This curriculum is already linked to the course',
+          );
         }
         throw err;
       }
@@ -239,10 +274,11 @@ export class CoursesService {
   }
 
   async update(id: number, dto: UpdateCourseDto, actorId: number) {
-    const existing = await this.findOneById(id);
+    const existing = await this.findLeanById(id);
     await this.assertUnique(dto.code, id);
 
-    const authorityId = dto.certificationAuthorityId ?? existing.certificationAuthorityId;
+    const authorityId =
+      dto.certificationAuthorityId ?? existing.certificationAuthorityId;
     const levelId = dto.certificationLevelId ?? existing.certificationLevelId;
     const departmentId = dto.departmentId ?? existing.departmentId;
     await this.assertRelations(authorityId, levelId, departmentId);
@@ -274,12 +310,30 @@ export class CoursesService {
 
   /** Soft delete — courses keep history/audit integrity. */
   async remove(id: number, actorId: number): Promise<void> {
-    await this.findOneById(id);
+    await this.findLeanById(id);
     await this.prisma.course.update({
       where: { id },
       data: { deletedAt: new Date(), updatedBy: actorId },
     });
     await this.audit.log('course.delete', actorId, 'Course', id, {});
+  }
+
+  private async findLeanById(id: number) {
+    const row = await this.prisma.course.findFirst({
+      where: { id, deletedAt: null },
+      select: {
+        id: true,
+        code: true,
+        name: true,
+        certificationAuthorityId: true,
+        certificationLevelId: true,
+        departmentId: true,
+      },
+    });
+    if (!row) {
+      throw new NotFoundException(`Course with id '${id}' not found`);
+    }
+    return row;
   }
 
   /** The department id the user belongs to via their staff profile (HOD). */
@@ -324,7 +378,10 @@ export class CoursesService {
       take: Math.min(Math.max(limit, 1), 50),
       select: { id: true, code: true, name: true },
     });
-    return rows.map((row) => ({ id: row.id, label: `${row.code} ${row.name}` }));
+    return rows.map((row) => ({
+      id: row.id,
+      label: `${row.code} ${row.name}`,
+    }));
   }
 
   async listLevelOptions(authorityId: number, search?: string, limit = 10) {
@@ -345,10 +402,17 @@ export class CoursesService {
       take: Math.min(Math.max(limit, 1), 500),
       select: { id: true, code: true, name: true },
     });
-    return rows.map((row) => ({ id: row.id, label: `${row.name} (${row.code})` }));
+    return rows.map((row) => ({
+      id: row.id,
+      label: `${row.name} (${row.code})`,
+    }));
   }
 
-  async listCurriculumOptions(authorityId: number, search?: string, limit = 10) {
+  async listCurriculumOptions(
+    authorityId: number,
+    search?: string,
+    limit = 10,
+  ) {
     const rows = await this.prisma.curriculum.findMany({
       where: {
         certificationAuthorityId: authorityId,
@@ -381,7 +445,10 @@ export class CoursesService {
       take: Math.min(Math.max(limit, 1), 50),
       select: { id: true, code: true, name: true },
     });
-    return rows.map((row) => ({ id: row.id, label: `${row.name} (${row.code})` }));
+    return rows.map((row) => ({
+      id: row.id,
+      label: `${row.name} (${row.code})`,
+    }));
   }
 
   /* ------------------------- Guards ------------------------- */
@@ -412,13 +479,18 @@ export class CoursesService {
         select: { id: true },
       });
       if (!authority) {
-        throw new BadRequestException('Selected certification authority does not exist');
+        throw new BadRequestException(
+          'Selected certification authority does not exist',
+        );
       }
     }
 
     if (levelId) {
       const level = await this.prisma.certificationLevel.findFirst({
-        where: { id: levelId, ...(authorityId ? { certificationAuthorityId: authorityId } : {}) },
+        where: {
+          id: levelId,
+          ...(authorityId ? { certificationAuthorityId: authorityId } : {}),
+        },
         select: { id: true },
       });
       if (!level) {

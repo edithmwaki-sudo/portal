@@ -1,4 +1,11 @@
-import { IsBoolean, IsInt, IsOptional, IsString, Length, MaxLength } from 'class-validator';
+import {
+  IsBoolean,
+  IsInt,
+  IsOptional,
+  IsString,
+  Length,
+  MaxLength,
+} from 'class-validator';
 
 export class UpdateCertificationLevelDto {
   @IsInt()

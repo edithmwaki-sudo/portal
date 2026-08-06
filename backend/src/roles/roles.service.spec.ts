@@ -51,13 +51,24 @@ describe('RolesService', () => {
         createdAt: new Date(),
         updatedAt: new Date(),
       });
-      const dto: CreateRoleDto = { name: ' School Admin ', displayName: 'School Admin' };
+      const dto: CreateRoleDto = {
+        name: ' School Admin ',
+        displayName: 'School Admin',
+      };
       const role = await service.create(dto, 7);
       expect(role.name).toBe('school_admin');
       expect(prismaMock.role.create).toHaveBeenCalledWith(
-        expect.objectContaining({ data: expect.objectContaining({ name: 'school_admin' }) }),
+        expect.objectContaining({
+          data: expect.objectContaining({ name: 'school_admin' }),
+        }),
       );
-      expect(auditMock.log).toHaveBeenCalledWith('role.create', 7, 'Role', 1, expect.anything());
+      expect(auditMock.log).toHaveBeenCalledWith(
+        'role.create',
+        7,
+        'Role',
+        1,
+        expect.anything(),
+      );
     });
 
     it('rejects a duplicate role name', async () => {
@@ -71,7 +82,9 @@ describe('RolesService', () => {
   describe('findOneById', () => {
     it('throws 404 for an unknown role', async () => {
       prismaMock.role.findUnique.mockResolvedValue(null);
-      await expect(service.findOneById(404)).rejects.toBeInstanceOf(NotFoundException);
+      await expect(service.findOneById(404)).rejects.toBeInstanceOf(
+        NotFoundException,
+      );
     });
   });
 
@@ -86,9 +99,9 @@ describe('RolesService', () => {
       });
       prismaMock.rolePermission.findMany.mockResolvedValue([]);
       prismaMock.permission.findUnique.mockResolvedValue(null);
-      await expect(service.attachPermission(1, 'nope.view', 7)).rejects.toBeInstanceOf(
-        NotFoundException,
-      );
+      await expect(
+        service.attachPermission(1, 'nope.view', 7),
+      ).rejects.toBeInstanceOf(NotFoundException);
     });
 
     it('rejects a permission already attached', async () => {
@@ -100,11 +113,17 @@ describe('RolesService', () => {
         updatedAt: new Date(),
       });
       prismaMock.rolePermission.findMany.mockResolvedValue([]);
-      prismaMock.permission.findUnique.mockResolvedValue({ id: 3, name: 'roles.view' });
-      prismaMock.rolePermission.findUnique.mockResolvedValue({ roleId: 1, permissionId: 3 });
-      await expect(service.attachPermission(1, 'roles.view', 7)).rejects.toBeInstanceOf(
-        ConflictException,
-      );
+      prismaMock.permission.findUnique.mockResolvedValue({
+        id: 3,
+        name: 'roles.view',
+      });
+      prismaMock.rolePermission.findUnique.mockResolvedValue({
+        roleId: 1,
+        permissionId: 3,
+      });
+      await expect(
+        service.attachPermission(1, 'roles.view', 7),
+      ).rejects.toBeInstanceOf(ConflictException);
     });
   });
 });

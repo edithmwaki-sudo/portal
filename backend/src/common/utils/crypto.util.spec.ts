@@ -44,7 +44,8 @@ describe('crypto.util', () => {
     it('handles very long tokens with a shared prefix (bcrypt-truncation scenario)', () => {
       // Two JWT-like tokens sharing the same header + sub + sessionUuid prefix,
       // differing only near the end (the jti). SHA-256 must still distinguish them.
-      const prefix = 'eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOjEsInNlc3Npb25VdWlkIjoiMTIzNDU2NzgtYWJjZC1lZmdo';
+      const prefix =
+        'eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOjEsInNlc3Npb25VdWlkIjoiMTIzNDU2NzgtYWJjZC1lZmdo';
       const t1 = `${prefix}.AAAA`;
       const t2 = `${prefix}.BBBB`;
       const h1 = hashToken(t1);

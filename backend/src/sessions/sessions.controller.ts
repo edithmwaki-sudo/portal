@@ -25,14 +25,14 @@ export class SessionsController {
   constructor(private readonly sessionsService: SessionsService) {}
 
   @Get()
-  @ApiOperation({ summary: 'List the authenticated user\'s active sessions' })
+  @ApiOperation({ summary: "List the authenticated user's active sessions" })
   list(@CurrentUser() user: AuthenticatedUser): Promise<SessionResponseDto[]> {
     return this.sessionsService.listActiveForUser(user.userId);
   }
 
   @Delete(':id')
   @HttpCode(HttpStatus.NO_CONTENT)
-  @ApiOperation({ summary: 'Revoke one of the authenticated user\'s sessions' })
+  @ApiOperation({ summary: "Revoke one of the authenticated user's sessions" })
   revoke(
     @CurrentUser() user: AuthenticatedUser,
     @Param('id', ParseIntPipe) id: number,
@@ -43,7 +43,9 @@ export class SessionsController {
 
   @Delete()
   @HttpCode(HttpStatus.NO_CONTENT)
-  @ApiOperation({ summary: 'Revoke all other sessions, keeping the current one' })
+  @ApiOperation({
+    summary: 'Revoke all other sessions, keeping the current one',
+  })
   revokeOthers(
     @CurrentUser() user: AuthenticatedUser,
     @Req() req: Request,

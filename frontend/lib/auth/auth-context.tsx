@@ -10,8 +10,12 @@ import {
 } from "react";
 import { useRouter } from "next/navigation";
 
-import { getMe, logout as apiLogout, type AuthUser } from "@/lib/api/auth";
-import { clearSession, getAccessToken } from "@/lib/auth/session";
+import {
+  getMe,
+  logout as apiLogout,
+  type AuthUser,
+} from "@/lib/api/auth";
+import { clearSession } from "@/lib/auth/session";
 
 interface AuthContextValue {
   user: AuthUser | null;
@@ -32,24 +36,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     if (typeof window === "undefined") return;
 
     let cancelled = false;
-    if (!getAccessToken()) {
-      Promise.resolve().then(() => {
-        if (!cancelled) {
-          setUser(null);
-          setLoading(false);
-        }
-      });
-      return () => {
-        cancelled = true;
-      };
-    }
 
+    // The 401 interceptor in lib/api/client.ts performs the silent refresh
+    // against the httpOnly refresh cookie (single in-flight refresh, queued),
+    // then replays this request. A request without any token/cookie will 401,
+    // fail the refresh, and land here as unauthenticated.
     getMe()
       .then((data) => {
         if (!cancelled) setUser(data);
       })
       .catch(() => {
-        /* 401 interceptor already cleared the stored session */
         if (!cancelled) setUser(null);
       })
       .finally(() => {

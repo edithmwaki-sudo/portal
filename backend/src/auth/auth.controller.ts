@@ -1,4 +1,15 @@
-import { Body, Controller, Get, HttpCode, HttpStatus, Post, Req, Res } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  HttpCode,
+  HttpStatus,
+  Post,
+  Req,
+  Res,
+  UnauthorizedException,
+} from '@nestjs/common';
+import { Throttle } from '@nestjs/throttler';
 import {
   ApiBearerAuth,
   ApiNoContentResponse,
@@ -35,6 +46,7 @@ export class AuthController {
   ) {}
 
   @Public()
+  @Throttle({ default: { limit: 10, ttl: 60_000 } })
   @Post('login')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
@@ -42,9 +54,17 @@ export class AuthController {
     description:
       'Returns access + refresh tokens and sets httpOnly cookies. If the user has two-factor enabled, returns a `loginToken` instead and no JWT is issued until the OTP is verified.',
   })
-  @ApiOkResponse({ description: 'Authenticated (tokens) or 2FA challenge (loginToken)' })
-  @ApiUnauthorizedResponse({ description: 'Invalid credentials or locked account' })
-  async login(@Body() dto: LoginDto, @Req() req: Request, @Res({ passthrough: true }) res: Response) {
+  @ApiOkResponse({
+    description: 'Authenticated (tokens) or 2FA challenge (loginToken)',
+  })
+  @ApiUnauthorizedResponse({
+    description: 'Invalid credentials or locked account',
+  })
+  async login(
+    @Body() dto: LoginDto,
+    @Req() req: Request,
+    @Res({ passthrough: true }) res: Response,
+  ) {
     const result = await this.authService.login(dto, req);
     if ('loginToken' in result) {
       return result;
@@ -54,41 +74,59 @@ export class AuthController {
   }
 
   @Public()
+  @Throttle({ default: { limit: 10, ttl: 60_000 } })
   @Post('verify-otp')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
     summary: 'Verify a login OTP',
-    description: 'Completes the two-factor login started by /auth/login and issues tokens.',
+    description:
+      'Completes the two-factor login started by /auth/login and issues tokens.',
   })
   @ApiOkResponse({ description: 'Tokens issued' })
-  @ApiUnauthorizedResponse({ description: 'Invalid, expired, or exhausted OTP' })
+  @ApiUnauthorizedResponse({
+    description: 'Invalid, expired, or exhausted OTP',
+  })
   async verifyOtp(
     @Body() body: VerifyOtpDto,
     @Req() req: Request,
     @Res({ passthrough: true }) res: Response,
   ) {
-    const user = await this.otpService.verifyLoginOtp(body.loginToken, body.code);
+    const user = await this.otpService.verifyLoginOtp(
+      body.loginToken,
+      body.code,
+    );
     const result = await this.authService.completeOtpLogin(user.id, req);
     this.setAuthCookies(res, result.accessToken, result.refreshToken);
     return result;
   }
 
   @Public()
+  @Throttle({ default: { limit: 30, ttl: 60_000 } })
   @Post('refresh')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
     summary: 'Rotate a refresh token',
     description:
-      'Validates the session and issues a fresh access + refresh token pair. Old tokens are single-use and their reuse revokes the session.',
+      'Validates the refresh token (from the httpOnly cookie or request body) and issues a fresh access + refresh token pair. Old tokens are single-use and their reuse revokes the session.',
   })
   @ApiOkResponse({ description: 'New token pair issued' })
-  @ApiUnauthorizedResponse({ description: 'Invalid, revoked, expired, or replayed refresh token' })
+  @ApiUnauthorizedResponse({
+    description: 'Invalid, revoked, expired, or replayed refresh token',
+  })
   async refresh(
     @Body() dto: RefreshTokenDto,
     @Req() req: Request,
     @Res({ passthrough: true }) res: Response,
   ) {
-    const result = await this.authService.refresh(dto.refreshToken, req);
+    const cookieToken =
+      typeof req.cookies?.['refresh_token'] === 'string'
+        ? req.cookies['refresh_token']
+        : undefined;
+    const rawToken = dto.refreshToken ?? cookieToken;
+    if (!rawToken) {
+      throw new UnauthorizedException('Missing refresh token');
+    }
+    const result = await this.authService.refresh(rawToken, req);
     this.setAuthCookies(res, result.accessToken, result.refreshToken);
     return result;
   }
@@ -119,8 +157,10 @@ export class AuthController {
   @Post('change-password')
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiBearerAuth('access-token')
-  @ApiOperation({ summary: 'Change the current user\'s password' })
-  @ApiNoContentResponse({ description: 'Password changed; all other sessions revoked' })
+  @ApiOperation({ summary: "Change the current user's password" })
+  @ApiNoContentResponse({
+    description: 'Password changed; all other sessions revoked',
+  })
   async changePassword(
     @CurrentUser() user: AuthenticatedUser,
     @Body() dto: ChangePasswordDto,
@@ -129,10 +169,14 @@ export class AuthController {
     await this.authService.changePassword(user, dto, req);
   }
 
-  private setAuthCookies(res: Response, accessToken: string, refreshToken: string) {
+  private setAuthCookies(
+    res: Response,
+    accessToken: string,
+    refreshToken: string,
+  ) {
     res.cookie('access_token', accessToken, {
       ...COOKIE_OPTIONS,
-      maxAge: 20 * 60 * 1000,
+      maxAge: 10 * 60 * 1000,
     });
     res.cookie('refresh_token', refreshToken, {
       ...COOKIE_OPTIONS,

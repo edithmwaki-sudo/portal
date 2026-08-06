@@ -27,8 +27,10 @@ describe('JwtAuthGuard', () => {
 
   it('delegates to Passport for non-public handlers', () => {
     reflectorMock.getAllAndOverride.mockReturnValue(undefined);
-    const spy = jest.spyOn(JwtAuthGuard.prototype, 'canActivate').mockReturnValue('delegated');
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const spy = jest
+      .spyOn(JwtAuthGuard.prototype, 'canActivate')
+      .mockReturnValue('delegated');
+
     (guard as any).canActivate = spy as any;
     const result = guard.canActivate(contextMock);
     expect(result).toBe('delegated');
@@ -37,9 +39,9 @@ describe('JwtAuthGuard', () => {
   it('reads the public flag from handler and class metadata', () => {
     reflectorMock.getAllAndOverride.mockReturnValue(true);
     guard.canActivate(contextMock);
-    expect(reflectorMock.getAllAndOverride).toHaveBeenCalledWith(IS_PUBLIC_KEY, [
-      contextMock.getHandler(),
-      contextMock.getClass(),
-    ]);
+    expect(reflectorMock.getAllAndOverride).toHaveBeenCalledWith(
+      IS_PUBLIC_KEY,
+      [contextMock.getHandler(), contextMock.getClass()],
+    );
   });
 });

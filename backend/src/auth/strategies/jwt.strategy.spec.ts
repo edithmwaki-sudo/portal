@@ -3,7 +3,9 @@ import { ConfigService } from '@nestjs/config';
 import { JwtStrategy } from './jwt.strategy';
 import type { AccessTokenPayload } from './jwt.strategy';
 
-function makePayload(overrides: Partial<AccessTokenPayload> = {}): AccessTokenPayload {
+function makePayload(
+  overrides: Partial<AccessTokenPayload> = {},
+): AccessTokenPayload {
   return {
     sub: 1,
     username: 'admin',
@@ -23,7 +25,8 @@ describe('JwtStrategy', () => {
 
   beforeEach(() => {
     strategy = new JwtStrategy({
-      get: (key: string) => (key === 'JWT_ACCESS_SECRET' ? 'test-secret' : undefined),
+      get: (key: string) =>
+        key === 'JWT_ACCESS_SECRET' ? 'test-secret' : undefined,
     } as unknown as ConfigService);
   });
 

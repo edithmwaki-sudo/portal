@@ -44,9 +44,7 @@ export class CertificationLevelsService {
     const { page, limit, search, status, certificationAuthorityId } = params;
 
     const where: Prisma.CertificationLevelWhereInput = {
-      ...(certificationAuthorityId
-        ? { certificationAuthorityId }
-        : {}),
+      ...(certificationAuthorityId ? { certificationAuthorityId } : {}),
       ...(status === 'active'
         ? { isActive: true }
         : status === 'inactive'
@@ -69,7 +67,9 @@ export class CertificationLevelsService {
         authority: { name: params.sortDirection === 'asc' ? 'asc' : 'desc' },
       });
     } else if (params.sortBy === 'code' || params.sortBy === 'name') {
-      orderBy.push({ [params.sortBy]: params.sortDirection === 'asc' ? 'asc' : 'desc' });
+      orderBy.push({
+        [params.sortBy]: params.sortDirection === 'asc' ? 'asc' : 'desc',
+      });
     } else {
       orderBy.push({ createdAt: 'desc' });
     }
@@ -113,7 +113,9 @@ export class CertificationLevelsService {
       select: { id: true },
     });
     if (!authority) {
-      throw new BadRequestException('Selected certification authority does not exist');
+      throw new BadRequestException(
+        'Selected certification authority does not exist',
+      );
     }
 
     await this.assertUnique(dto.certificationAuthorityId, dto.code, dto.name);
@@ -146,14 +148,17 @@ export class CertificationLevelsService {
   async update(id: number, dto: UpdateCertificationLevelDto, actorId: number) {
     const existing = await this.findOneById(id);
 
-    const authorityId = dto.certificationAuthorityId ?? existing.certificationAuthorityId;
+    const authorityId =
+      dto.certificationAuthorityId ?? existing.certificationAuthorityId;
     if (dto.certificationAuthorityId) {
       const authority = await this.prisma.certificationAuthority.findUnique({
         where: { id: dto.certificationAuthorityId },
         select: { id: true },
       });
       if (!authority) {
-        throw new BadRequestException('Selected certification authority does not exist');
+        throw new BadRequestException(
+          'Selected certification authority does not exist',
+        );
       }
     }
 

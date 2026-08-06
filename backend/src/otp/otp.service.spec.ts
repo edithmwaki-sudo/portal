@@ -53,13 +53,19 @@ describe('OtpService', () => {
 
   describe('requestLoginChallenge', () => {
     it('creates a hashed OTP and returns a challenge token', async () => {
-      prismaMock.user.findUnique.mockResolvedValue({ id: 5, email: 'u@x.test' });
+      prismaMock.user.findUnique.mockResolvedValue({
+        id: 5,
+        email: 'u@x.test',
+      });
       prismaMock.otpCode.create.mockResolvedValue({ id: 11 });
       jwtMock.sign.mockReturnValue('challenge-token');
 
       const result = await service.requestLoginChallenge(5);
 
-      expect(result).toEqual({ requiresTwoFactor: true, loginToken: 'challenge-token' });
+      expect(result).toEqual({
+        requiresTwoFactor: true,
+        loginToken: 'challenge-token',
+      });
       expect(prismaMock.otpCode.create).toHaveBeenCalledWith({
         data: expect.objectContaining({
           userId: 5,
@@ -95,7 +101,11 @@ describe('OtpService', () => {
         expiresAt: new Date(Date.now() + 60_000),
         verifiedAt: null,
       });
-      jwtMock.verifyAsync.mockResolvedValue({ sub: 5, otpId: 11, type: 'otp-login' });
+      jwtMock.verifyAsync.mockResolvedValue({
+        sub: 5,
+        otpId: 11,
+        type: 'otp-login',
+      });
       prismaMock.user.findUnique.mockResolvedValue({ id: 5, username: 'u' });
     });
 
@@ -115,7 +125,11 @@ describe('OtpService', () => {
     });
 
     it('rejects a token of the wrong type', async () => {
-      jwtMock.verifyAsync.mockResolvedValue({ sub: 5, otpId: 11, type: 'access' });
+      jwtMock.verifyAsync.mockResolvedValue({
+        sub: 5,
+        otpId: 11,
+        type: 'access',
+      });
       await expect(
         service.verifyLoginOtp('challenge-token', '123456'),
       ).rejects.toThrow('Invalid login challenge');

@@ -111,21 +111,30 @@ export class CertificationGradesService {
   ) {
     await this.assertAuthorityExists(certificationAuthorityId);
     this.assertRange(dto.gradeStart, dto.gradeEnd);
-    await this.assertNoOverlap(certificationAuthorityId, dto.gradeStart, dto.gradeEnd);
-    await this.assertGradeUnique(certificationAuthorityId, dto.grade);
 
-    const row = await this.prisma.certificationAuthorityGrade.create({
-      data: {
+    const row = await this.prisma.$transaction(async (tx) => {
+      await tx.$executeRaw`SELECT pg_advisory_xact_lock(${certificationAuthorityId})`;
+      await this.assertNoOverlap(
+        tx,
         certificationAuthorityId,
-        grade: dto.grade.trim(),
-        gradeStart: dto.gradeStart,
-        gradeEnd: dto.gradeEnd,
-        remark: dto.remark ?? null,
-        isActive: dto.isActive ?? true,
-        createdBy: actorId,
-        updatedBy: actorId,
-      },
-      select: GRADE_SELECT,
+        dto.gradeStart,
+        dto.gradeEnd,
+      );
+      await this.assertGradeUnique(tx, certificationAuthorityId, dto.grade);
+
+      return tx.certificationAuthorityGrade.create({
+        data: {
+          certificationAuthorityId,
+          grade: dto.grade.trim(),
+          gradeStart: dto.gradeStart,
+          gradeEnd: dto.gradeEnd,
+          remark: dto.remark ?? null,
+          isActive: dto.isActive ?? true,
+          createdBy: actorId,
+          updatedBy: actorId,
+        },
+        select: GRADE_SELECT,
+      });
     });
 
     await this.audit.log(
@@ -150,27 +159,37 @@ export class CertificationGradesService {
     const gradeStart = dto.gradeStart ?? existing.gradeStart;
     const gradeEnd = dto.gradeEnd ?? existing.gradeEnd;
     this.assertRange(gradeStart, gradeEnd);
-    await this.assertNoOverlap(
-      certificationAuthorityId,
-      gradeStart,
-      gradeEnd,
-      id,
-    );
-    if (dto.grade) {
-      await this.assertGradeUnique(certificationAuthorityId, dto.grade, id);
-    }
 
-    const row = await this.prisma.certificationAuthorityGrade.update({
-      where: { id },
-      data: {
-        grade: dto.grade?.trim(),
-        gradeStart: dto.gradeStart,
-        gradeEnd: dto.gradeEnd,
-        remark: dto.remark,
-        isActive: dto.isActive,
-        updatedBy: actorId,
-      },
-      select: GRADE_SELECT,
+    const row = await this.prisma.$transaction(async (tx) => {
+      await tx.$executeRaw`SELECT pg_advisory_xact_lock(${certificationAuthorityId})`;
+      await this.assertNoOverlap(
+        tx,
+        certificationAuthorityId,
+        gradeStart,
+        gradeEnd,
+        id,
+      );
+      if (dto.grade) {
+        await this.assertGradeUnique(
+          tx,
+          certificationAuthorityId,
+          dto.grade,
+          id,
+        );
+      }
+
+      return tx.certificationAuthorityGrade.update({
+        where: { id },
+        data: {
+          grade: dto.grade?.trim(),
+          gradeStart: dto.gradeStart,
+          gradeEnd: dto.gradeEnd,
+          remark: dto.remark,
+          isActive: dto.isActive,
+          updatedBy: actorId,
+        },
+        select: GRADE_SELECT,
+      });
     });
 
     await this.audit.log(
@@ -236,11 +255,12 @@ export class CertificationGradesService {
   }
 
   private async assertGradeUnique(
+    client: Prisma.TransactionClient,
     certificationAuthorityId: number,
     grade: string,
     excludeId?: number,
   ): Promise<void> {
-    const existing = await this.prisma.certificationAuthorityGrade.findFirst({
+    const existing = await client.certificationAuthorityGrade.findFirst({
       where: {
         certificationAuthorityId,
         grade: { equals: grade.trim(), mode: 'insensitive' },
@@ -256,12 +276,13 @@ export class CertificationGradesService {
   }
 
   private async assertNoOverlap(
+    client: Prisma.TransactionClient,
     certificationAuthorityId: number,
     gradeStart: number,
     gradeEnd: number,
     excludeId?: number,
   ): Promise<void> {
-    const overlapping = await this.prisma.certificationAuthorityGrade.findFirst({
+    const overlapping = await client.certificationAuthorityGrade.findFirst({
       where: {
         certificationAuthorityId,
         gradeEnd: { gte: gradeStart },

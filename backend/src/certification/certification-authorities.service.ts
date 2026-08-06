@@ -21,11 +21,7 @@ const AUTHORITY_SELECT = {
 } satisfies Prisma.CertificationAuthoritySelect;
 
 export type AuthorityOrderField =
-  | 'code'
-  | 'name'
-  | 'levelsCount'
-  | 'createdAt'
-  | 'updatedAt';
+  'code' | 'name' | 'levelsCount' | 'createdAt' | 'updatedAt';
 
 @Injectable()
 export class CertificationAuthoritiesService {
@@ -120,26 +116,26 @@ export class CertificationAuthoritiesService {
   async findOneById(id: number) {
     const row = await this.prisma.certificationAuthority.findUnique({
       where: { id },
-      select: AUTHORITY_SELECT,
+      include: {
+        _count: { select: { levels: true } },
+        levels: {
+          select: {
+            id: true,
+            code: true,
+            name: true,
+            entryGrade: true,
+            description: true,
+            isActive: true,
+          },
+          orderBy: [{ code: 'asc' }, { name: 'asc' }],
+        },
+      },
     });
     if (!row) {
       throw new NotFoundException(
         `Certification authority with id '${id}' not found`,
       );
     }
-
-    const levels = await this.prisma.certificationLevel.findMany({
-      where: { certificationAuthorityId: id },
-      orderBy: [{ code: 'asc' }, { name: 'asc' }],
-      select: {
-        id: true,
-        code: true,
-        name: true,
-        entryGrade: true,
-        description: true,
-        isActive: true,
-      },
-    });
 
     return {
       id: row.id,
@@ -148,7 +144,7 @@ export class CertificationAuthoritiesService {
       description: row.description,
       isActive: row.isActive,
       levelsCount: row._count.levels,
-      levels,
+      levels: row.levels,
       createdAt: row.createdAt,
       updatedAt: row.updatedAt,
     };
@@ -180,8 +176,20 @@ export class CertificationAuthoritiesService {
     return this.toView(row);
   }
 
-  async update(id: number, dto: UpdateCertificationAuthorityDto, actorId: number) {
-    const existing = await this.findOneById(id);
+  async update(
+    id: number,
+    dto: UpdateCertificationAuthorityDto,
+    actorId: number,
+  ) {
+    const existing = await this.prisma.certificationAuthority.findUnique({
+      where: { id },
+      select: { id: true, code: true, name: true },
+    });
+    if (!existing) {
+      throw new NotFoundException(
+        `Certification authority with id '${id}' not found`,
+      );
+    }
     await this.assertUnique(dto.code, dto.name, id);
 
     const row = await this.prisma.certificationAuthority.update({
@@ -211,8 +219,16 @@ export class CertificationAuthoritiesService {
   }
 
   async remove(id: number, actorId: number): Promise<void> {
-    const existing = await this.findOneById(id);
-    if (existing.levelsCount > 0) {
+    const existing = await this.prisma.certificationAuthority.findUnique({
+      where: { id },
+      select: { id: true, _count: { select: { levels: true } } },
+    });
+    if (!existing) {
+      throw new NotFoundException(
+        `Certification authority with id '${id}' not found`,
+      );
+    }
+    if (existing._count.levels > 0) {
       throw new ConflictException(
         'Remove certification levels from this authority before deleting it.',
       );

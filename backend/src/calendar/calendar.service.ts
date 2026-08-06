@@ -68,7 +68,9 @@ export class CalendarService {
       select: { id: true, name: true, startDate: true, endDate: true },
     });
     if (!session) {
-      throw new NotFoundException(`Academic session with id '${sessionId}' not found`);
+      throw new NotFoundException(
+        `Academic session with id '${sessionId}' not found`,
+      );
     }
 
     const [events, weekends] = await Promise.all([
@@ -98,7 +100,9 @@ export class CalendarService {
       select: { id: true, name: true, startDate: true, endDate: true },
     });
     if (!year) {
-      throw new NotFoundException(`Academic year with id '${yearId}' not found`);
+      throw new NotFoundException(
+        `Academic year with id '${yearId}' not found`,
+      );
     }
 
     const sessions = await this.prisma.academicSession.findMany({
@@ -117,14 +121,23 @@ export class CalendarService {
     ]);
 
     return {
-      year: { id: year.id, name: year.name, startDate: year.startDate, endDate: year.endDate },
+      year: {
+        id: year.id,
+        name: year.name,
+        startDate: year.startDate,
+        endDate: year.endDate,
+      },
       sessions,
       weekends,
       events: events.map(toView),
     };
   }
 
-  async createEvent(sessionId: number, dto: CreateCalendarEventDto, actorId: number) {
+  async createEvent(
+    sessionId: number,
+    dto: CreateCalendarEventDto,
+    actorId: number,
+  ) {
     const session = await this.assertSession(sessionId);
     await this.assertEventType(dto.eventTypeId);
     this.assertDateRange(dto.startDate, dto.endDate);
@@ -146,9 +159,19 @@ export class CalendarService {
       select: EVENT_SELECT,
     });
 
-    await this.audit.log('calendar.event_create', actorId, 'CalendarEvent', row.id, {
-      newValues: { title: row.title, startDate: row.startDate, endDate: row.endDate },
-    });
+    await this.audit.log(
+      'calendar.event_create',
+      actorId,
+      'CalendarEvent',
+      row.id,
+      {
+        newValues: {
+          title: row.title,
+          startDate: row.startDate,
+          endDate: row.endDate,
+        },
+      },
+    );
 
     return toView(row);
   }
@@ -162,7 +185,9 @@ export class CalendarService {
     const event = await this.assertEventInSession(sessionId, eventId);
 
     if (event.isLocked) {
-      throw new ForbiddenException('This system event is locked and cannot be edited');
+      throw new ForbiddenException(
+        'This system event is locked and cannot be edited',
+      );
     }
     if (dto.eventTypeId !== undefined) {
       await this.assertEventType(dto.eventTypeId);
@@ -185,33 +210,56 @@ export class CalendarService {
       select: EVENT_SELECT,
     });
 
-    await this.audit.log('calendar.event_update', actorId, 'CalendarEvent', eventId, {
-      oldValues: { title: event.title },
-      newValues: { title: row.title },
-    });
+    await this.audit.log(
+      'calendar.event_update',
+      actorId,
+      'CalendarEvent',
+      eventId,
+      {
+        oldValues: { title: event.title },
+        newValues: { title: row.title },
+      },
+    );
 
     return toView(row);
   }
 
-  async deleteEvent(sessionId: number, eventId: number, actorId: number): Promise<void> {
+  async deleteEvent(
+    sessionId: number,
+    eventId: number,
+    actorId: number,
+  ): Promise<void> {
     const event = await this.assertEventInSession(sessionId, eventId);
     if (event.source !== 'manual') {
       throw new ForbiddenException('System events cannot be deleted');
     }
     await this.prisma.calendarEvent.delete({ where: { id: eventId } });
-    await this.audit.log('calendar.event_delete', actorId, 'CalendarEvent', eventId, {
-      oldValues: { title: event.title },
-    });
+    await this.audit.log(
+      'calendar.event_delete',
+      actorId,
+      'CalendarEvent',
+      eventId,
+      {
+        oldValues: { title: event.title },
+      },
+    );
   }
 
   /** Re-sync Kenyan public holidays from the Nager.Date API (graceful on failure). */
   async syncHolidays(sessionId: number, actorId: number) {
     const session = await this.prisma.academicSession.findUnique({
       where: { id: sessionId },
-      select: { id: true, academicYearId: true, startDate: true, endDate: true },
+      select: {
+        id: true,
+        academicYearId: true,
+        startDate: true,
+        endDate: true,
+      },
     });
     if (!session) {
-      throw new NotFoundException(`Academic session with id '${sessionId}' not found`);
+      throw new NotFoundException(
+        `Academic session with id '${sessionId}' not found`,
+      );
     }
     if (!session.startDate || !session.endDate) {
       throw new BadRequestException(
@@ -227,6 +275,21 @@ export class CalendarService {
     const years = this.yearsBetween(session.startDate, session.endDate);
     let synced = 0;
 
+    const existingDates = new Set(
+      (
+        await this.prisma.calendarEvent.findMany({
+          where: {
+            academicSessionId: sessionId,
+            source: 'system_api',
+            eventTypeId: holidayType?.id,
+          },
+          select: { startDate: true },
+        })
+      ).map((row) => row.startDate.toISOString()),
+    );
+
+    const toCreate: Prisma.CalendarEventCreateManyInput[] = [];
+
     try {
       for (const year of years) {
         const response = await fetch(
@@ -240,39 +303,35 @@ export class CalendarService {
         for (const holiday of holidays) {
           const start = new Date(holiday.date);
           if (start < session.startDate || start > session.endDate) continue;
-          const existing = await this.prisma.calendarEvent.findFirst({
-            where: {
-              academicSessionId: sessionId,
-              source: 'system_api',
-              eventTypeId: holidayType?.id,
-              startDate: start,
-            },
-            select: { id: true },
-          });
-          if (existing) continue;
+          if (existingDates.has(start.toISOString())) continue;
           if (!holidayType) {
             throw new BadRequestException(
               "The 'holiday' event type is not configured. Run the seed script first.",
             );
           }
-          await this.prisma.calendarEvent.create({
-            data: {
-              academicYearId: session.academicYearId,
-              academicSessionId: sessionId,
-              eventTypeId: holidayType.id,
-              title: holiday.name ?? 'Public Holiday',
-              startDate: start,
-              endDate: start,
-              source: 'system_api',
-              createdBy: actorId,
-              updatedBy: actorId,
-            },
+          toCreate.push({
+            academicYearId: session.academicYearId,
+            academicSessionId: sessionId,
+            eventTypeId: holidayType.id,
+            title: holiday.name ?? 'Public Holiday',
+            startDate: start,
+            endDate: start,
+            source: 'system_api',
+            createdBy: actorId,
+            updatedBy: actorId,
           });
           synced += 1;
         }
       }
     } catch {
       // Nager.Date may be unreachable; report gracefully rather than failing the request.
+    }
+
+    if (toCreate.length > 0) {
+      await this.prisma.calendarEvent.createMany({
+        data: toCreate,
+        skipDuplicates: true,
+      });
     }
 
     return { synced };
@@ -288,7 +347,10 @@ export class CalendarService {
       },
     });
     const result = await this.syncHolidays(sessionId, actorId);
-    return { ...result, note: 'System events regenerated. Manual events preserved.' };
+    return {
+      ...result,
+      note: 'System events regenerated. Manual events preserved.',
+    };
   }
 
   /* ------------------------- Guards & helpers ------------------------- */
@@ -299,7 +361,9 @@ export class CalendarService {
       select: { id: true, academicYearId: true },
     });
     if (!session) {
-      throw new NotFoundException(`Academic session with id '${sessionId}' not found`);
+      throw new NotFoundException(
+        `Academic session with id '${sessionId}' not found`,
+      );
     }
     return session;
   }
@@ -317,10 +381,19 @@ export class CalendarService {
   private async assertEventInSession(sessionId: number, eventId: number) {
     const event = await this.prisma.calendarEvent.findFirst({
       where: { id: eventId, academicSessionId: sessionId },
-      select: { id: true, title: true, startDate: true, endDate: true, source: true, isLocked: true },
+      select: {
+        id: true,
+        title: true,
+        startDate: true,
+        endDate: true,
+        source: true,
+        isLocked: true,
+      },
     });
     if (!event) {
-      throw new NotFoundException(`Calendar event with id '${eventId}' not found`);
+      throw new NotFoundException(
+        `Calendar event with id '${eventId}' not found`,
+      );
     }
     return event;
   }

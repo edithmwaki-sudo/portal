@@ -8,7 +8,8 @@ import {
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import { randomUUID } from 'crypto';
-import { User } from '@prisma/client';import type { Request } from 'express';
+import { User } from '@prisma/client';
+import type { Request } from 'express';
 
 import { PrismaService } from '../prisma/prisma.service';
 import { UsersService } from '../users/users.service';
@@ -427,9 +428,9 @@ export class AuthService {
 
   private async verifyRefreshToken(raw: string) {
     try {
-      const payload = (await this.jwtService.verifyAsync(raw, {
+      const payload = await this.jwtService.verifyAsync(raw, {
         secret: this.config.get<string>('JWT_REFRESH_SECRET'),
-      })) as { sub: number; sessionUuid: string; type: string };
+      });
       if (payload.type !== 'refresh' || !payload.sessionUuid) {
         throw new Error('not a refresh token');
       }

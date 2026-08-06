@@ -65,11 +65,9 @@ export class CertificationAuthoritiesController {
     });
 
     return {
-      items: plainToInstance(
-        CertificationAuthorityResponseDto,
-        result.items,
-        { excludeExtraneousValues: true },
-      ),
+      items: plainToInstance(CertificationAuthorityResponseDto, result.items, {
+        excludeExtraneousValues: true,
+      }),
       total: result.total,
       page: parsedPage,
       limit: parsedLimit,
@@ -111,10 +109,7 @@ export class CertificationAuthoritiesController {
     @Body() dto: CreateCertificationAuthorityDto,
     @CurrentUser() actor: AuthenticatedUser,
   ) {
-    const authority = await this.authoritiesService.create(
-      dto,
-      actor.userId,
-    );
+    const authority = await this.authoritiesService.create(dto, actor.userId);
     return plainToInstance(CertificationAuthorityResponseDto, authority, {
       excludeExtraneousValues: true,
     });

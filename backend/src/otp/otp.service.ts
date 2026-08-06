@@ -3,8 +3,15 @@ import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import type { User } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
-import { generateOtp, hashPassword, verifyPassword } from '../common/utils/crypto.util';
-import { ConsoleOtpSender, type OtpSender } from './providers/otp-sender.interface';
+import {
+  generateOtp,
+  hashPassword,
+  verifyPassword,
+} from '../common/utils/crypto.util';
+import {
+  ConsoleOtpSender,
+  type OtpSender,
+} from './providers/otp-sender.interface';
 
 export const OTP_LOGIN_PURPOSE = 'login_2fa';
 
@@ -79,9 +86,9 @@ export class OtpService {
   async verifyLoginOtp(loginToken: string, code: string): Promise<User> {
     let payload: OtpLoginPayload;
     try {
-      payload = (await this.jwt.verifyAsync(loginToken, {
+      payload = await this.jwt.verifyAsync(loginToken, {
         secret: this.otpSecret,
-      })) as OtpLoginPayload;
+      });
     } catch {
       throw new UnauthorizedException('Invalid or expired login challenge');
     }
@@ -90,33 +97,48 @@ export class OtpService {
       throw new UnauthorizedException('Invalid login challenge');
     }
 
-    const otp = await this.prisma.otpCode.findUnique({ where: { id: payload.otpId } });
+    const otp = await this.prisma.otpCode.findUnique({
+      where: { id: payload.otpId },
+    });
     if (!otp || otp.purpose !== OTP_LOGIN_PURPOSE || otp.verifiedAt) {
       throw new UnauthorizedException('Invalid or already used code');
     }
     if (otp.expiresAt < new Date()) {
       throw new UnauthorizedException('Code has expired');
     }
-    if (otp.attempts >= otp.maxAttempts) {
-      throw new UnauthorizedException('Too many attempts — request a new code');
-    }
 
-    await this.prisma.otpCode.update({
-      where: { id: otp.id },
-      data: { attempts: { increment: 1 } },
+    await this.prisma.$transaction(async (tx) => {
+      const claim = await tx.otpCode.updateMany({
+        where: {
+          id: otp.id,
+          attempts: { lt: otp.maxAttempts },
+          verifiedAt: null,
+        },
+        data: { attempts: { increment: 1 } },
+      });
+      if (claim.count === 0) {
+        throw new UnauthorizedException(
+          'Too many attempts — request a new code',
+        );
+      }
+
+      const ok = await verifyPassword(String(code), otp.codeHash);
+      if (!ok) {
+        throw new UnauthorizedException('Incorrect code');
+      }
+
+      const marked = await tx.otpCode.updateMany({
+        where: { id: otp.id, verifiedAt: null },
+        data: { verifiedAt: new Date() },
+      });
+      if (marked.count === 0) {
+        throw new UnauthorizedException('Invalid or already used code');
+      }
     });
 
-    const ok = await verifyPassword(String(code), otp.codeHash);
-    if (!ok) {
-      throw new UnauthorizedException('Incorrect code');
-    }
-
-    await this.prisma.otpCode.update({
-      where: { id: otp.id },
-      data: { verifiedAt: new Date() },
+    const user = await this.prisma.user.findUnique({
+      where: { id: otp.userId },
     });
-
-    const user = await this.prisma.user.findUnique({ where: { id: otp.userId } });
     if (!user) {
       throw new UnauthorizedException('User no longer exists');
     }
@@ -129,6 +151,8 @@ export class OtpService {
   }
 
   private refreshSecret(): string {
-    return this.config.get<string>('JWT_REFRESH_SECRET') ?? 'dev-refresh-secret';
+    return (
+      this.config.get<string>('JWT_REFRESH_SECRET') ?? 'dev-refresh-secret'
+    );
   }
 }

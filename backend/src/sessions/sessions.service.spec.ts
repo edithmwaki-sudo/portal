@@ -46,11 +46,17 @@ describe('SessionsService', () => {
 
   describe('listActiveForUser', () => {
     it('returns only active, unexpired sessions ordered by last use', async () => {
-      prismaMock.session.findMany.mockResolvedValue([{ id: 1, sessionUuid: 's1' }]);
+      prismaMock.session.findMany.mockResolvedValue([
+        { id: 1, sessionUuid: 's1' },
+      ]);
       const result = await service.listActiveForUser(1);
       expect(result).toHaveLength(1);
       expect(prismaMock.session.findMany).toHaveBeenCalledWith({
-        where: { userId: 1, revokedAt: null, expiresAt: { gt: expect.any(Date) } },
+        where: {
+          userId: 1,
+          revokedAt: null,
+          expiresAt: { gt: expect.any(Date) },
+        },
         orderBy: { lastUsedAt: 'desc' },
       });
     });
@@ -85,7 +91,7 @@ describe('SessionsService', () => {
       );
     });
 
-    it('forbids revoking another user\'s session', async () => {
+    it("forbids revoking another user's session", async () => {
       prismaMock.session.findUnique.mockResolvedValue({
         id: 9,
         userId: 999,

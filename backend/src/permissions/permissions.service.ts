@@ -1,4 +1,8 @@
-import { Injectable, NotFoundException, OnApplicationBootstrap } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  OnApplicationBootstrap,
+} from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { AuditService } from '../audit/audit.service';
 import { syncPermissions } from '../database/seed/sync-permissions';
@@ -18,13 +22,9 @@ export class PermissionsService implements OnApplicationBootstrap {
     await syncPermissions(this.prisma);
     const result = await this.findAll(1, 100);
     if (actorId) {
-      await this.audit.log(
-        'permission.sync',
-        actorId,
-        'Permission',
-        null,
-        { newValues: { total: result.total } },
-      );
+      await this.audit.log('permission.sync', actorId, 'Permission', null, {
+        newValues: { total: result.total },
+      });
     }
     return result;
   }

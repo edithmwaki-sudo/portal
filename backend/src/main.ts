@@ -17,6 +17,16 @@ function parseOriginList(value: string | undefined): string[] {
 }
 
 async function bootstrap() {
+  // Fail fast: no silent fallbacks for signing keys. A missing secret in prod
+  // must stop startup rather than issue unsigned-token-signed sessions.
+  const requiredSecrets = ['JWT_ACCESS_SECRET', 'JWT_REFRESH_SECRET'];
+  const missingSecrets = requiredSecrets.filter((key) => !process.env[key]);
+  if (missingSecrets.length > 0) {
+    throw new Error(
+      `Missing required environment variable(s): ${missingSecrets.join(', ')}`,
+    );
+  }
+
   const app = await NestFactory.create(AppModule, { bufferLogs: true });
   app.useLogger(app.get(Logger));
   app.enableShutdownHooks();
@@ -47,7 +57,12 @@ async function bootstrap() {
     },
     credentials: true,
     methods: ['GET', 'POST', 'PATCH', 'PUT', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept'],
+    allowedHeaders: [
+      'Content-Type',
+      'Authorization',
+      'X-Requested-With',
+      'Accept',
+    ],
     maxAge: 86400,
   });
 
@@ -66,7 +81,9 @@ async function bootstrap() {
   // API documentation (available at /api/docs).
   const swaggerConfig = new DocumentBuilder()
     .setTitle('Apex ERP API')
-    .setDescription('Authentication & authorization API for the School Management System')
+    .setDescription(
+      'Authentication & authorization API for the School Management System',
+    )
     .setVersion('1.0')
     .addBearerAuth(
       { type: 'http', scheme: 'bearer', bearerFormat: 'JWT' },

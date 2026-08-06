@@ -30,7 +30,10 @@ export class AttendanceController {
   constructor(private readonly attendanceService: AttendanceService) {}
 
   @Get('my-units')
-  @RequirePermission(Permissions.canViewAttendance, Permissions.canMarkAttendance)
+  @RequirePermission(
+    Permissions.canViewAttendance,
+    Permissions.canMarkAttendance,
+  )
   @ApiOperation({ summary: 'Units assigned to the current trainer' })
   @ApiOkResponse({ description: 'List of assigned units with their sessions' })
   async myUnits(@CurrentUser() actor: AuthenticatedUser) {
@@ -38,7 +41,10 @@ export class AttendanceController {
   }
 
   @Get('units/:unitId/roster')
-  @RequirePermission(Permissions.canViewAttendance, Permissions.canMarkAttendance)
+  @RequirePermission(
+    Permissions.canViewAttendance,
+    Permissions.canMarkAttendance,
+  )
   @ApiOperation({ summary: 'Student roster for a unit (by course)' })
   @ApiOkResponse({ description: 'List of students on the unit course' })
   async roster(
@@ -50,13 +56,18 @@ export class AttendanceController {
 
   @Get('units/:unitId/records')
   @RequirePermission(Permissions.canViewAttendance)
-  @ApiOperation({ summary: 'Attendance records for a unit (optional date filter)' })
+  @ApiOperation({
+    summary: 'Attendance records for a unit (optional date filter)',
+  })
   @ApiOkResponse({ description: 'List of attendance entries' })
   async records(
     @Param('unitId', ParseIntPipe) unitId: number,
     @Query('sessionDate') sessionDate?: string,
   ) {
-    const items = await this.attendanceService.listForSession(unitId, sessionDate);
+    const items = await this.attendanceService.listForSession(
+      unitId,
+      sessionDate,
+    );
     return plainToInstance(AttendanceEntryDto, items, {
       excludeExtraneousValues: true,
     });

@@ -21,7 +21,10 @@ import {
 import { CalendarService } from './calendar.service';
 import { CreateCalendarEventDto } from './dto/create-calendar-event.dto';
 import { UpdateCalendarEventDto } from './dto/update-calendar-event.dto';
-import { CalendarEventDto, CalendarEventTypeDto } from './dto/calendar-event-response.dto';
+import {
+  CalendarEventDto,
+  CalendarEventTypeDto,
+} from './dto/calendar-event-response.dto';
 import { RequirePermission } from '../permissions/decorators/require-permission.decorator';
 import { Permissions } from '../permissions/permissions';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
@@ -45,8 +48,12 @@ export class CalendarController {
 
   @Get('academic-sessions/:sessionId/calendar')
   @RequirePermission(Permissions.canViewCalendar)
-  @ApiOperation({ summary: 'Get a session calendar (events + computed weekends)' })
-  async getSessionCalendar(@Param('sessionId', ParseIntPipe) sessionId: number) {
+  @ApiOperation({
+    summary: 'Get a session calendar (events + computed weekends)',
+  })
+  async getSessionCalendar(
+    @Param('sessionId', ParseIntPipe) sessionId: number,
+  ) {
     const result = await this.calendarService.getSessionCalendar(sessionId);
     result.events = plainToInstance(CalendarEventDto, result.events, {
       excludeExtraneousValues: true,
@@ -67,7 +74,9 @@ export class CalendarController {
 
   @Post('academic-sessions/:sessionId/calendar/generate')
   @RequirePermission(Permissions.canGenerateCalendar)
-  @ApiOperation({ summary: 'Regenerate system events (holidays) for a session' })
+  @ApiOperation({
+    summary: 'Regenerate system events (holidays) for a session',
+  })
   async generate(
     @Param('sessionId', ParseIntPipe) sessionId: number,
     @CurrentUser() actor: AuthenticatedUser,
@@ -94,8 +103,14 @@ export class CalendarController {
     @Body() dto: CreateCalendarEventDto,
     @CurrentUser() actor: AuthenticatedUser,
   ) {
-    const event = await this.calendarService.createEvent(sessionId, dto, actor.userId);
-    return plainToInstance(CalendarEventDto, event, { excludeExtraneousValues: true });
+    const event = await this.calendarService.createEvent(
+      sessionId,
+      dto,
+      actor.userId,
+    );
+    return plainToInstance(CalendarEventDto, event, {
+      excludeExtraneousValues: true,
+    });
   }
 
   @Put('academic-sessions/:sessionId/calendar/events/:eventId')
@@ -108,8 +123,15 @@ export class CalendarController {
     @Body() dto: UpdateCalendarEventDto,
     @CurrentUser() actor: AuthenticatedUser,
   ) {
-    const event = await this.calendarService.updateEvent(sessionId, eventId, dto, actor.userId);
-    return plainToInstance(CalendarEventDto, event, { excludeExtraneousValues: true });
+    const event = await this.calendarService.updateEvent(
+      sessionId,
+      eventId,
+      dto,
+      actor.userId,
+    );
+    return plainToInstance(CalendarEventDto, event, {
+      excludeExtraneousValues: true,
+    });
   }
 
   @Delete('academic-sessions/:sessionId/calendar/events/:eventId')

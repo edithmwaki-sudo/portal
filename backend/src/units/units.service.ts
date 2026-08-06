@@ -114,7 +114,9 @@ export class UnitsService {
 
     const orderBy: Prisma.UnitOrderByWithRelationInput[] = [];
     if (params.sortBy === 'code' || params.sortBy === 'name') {
-      orderBy.push({ [params.sortBy]: params.sortDirection === 'asc' ? 'asc' : 'desc' });
+      orderBy.push({
+        [params.sortBy]: params.sortDirection === 'asc' ? 'asc' : 'desc',
+      });
     } else {
       orderBy.push({ createdAt: 'desc' });
     }
@@ -152,7 +154,11 @@ export class UnitsService {
 
   async create(dto: CreateUnitDto, actorId: number) {
     await this.assertCourseAndCurriculum(dto.courseId, dto.curriculumId);
-    await this.assertUniqueCode(dto.courseId, dto.curriculumId, dto.code.trim());
+    await this.assertUniqueCode(
+      dto.courseId,
+      dto.curriculumId,
+      dto.code.trim(),
+    );
 
     const row = await this.prisma.unit.create({
       data: {
@@ -190,10 +196,17 @@ export class UnitsService {
     const curriculumId = dto.curriculumId ?? existing.curriculumId;
     const code = dto.code?.trim() ?? existing.code;
 
-    if (courseId !== existing.courseId || curriculumId !== existing.curriculumId) {
+    if (
+      courseId !== existing.courseId ||
+      curriculumId !== existing.curriculumId
+    ) {
       await this.assertCourseAndCurriculum(courseId, curriculumId);
     }
-    if (code !== existing.code || courseId !== existing.courseId || curriculumId !== existing.curriculumId) {
+    if (
+      code !== existing.code ||
+      courseId !== existing.courseId ||
+      curriculumId !== existing.curriculumId
+    ) {
       await this.assertUniqueCode(courseId, curriculumId, code, id);
     }
 

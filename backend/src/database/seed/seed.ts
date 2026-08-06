@@ -1,4 +1,3 @@
-/* eslint-disable no-console */
 /**
  * Idempotent seed script.
  *
@@ -25,11 +24,21 @@ const ADMIN_PASSWORD = process.env.SEED_ADMIN_PASSWORD ?? 'admin123';
 const BCRYPT_ROUNDS = parseInt(process.env.BCRYPT_ROUNDS ?? '12', 10);
 
 async function main() {
+  // Never allow the well-known default password in a production database.
+  // Refuse to run unless SEED_ADMIN_PASSWORD is explicitly set.
+  if (process.env.NODE_ENV === 'production' && ADMIN_PASSWORD === 'admin123') {
+    throw new Error(
+      'Refusing to seed production with the default admin password. Set SEED_ADMIN_PASSWORD.',
+    );
+  }
+
   const prisma = new PrismaClient();
   try {
     console.log('Seeding permission catalog...');
     await syncPermissions(prisma);
-    const permissions = await prisma.permission.findMany({ select: { id: true } });
+    const permissions = await prisma.permission.findMany({
+      select: { id: true },
+    });
     console.log(`  -> ${permissions.length} permissions ready`);
 
     console.log(`Ensuring '${ADMIN_ROLE_NAME}' role...`);
@@ -49,8 +58,13 @@ async function main() {
       .filter((pp) => !have.has(pp.id))
       .map((pp) => ({ roleId: adminRole.id, permissionId: pp.id }));
     if (toAdd.length > 0) {
-      await prisma.rolePermission.createMany({ data: toAdd, skipDuplicates: true });
-      console.log(`  -> granted ${toAdd.length} missing permission(s) to 'administrator'`);
+      await prisma.rolePermission.createMany({
+        data: toAdd,
+        skipDuplicates: true,
+      });
+      console.log(
+        `  -> granted ${toAdd.length} missing permission(s) to 'administrator'`,
+      );
     } else {
       console.log('  -> administrator already holds every permission');
     }
@@ -92,8 +106,13 @@ async function main() {
         .filter((p) => !have.has(p.id))
         .map((p) => ({ roleId: hodRole.id, permissionId: p.id }));
       if (toAdd.length > 0) {
-        await prisma.rolePermission.createMany({ data: toAdd, skipDuplicates: true });
-        console.log(`  -> granted ${toAdd.length} calendar & classes permission(s) to 'hod'`);
+        await prisma.rolePermission.createMany({
+          data: toAdd,
+          skipDuplicates: true,
+        });
+        console.log(
+          `  -> granted ${toAdd.length} calendar & classes permission(s) to 'hod'`,
+        );
       }
     }
 
@@ -145,7 +164,10 @@ async function main() {
     console.log('  user     :', user.username);
     console.log('  email    :', user.email);
     console.log('  role     :', ADMIN_ROLE_NAME, '(all permissions)');
-    console.log('  password :', ADMIN_PASSWORD.length ? 'set (from SEED_ADMIN_PASSWORD or default)' : '');
+    console.log(
+      '  password :',
+      ADMIN_PASSWORD.length ? 'set (from SEED_ADMIN_PASSWORD or default)' : '',
+    );
   } catch (err) {
     console.error('Seed failed:', err);
     process.exitCode = 1;

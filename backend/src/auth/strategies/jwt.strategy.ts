@@ -19,20 +19,28 @@ export interface AccessTokenPayload {
 
 function cookieExtractor(req: Request): string | null {
   const token =
-    req?.cookies?.['access_token'] ?? req?.headers?.['authorization']?.split(' ')[1] ?? null;
+    req?.cookies?.['access_token'] ??
+    req?.headers?.['authorization']?.split(' ')[1] ??
+    null;
   return token || null;
 }
 
 @Injectable()
 export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
   constructor(config: ConfigService) {
+    const secret = config.get<string>('JWT_ACCESS_SECRET');
+    if (!secret) {
+      throw new Error(
+        'JWT_ACCESS_SECRET is not configured. Set it in the environment before starting the server.',
+      );
+    }
     super({
       jwtFromRequest: ExtractJwt.fromExtractors([
         ExtractJwt.fromAuthHeaderAsBearerToken(),
         cookieExtractor,
       ]),
       ignoreExpiration: false,
-      secretOrKey: config.get<string>('JWT_ACCESS_SECRET') ?? 'dev-access-secret',
+      secretOrKey: secret,
     });
   }
 

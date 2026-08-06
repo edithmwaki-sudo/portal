@@ -107,9 +107,19 @@ export class CoursesController {
 
   @Get('meta/authorities')
   @RequirePermission(...COURSE_FORM_PERMISSIONS)
-  @ApiOperation({ summary: 'Active certification authority options for the course form' })
-  async metaAuthorities(@Query('search') search?: string, @Query('limit') limit?: string) {
-    return { options: await this.coursesService.listAuthorityOptions(search, limit ? parseInt(limit, 10) : undefined) };
+  @ApiOperation({
+    summary: 'Active certification authority options for the course form',
+  })
+  async metaAuthorities(
+    @Query('search') search?: string,
+    @Query('limit') limit?: string,
+  ) {
+    return {
+      options: await this.coursesService.listAuthorityOptions(
+        search,
+        limit ? parseInt(limit, 10) : undefined,
+      ),
+    };
   }
 
   @Get('meta/levels')
@@ -124,12 +134,20 @@ export class CoursesController {
     if (Number.isNaN(parsed)) {
       return { options: [] };
     }
-    return { options: await this.coursesService.listLevelOptions(parsed, search, limit ? parseInt(limit, 10) : undefined) };
+    return {
+      options: await this.coursesService.listLevelOptions(
+        parsed,
+        search,
+        limit ? parseInt(limit, 10) : undefined,
+      ),
+    };
   }
 
   @Get('meta/curricula')
   @RequirePermission(...COURSE_FORM_PERMISSIONS)
-  @ApiOperation({ summary: 'Active curriculum options for an authority (cascade)' })
+  @ApiOperation({
+    summary: 'Active curriculum options for an authority (cascade)',
+  })
   async metaCurricula(
     @Query('authorityId') authorityId: string,
     @Query('search') search?: string,
@@ -139,21 +157,37 @@ export class CoursesController {
     if (Number.isNaN(parsed)) {
       return { options: [] };
     }
-    return { options: await this.coursesService.listCurriculumOptions(parsed, search, limit ? parseInt(limit, 10) : undefined) };
+    return {
+      options: await this.coursesService.listCurriculumOptions(
+        parsed,
+        search,
+        limit ? parseInt(limit, 10) : undefined,
+      ),
+    };
   }
 
   @Get('meta/departments')
   @RequirePermission(...COURSE_FORM_PERMISSIONS)
   @ApiOperation({ summary: 'Active department options for the course form' })
-  async metaDepartments(@Query('search') search?: string, @Query('limit') limit?: string) {
-    return { options: await this.coursesService.listDepartmentOptions(search, limit ? parseInt(limit, 10) : undefined) };
+  async metaDepartments(
+    @Query('search') search?: string,
+    @Query('limit') limit?: string,
+  ) {
+    return {
+      options: await this.coursesService.listDepartmentOptions(
+        search,
+        limit ? parseInt(limit, 10) : undefined,
+      ),
+    };
   }
 
   @Get('meta/my-department')
   @RequirePermission(Permissions.canHodViewCourse)
   @ApiOperation({ summary: "The HOD's own department (id + name) for context" })
   async metaMyDepartment(@CurrentUser() actor: AuthenticatedUser) {
-    return { department: await this.coursesService.getMyDepartment(actor.userId) };
+    return {
+      department: await this.coursesService.getMyDepartment(actor.userId),
+    };
   }
 
   @Get(':id')
@@ -185,8 +219,9 @@ export class CoursesController {
     if (actor.permissions.includes(Permissions.canViewCourse)) {
       return;
     }
-    const hodDepartmentId =
-      await this.coursesService.resolveHodDepartmentId(actor.userId);
+    const hodDepartmentId = await this.coursesService.resolveHodDepartmentId(
+      actor.userId,
+    );
     if (course.departmentId !== hodDepartmentId) {
       throw new NotFoundException(`Course with id '${id}' not found`);
     }
@@ -194,7 +229,9 @@ export class CoursesController {
 
   @Post()
   @RequirePermission(Permissions.canAddCourse)
-  @ApiOperation({ summary: 'Create a course (optionally linking its first curriculum)' })
+  @ApiOperation({
+    summary: 'Create a course (optionally linking its first curriculum)',
+  })
   @ApiCreatedResponse({ type: CourseResponseDto })
   async create(
     @Body() dto: CreateCourseDto,

@@ -160,9 +160,19 @@ export class AcademicSessionsService {
       return created;
     });
 
-    await this.audit.log('academic_session.create', actorId, 'AcademicSession', row.id, {
-      newValues: { code: row.code, name: row.name, academicYearId: row.academicYearId },
-    });
+    await this.audit.log(
+      'academic_session.create',
+      actorId,
+      'AcademicSession',
+      row.id,
+      {
+        newValues: {
+          code: row.code,
+          name: row.name,
+          academicYearId: row.academicYearId,
+        },
+      },
+    );
 
     return this.findOneById(row.id);
   }
@@ -205,10 +215,16 @@ export class AcademicSessionsService {
       return updated;
     });
 
-    await this.audit.log('academic_session.update', actorId, 'AcademicSession', id, {
-      oldValues: { code: existing.code, name: existing.name },
-      newValues: { code: row.code, name: row.name },
-    });
+    await this.audit.log(
+      'academic_session.update',
+      actorId,
+      'AcademicSession',
+      id,
+      {
+        oldValues: { code: existing.code, name: existing.name },
+        newValues: { code: row.code, name: row.name },
+      },
+    );
 
     return this.findOneById(id);
   }
@@ -216,7 +232,13 @@ export class AcademicSessionsService {
   async remove(id: number, actorId: number): Promise<void> {
     await this.findOneById(id);
     await this.prisma.academicSession.delete({ where: { id } });
-    await this.audit.log('academic_session.delete', actorId, 'AcademicSession', id, {});
+    await this.audit.log(
+      'academic_session.delete',
+      actorId,
+      'AcademicSession',
+      id,
+      {},
+    );
   }
 
   private async assertUniqueCode(

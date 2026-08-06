@@ -30,7 +30,9 @@ const ENTRY_SELECT = {
     select: {
       id: true,
       employeeNumber: true,
-      user: { select: { id: true, name: true, firstName: true, lastName: true } },
+      user: {
+        select: { id: true, name: true, firstName: true, lastName: true },
+      },
     },
   },
   room: { select: { id: true, name: true, code: true } },
@@ -55,16 +57,18 @@ type EntryRecord = {
   trainerStaff: {
     id: number;
     employeeNumber: string | null;
-    user: { id: number; name: string; firstName: string | null; lastName: string | null };
+    user: {
+      id: number;
+      name: string;
+      firstName: string | null;
+      lastName: string | null;
+    };
   } | null;
   room: { id: number; name: string; code: string } | null;
 };
 
 function toTimeString(value: Date): string {
-  const date =
-    value instanceof Date
-      ? value
-      : new Date(value);
+  const date = value instanceof Date ? value : new Date(value);
   return `${String(date.getUTCHours()).padStart(2, '0')}:${String(
     date.getUTCMinutes(),
   ).padStart(2, '0')}`;
@@ -126,7 +130,13 @@ export class TimetablesService {
         employeeNumber: true,
         isTeachingStaff: true,
         user: {
-          select: { id: true, name: true, firstName: true, lastName: true, email: true },
+          select: {
+            id: true,
+            name: true,
+            firstName: true,
+            lastName: true,
+            email: true,
+          },
         },
       },
       take: 500,
@@ -208,14 +218,20 @@ export class TimetablesService {
       select: ENTRY_SELECT,
     });
 
-    await this.audit.log('timetable.create', actorId, 'AcademicTimetable', row.id, {
-      newValues: {
-        unitId: row.unitId,
-        dayOfWeek: row.dayOfWeek,
-        startTime: toTimeString(row.startTime),
-        endTime: toTimeString(row.endTime),
+    await this.audit.log(
+      'timetable.create',
+      actorId,
+      'AcademicTimetable',
+      row.id,
+      {
+        newValues: {
+          unitId: row.unitId,
+          dayOfWeek: row.dayOfWeek,
+          startTime: toTimeString(row.startTime),
+          endTime: toTimeString(row.endTime),
+        },
       },
-    });
+    );
 
     return toView(row);
   }
@@ -225,16 +241,26 @@ export class TimetablesService {
 
     const sessionId = dto.academicSessionId ?? existing.academicSessionId;
     const unitId = dto.unitId ?? existing.unitId;
-    const roomId = dto.lectureRoomId !== undefined ? dto.lectureRoomId : existing.lectureRoomId;
+    const roomId =
+      dto.lectureRoomId !== undefined
+        ? dto.lectureRoomId
+        : existing.lectureRoomId;
     const trainerStaffId =
-      dto.trainerStaffId !== undefined ? dto.trainerStaffId : existing.trainerStaffId;
+      dto.trainerStaffId !== undefined
+        ? dto.trainerStaffId
+        : existing.trainerStaffId;
     const dayOfWeek = dto.dayOfWeek ?? existing.dayOfWeek;
     const startTime = dto.startTime ?? existing.startTime;
     const endTime = dto.endTime ?? existing.endTime;
 
-    if (sessionId !== existing.academicSessionId) await this.assertSession(sessionId);
+    if (sessionId !== existing.academicSessionId)
+      await this.assertSession(sessionId);
     if (unitId !== existing.unitId) await this.assertUnit(unitId);
-    if (roomId !== null && roomId !== undefined && roomId !== existing.lectureRoomId) {
+    if (
+      roomId !== null &&
+      roomId !== undefined &&
+      roomId !== existing.lectureRoomId
+    ) {
       await this.assertRoom(roomId);
     }
     if (
@@ -290,7 +316,13 @@ export class TimetablesService {
       where: { id },
       data: { deletedAt: new Date(), updatedBy: actorId },
     });
-    await this.audit.log('timetable.delete', actorId, 'AcademicTimetable', id, {});
+    await this.audit.log(
+      'timetable.delete',
+      actorId,
+      'AcademicTimetable',
+      id,
+      {},
+    );
   }
 
   /* ------------------------- Guards & helpers ------------------------- */
@@ -301,7 +333,9 @@ export class TimetablesService {
       select: { id: true },
     });
     if (!session) {
-      throw new NotFoundException(`Academic session with id '${sessionId}' not found`);
+      throw new NotFoundException(
+        `Academic session with id '${sessionId}' not found`,
+      );
     }
   }
 
@@ -311,7 +345,9 @@ export class TimetablesService {
       select: { id: true, isActive: true },
     });
     if (!unit || !unit.isActive) {
-      throw new BadRequestException('Selected unit does not exist or is inactive');
+      throw new BadRequestException(
+        'Selected unit does not exist or is inactive',
+      );
     }
   }
 
@@ -321,7 +357,9 @@ export class TimetablesService {
       select: { id: true },
     });
     if (!room) {
-      throw new BadRequestException('Selected lecture room does not exist or is inactive');
+      throw new BadRequestException(
+        'Selected lecture room does not exist or is inactive',
+      );
     }
   }
 
@@ -351,7 +389,15 @@ export class TimetablesService {
     endTime: string;
     excludeId?: number;
   }) {
-    const { sessionId, roomId, trainerStaffId, unitId, dayOfWeek, startTime, endTime } = params;
+    const {
+      sessionId,
+      roomId,
+      trainerStaffId,
+      unitId,
+      dayOfWeek,
+      startTime,
+      endTime,
+    } = params;
     const overlapping: Prisma.AcademicTimetableWhereInput[] = [];
 
     const timeOverlap: Prisma.AcademicTimetableWhereInput[] = [

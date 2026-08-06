@@ -49,10 +49,10 @@ export async function verifyOtp(
   return response.data;
 }
 
-export async function refreshToken(refreshToken: string): Promise<AuthSession> {
-  const response = await apiClient.post<AuthSession>("/auth/refresh", {
-    refreshToken,
-  });
+export async function refreshToken(): Promise<AuthSession> {
+  // The refresh token lives in an httpOnly cookie; nothing sensitive is sent
+  // from JS. The response sets fresh cookies via Set-Cookie automatically.
+  const response = await apiClient.post<AuthSession>("/auth/refresh", {});
   return response.data;
 }
 

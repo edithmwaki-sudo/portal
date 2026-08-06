@@ -18,5 +18,7 @@ export class CertificationAuthorityResponseDto {
   @Expose() levelsCount: number;
   @Expose() createdAt: Date;
   @Expose() updatedAt: Date;
-  @Expose() @Type(() => CertificationLevelBriefDto) levels?: CertificationLevelBriefDto[];
+  @Expose()
+  @Type(() => CertificationLevelBriefDto)
+  levels?: CertificationLevelBriefDto[];
 }
