@@ -211,6 +211,12 @@ export const navItems: NavItem[] = [
         icon: BarChart3,
         permissions: ["finance.reports.view"],
       },
+      {
+        label: "Fee Statements",
+        href: "/fees/statements",
+        icon: FileText,
+        permissions: ["feestatement.view"],
+      },
     ],
   },
   { label: "Settings", href: "/settings", icon: Settings },

@@ -228,3 +228,154 @@ export async function updateCourseFeeAssignment(
 export async function deleteCourseFeeAssignment(id: number): Promise<void> {
   await apiClient.delete(`/course-fee-assignments/${id}`);
 }
+
+// ---------------------------------------------------------------
+// Fee statements
+// ---------------------------------------------------------------
+
+export type FeeStatementScope = "session_to_date" | "per_session" | "per_year";
+
+export interface FeeStatementScopeInfo {
+  mode: FeeStatementScope;
+  academicYearId: number | null;
+  academicYearName: string | null;
+  sessionIds: number[];
+  includeNullSession: boolean;
+  label: string;
+  activeSessionId: number | null;
+}
+
+export interface FeeStatementListItem {
+  id: number;
+  admissionNumber: string | null;
+  name: string;
+  courseCode: string | null;
+  invoiced: number;
+  paid: number;
+  balance: number;
+}
+
+export interface FeeStatementListResponse {
+  items: FeeStatementListItem[];
+  total: number;
+  page: number;
+  limit: number;
+  scope: FeeStatementScopeInfo;
+}
+
+export interface FeeStatementTransaction {
+  number: number;
+  date: string;
+  reference: string;
+  description: string;
+  type: string;
+  debit: number;
+  credit: number;
+  balance: number;
+  academicSessionId: number | null;
+  sessionLabel: string;
+}
+
+export interface FeeStatementSessionBreakdown {
+  sessionName: string;
+  fees: number;
+  paid: number;
+  outstanding: number;
+}
+
+export interface FeeStatementSummary {
+  totalDebit: number;
+  totalCredit: number;
+  totalInvoiced: number;
+  totalPaid: number;
+  outstandingBalance: number;
+  creditBalance: number;
+  unallocated: number;
+  ledgerBalance: number;
+}
+
+export interface FeeStatementDetail {
+  student: {
+    id: number;
+    admissionNumber: string | null;
+    name: string;
+    email: string | null;
+    phone: string | null;
+    level: number | null;
+    admissionYear: number | null;
+    studentType: string | null;
+  };
+  course: { code: string | null; name: string | null } | null;
+  department: { name: string | null } | null;
+  scope: FeeStatementScopeInfo;
+  transactions: FeeStatementTransaction[];
+  sessionBreakdown: FeeStatementSessionBreakdown[];
+  summary: FeeStatementSummary;
+}
+
+export type FeeStatementScopeQuery = {
+  scope?: FeeStatementScope;
+  academicYearId?: number;
+  academicSessionId?: number;
+};
+
+export interface FeeStatementFilters extends FeeStatementScopeQuery {
+  page?: number;
+  limit?: number;
+  search?: string;
+}
+
+function buildParams(filters: FeeStatementFilters) {
+  const params: Record<string, string | number> = {
+    page: filters.page ?? 1,
+    limit: filters.limit ?? 25,
+  };
+  if (filters.search) params.search = filters.search;
+  if (filters.scope) params.scope = filters.scope;
+  if (filters.academicYearId) params.academicYearId = filters.academicYearId;
+  if (filters.academicSessionId) {
+    params.academicSessionId = filters.academicSessionId;
+  }
+  return params;
+}
+
+export async function getFeeStatements(
+  filters: FeeStatementFilters = {}
+): Promise<FeeStatementListResponse> {
+  const response = await apiClient.get<FeeStatementListResponse>(
+    "/fees/statements",
+    { params: buildParams(filters) }
+  );
+  return response.data;
+}
+
+export async function getFeeStatement(
+  studentId: number,
+  filters: FeeStatementScopeQuery = {}
+): Promise<FeeStatementDetail> {
+  const response = await apiClient.get<FeeStatementDetail>(
+    `/fees/statements/${studentId}`,
+    { params: buildParams(filters) }
+  );
+  return response.data;
+}
+
+/** Downloads the fee statement PDF using the authenticated API session. */
+export async function downloadFeeStatementPdf(
+  studentId: number,
+  filters: FeeStatementScopeQuery = {},
+  filename = `fee-statement-${studentId}.pdf`
+): Promise<void> {
+  const response = await apiClient.get(`/fees/statements/${studentId}/pdf`, {
+    params: buildParams(filters),
+    responseType: "blob",
+  });
+  const url = URL.createObjectURL(response.data as Blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = filename;
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  URL.revokeObjectURL(url);
+}

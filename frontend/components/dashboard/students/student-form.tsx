@@ -1043,7 +1043,7 @@ export function StudentForm({
           </div>
         </FormSection>
 
-        <div className="flex items-center justify-end gap-2 border-t pt-4">
+        <div className="flex items-center justify-end gap-2 rounded-lg bg-white p-6 shadow-lg shadow-black/5">
           <Button
             type="button"
             variant="outline"

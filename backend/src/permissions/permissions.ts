@@ -87,6 +87,7 @@ export const Permissions = {
   canManagePayment: 'payment.manage',
 
   canViewFinanceReport: 'finance.reports.view',
+  canViewFeeStatement: 'feestatement.view',
 } as const;
 
 export type PermissionName = (typeof Permissions)[keyof typeof Permissions];
@@ -166,4 +167,5 @@ export const PERMISSION_DESCRIPTIONS: Record<PermissionName, string> = {
   'payment.view': 'View payments',
   'payment.manage': 'Record and reverse payments',
   'finance.reports.view': 'View finance reports and analytics',
+  'feestatement.view': 'View student fee statements',
 };

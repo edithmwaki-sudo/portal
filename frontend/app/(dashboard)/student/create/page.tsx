@@ -15,12 +15,10 @@ export default function CreateStudentPage() {
         description="Create the student account, admission record and course enrolment."
       />
       <div className="mx-[50px] mb-[30px]">
-        <div className="w-full rounded-lg bg-white p-6 shadow-lg shadow-black/5">
-          <StudentForm
-            onSuccess={() => router.push("/student")}
-            onCancel={() => router.push("/student")}
-          />
-        </div>
+        <StudentForm
+          onSuccess={() => router.push("/student")}
+          onCancel={() => router.push("/student")}
+        />
       </div>
     </>
   );

@@ -3,14 +3,12 @@ interface FormSectionProps {
   children: React.ReactNode;
 }
 
-/** Legacy-style form grouping: a headed section inside the multi-part record form. */
+/** A titled white section card used to group fields (invoice/adhoc style). */
 export function FormSection({ title, children }: FormSectionProps) {
   return (
-    <fieldset className="grid gap-4 border-t pt-4 first:border-t-0 first:pt-0">
-      <legend className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
-        {title}
-      </legend>
+    <section className="rounded-lg bg-white p-6 shadow-lg shadow-black/5">
+      <h2 className="mb-4 text-base font-semibold">{title}</h2>
       <div className="grid gap-4">{children}</div>
-    </fieldset>
+    </section>
   );
 }

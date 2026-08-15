@@ -30,6 +30,7 @@ export interface PageToolbarAction {
   variant?: "default" | "outline" | "secondary" | "ghost";
   /** Red text — for genuinely page-level destructive actions only. */
   destructive?: boolean;
+  disabled?: boolean;
 }
 
 export interface PageToolbarLink {
@@ -158,6 +159,7 @@ export function PageToolbar({
                     asChild
                     key={action.label}
                     variant={action.variant ?? "default"}
+                    disabled={action.disabled}
                   >
                     <Link href={action.href}>{content}</Link>
                   </Button>
@@ -166,6 +168,7 @@ export function PageToolbar({
                     key={action.label}
                     variant={action.variant ?? "default"}
                     onClick={action.onClick}
+                    disabled={action.disabled}
                   >
                     {content}
                   </Button>
