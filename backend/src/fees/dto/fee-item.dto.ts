@@ -1,4 +1,11 @@
-import { IsNumber, IsOptional, IsString, Length, Min } from 'class-validator';
+import {
+  IsNumber,
+  IsOptional,
+  IsString,
+  Length,
+  Max,
+  Min,
+} from 'class-validator';
 
 export class CreateFeeItemDto {
   @IsString()
@@ -7,6 +14,7 @@ export class CreateFeeItemDto {
 
   @IsNumber({ maxDecimalPlaces: 2 })
   @Min(0)
+  @Max(1_000_000_000)
   amount: number;
 
   @IsNumber()

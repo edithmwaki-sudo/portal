@@ -28,6 +28,8 @@ import { LectureRoomsModule } from './lecture-rooms/lecture-rooms.module';
 import { TimetablesModule } from './timetables/timetables.module';
 import { AttendanceModule } from './attendance/attendance.module';
 import { FeesModule } from './fees/fees.module';
+import { FinanceModule } from './finance/finance.module';
+import { ReportsModule } from './reports/reports.module';
 // NOTE: request-body audit capture is deferred — revisit later.
 // import { RequestContextModule } from './common/request-context/request-context.module';
 import { getLogFilePath } from './logs/log-file';
@@ -120,6 +122,8 @@ import { getLogFilePath } from './logs/log-file';
     TimetablesModule,
     AttendanceModule,
     FeesModule,
+    FinanceModule,
+    ReportsModule,
     LogsModule,
     // NOTE: request-body audit capture is deferred — revisit later.
     // RequestContextModule,

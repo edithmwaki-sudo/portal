@@ -3,6 +3,7 @@ import {
   IsDateString,
   IsEmail,
   IsEnum,
+  IsIn,
   IsInt,
   IsOptional,
   IsString,
@@ -15,24 +16,35 @@ import { Gender } from '@prisma/client';
 export const STUDENT_STATUSES = ['ACTIVE', 'INACTIVE', 'GRADUATED'] as const;
 export type StudentStatus = (typeof STUDENT_STATUSES)[number];
 
-export class CreateStudentDto {
-  // Account + login
-  @IsString()
-  @Length(3, 100)
-  username: string;
+export const NEXT_OF_KIN_RELATIONSHIPS = [
+  'Partner',
+  'Sibling',
+  'Father',
+  'Mother',
+  'Relative',
+  'Guardian',
+] as const;
+export type NextOfKinRelationship = (typeof NEXT_OF_KIN_RELATIONSHIPS)[number];
 
+export class CreateStudentDto {
+  // Account — username (admission number) and default password are generated
+  // server-side; email is the student's login identifier.
   @IsEmail()
   @Length(3, 255)
   email: string;
 
   @IsString()
-  @Length(8, 255)
-  password: string;
+  @Length(1, 255)
+  firstName: string;
 
-  // Personal (on User)
+  @IsString()
+  @IsOptional()
+  @Length(0, 255)
+  middleName?: string;
+
   @IsString()
   @Length(1, 255)
-  name: string;
+  lastName: string;
 
   @IsEnum(Gender)
   @IsOptional()
@@ -49,23 +61,33 @@ export class CreateStudentDto {
 
   @IsString()
   @IsOptional()
+  @Length(0, 50)
+  nationalId?: string;
+
+  @IsString()
+  @IsOptional()
   @Length(0, 100)
-  county?: string;
+  placeOfBirth?: string;
 
   @IsString()
   @IsOptional()
   @Length(0, 100)
   religion?: string;
 
+  /** Also the student's default (one-time) login password. */
   @IsString()
-  @IsOptional()
-  @Length(0, 50)
-  phone?: string;
+  @Length(1, 50)
+  phone: string;
 
   @IsString()
   @IsOptional()
   @Length(0, 50)
   alternativePhoneNumber?: string;
+
+  @IsString()
+  @IsOptional()
+  @Length(0, 100)
+  county?: string;
 
   @IsString()
   @IsOptional()
@@ -76,6 +98,11 @@ export class CreateStudentDto {
   @IsOptional()
   @Length(0, 100)
   city?: string;
+
+  @IsString()
+  @IsOptional()
+  @Length(0, 20)
+  postalCode?: string;
 
   @IsBoolean()
   @IsOptional()
@@ -91,15 +118,43 @@ export class CreateStudentDto {
   @Length(0, 1000)
   disabilityDescription?: string;
 
-  // Student profile
+  // Next of kin
+  @IsString()
+  @IsOptional()
+  @Length(0, 100)
+  nextOfKinFirstName?: string;
+
+  @IsString()
+  @IsOptional()
+  @Length(0, 100)
+  nextOfKinLastName?: string;
+
   @IsString()
   @IsOptional()
   @Length(0, 50)
-  admissionNumber?: string;
+  nextOfKinPhone?: string;
+
+  @IsString()
+  @IsOptional()
+  @Length(0, 50)
+  nextOfKinAltPhone?: string;
+
+  @IsEmail()
+  @IsOptional()
+  @Length(0, 255)
+  nextOfKinEmail?: string;
+
+  @IsString()
+  @IsOptional()
+  @IsIn(NEXT_OF_KIN_RELATIONSHIPS)
+  nextOfKinRelationship?: NextOfKinRelationship;
+
+  // Admission
+  @IsInt()
+  courseId: number;
 
   @IsInt()
-  @IsOptional()
-  courseId?: number;
+  curriculumId: number;
 
   @IsInt()
   @IsOptional()

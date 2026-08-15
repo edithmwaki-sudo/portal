@@ -166,6 +166,21 @@ export class CoursesController {
     };
   }
 
+  @Get('meta/curricula-by-course')
+  @RequirePermission(...COURSE_FORM_PERMISSIONS)
+  @ApiOperation({
+    summary: 'Active course curricula for a course (enrolment cascade)',
+  })
+  async metaCurriculaByCourse(@Query('courseId') courseId: string) {
+    const parsed = parseInt(courseId, 10);
+    if (Number.isNaN(parsed)) {
+      return { options: [] };
+    }
+    return {
+      options: await this.coursesService.listCourseCurriculumOptions(parsed),
+    };
+  }
+
   @Get('meta/departments')
   @RequirePermission(...COURSE_FORM_PERMISSIONS)
   @ApiOperation({ summary: 'Active department options for the course form' })

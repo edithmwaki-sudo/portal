@@ -428,6 +428,19 @@ export class CoursesService {
     return rows.map((row) => ({ id: row.id, label: row.cycleName }));
   }
 
+  /** Active course-curriculum links for a course — what is open for enrolment. */
+  async listCourseCurriculumOptions(courseId: number) {
+    const rows = await this.prisma.courseCurriculum.findMany({
+      where: { courseId, isActive: true },
+      orderBy: { curriculum: { cycleName: 'asc' } },
+      include: { curriculum: { select: { id: true, cycleName: true } } },
+    });
+    return rows.map((row) => ({
+      id: row.id,
+      label: row.curriculum.cycleName,
+    }));
+  }
+
   async listDepartmentOptions(search?: string, limit = 10) {
     const rows = await this.prisma.department.findMany({
       where: {

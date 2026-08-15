@@ -1,5 +1,6 @@
 import {
   Award,
+  BarChart3,
   BookOpen,
   Briefcase,
   Building2,
@@ -181,6 +182,18 @@ export const navItems: NavItem[] = [
     icon: Wallet,
     children: [
       {
+        label: "Invoices",
+        href: "/invoices",
+        icon: ReceiptText,
+        permissions: ["invoice.view"],
+      },
+      {
+        label: "Payments",
+        href: "/payments",
+        icon: Wallet,
+        permissions: ["payment.view"],
+      },
+      {
         label: "Fee Structures",
         href: "/fees/structures",
         icon: ReceiptText,
@@ -191,6 +204,12 @@ export const navItems: NavItem[] = [
         href: "/fees/assignments",
         icon: ListChecks,
         permissions: ["fee_assignment.view"],
+      },
+      {
+        label: "Finance Reports",
+        href: "/reports/finance",
+        icon: BarChart3,
+        permissions: ["finance.reports.view"],
       },
     ],
   },

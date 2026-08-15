@@ -35,7 +35,10 @@ export async function syncPermissions(prisma: PrismaClient): Promise<void> {
   if (toInsert.length > 0 || toUpdate.length > 0 || toPrune.length > 0) {
     await prisma.$transaction(async (tx) => {
       if (toInsert.length > 0) {
-        await tx.permission.createMany({ data: toInsert, skipDuplicates: true });
+        await tx.permission.createMany({
+          data: toInsert,
+          skipDuplicates: true,
+        });
       }
 
       for (const row of toUpdate) {

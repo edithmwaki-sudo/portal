@@ -288,6 +288,7 @@ model Curriculum {
   courseCurricula CourseCurriculum[] @relation("CurriculumCourseCurricula")
   units           Unit[]            @relation("CurriculumUnits")
   feeAssignments  CourseFeeAssignment[] @relation("CurriculumFeeAssignments")
+  invoices        Invoice[]         @relation("CurriculumInvoiceSource")
 
   @@index([certificationAuthorityId, isActive])
   @@index([createdAt])
@@ -321,6 +322,8 @@ model Course {
   courseCurricula CourseCurriculum[] @relation("CourseCurricula")
   units           Unit[]            @relation("CourseUnits")
   feeAssignments  CourseFeeAssignment[] @relation("CourseFeeAssignments")
+  students        StudentProfile[]  @relation("CourseStudentProfiles")
+  invoices        Invoice[]         @relation("CourseInvoices")
 
   @@index([departmentId, isActive, name])
   @@index([certificationAuthorityId, certificationLevelId, isActive])
@@ -344,6 +347,9 @@ model CourseCurriculum {
 
   course     Course     @relation("CourseCurricula", fields: [courseId], references: [id], onDelete: Cascade)
   curriculum Curriculum @relation("CurriculumCourseCurricula", fields: [curriculumId], references: [id], onDelete: Cascade)
+
+  enrolments CourseEnrolment[] @relation("CourseEnrolments")
+  invoices   Invoice[]         @relation("CurriculumInvoices")
 
   @@unique([courseId, curriculumId])
   @@index([courseId, isActive])
@@ -389,10 +395,17 @@ model StudentProfile {
   id            Int       @id @default(autoincrement())
   userId        Int       @unique @map("user_id")
   admissionNumber String? @unique @map("admission_number") @db.VarChar(50)
+  nationalId    String?   @map("national_id") @db.VarChar(50)
   courseId      Int?      @map("course_id")
   level         Int?      @default(1)
   admDate       DateTime? @map("adm_date") @db.Date
   status        String?   @map("status") @db.VarChar(20)
+  nextOfKinFirstName    String? @map("next_of_kin_first_name") @db.VarChar(100)
+  nextOfKinLastName     String? @map("next_of_kin_last_name") @db.VarChar(100)
+  nextOfKinPhone        String? @map("next_of_kin_phone") @db.VarChar(50)
+  nextOfKinAltPhone     String? @map("next_of_kin_alt_phone") @db.VarChar(50)
+  nextOfKinEmail        String? @map("next_of_kin_email") @db.VarChar(255)
+  nextOfKinRelationship String? @map("next_of_kin_relationship") @db.VarChar(100)
   createdBy     Int?      @map("created_by")
   updatedBy     Int?      @map("updated_by")
   deletedAt     DateTime? @map("deleted_at") @db.Timestamptz(6)
@@ -400,10 +413,48 @@ model StudentProfile {
   updatedAt     DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  course Course? @relation("CourseStudentProfiles", fields: [courseId], references: [id], onDelete: SetNull)
+
+  courseEnrolments CourseEnrolment[] @relation("StudentEnrolments")
+  invoices         Invoice[]         @relation("StudentInvoices")
+  payments         Payment[]         @relation("StudentPayments")
+  ledgerEntries    StudentLedgerEntry[] @relation("StudentLedger")
 
   @@index([courseId])
   @@index([deletedAt])
+  @@index([nationalId])
   @@map("student_profiles")
+}
+
+// A student's admission into a course version (course + curriculum), tied to
+// an optional academic session. Created during onboarding; a student may be
+// re-enrolled (e.g. transfer) by adding a new row.
+model CourseEnrolment {
+  id                 Int       @id @default(autoincrement())
+  studentId          Int       @map("student_id")
+  courseCurriculumId Int       @map("course_curriculum_id")
+  academicSessionId  Int?      @map("academic_session_id")
+  academicYearId     Int?      @map("academic_year_id")
+  enrolmentDate      DateTime  @map("enrolment_date") @db.Date
+  status             String    @default("enrolled") @map("status") @db.VarChar(50)
+  remarks            String?   @map("remarks") @db.Text
+  createdBy          Int?      @map("created_by")
+  updatedBy          Int?      @map("updated_by")
+  deletedAt          DateTime? @map("deleted_at") @db.Timestamptz(6)
+  createdAt          DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt          DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  student          StudentProfile   @relation("StudentEnrolments", fields: [studentId], references: [id], onDelete: Cascade)
+  courseCurriculum CourseCurriculum @relation("CourseEnrolments", fields: [courseCurriculumId], references: [id], onDelete: Cascade)
+  academicSession  AcademicSession? @relation("SessionEnrolments", fields: [academicSessionId], references: [id], onDelete: SetNull)
+  academicYear     AcademicYear?    @relation("YearEnrolments", fields: [academicYearId], references: [id], onDelete: SetNull)
+
+  @@unique([studentId, courseCurriculumId])
+  @@index([courseCurriculumId, status])
+  @@index([academicSessionId, status])
+  @@index([academicYearId, status])
+  @@index([status, deletedAt, createdAt])
+  @@map("course_enrolments")
 }
 
 // =============================================================
@@ -427,6 +478,8 @@ model AcademicYear {
   sessions AcademicSession[] @relation("YearSessions")
   calendarEvents CalendarEvent[] @relation("YearCalendarEvents")
   feeAssignments CourseFeeAssignment[] @relation("YearFeeAssignments")
+  enrolments CourseEnrolment[] @relation("YearEnrolments")
+  invoices  Invoice[] @relation("YearInvoices")
 
   @@index([isActive])
   @@index([isActive, startDate])
@@ -451,6 +504,10 @@ model AcademicSession {
   calendarEvents CalendarEvent[]    @relation("SessionCalendarEvents")
   timetables    AcademicTimetable[] @relation("SessionTimetables")
   feeAssignments CourseFeeAssignment[] @relation("SessionFeeAssignments")
+  enrolments    CourseEnrolment[]   @relation("SessionEnrolments")
+  payments      Payment[]           @relation("SessionPayments")
+  invoices      Invoice[]           @relation("SessionInvoices")
+  ledgerEntries StudentLedgerEntry[] @relation("SessionLedgerEntries")
 
   @@unique([academicYearId, code])
   @@index([academicYearId, isActive])
@@ -691,6 +748,7 @@ model FeeStructure {
 
   items       FeeItem[]              @relation("FeeStructureItems")
   assignments CourseFeeAssignment[]  @relation("FeeStructureAssignments")
+  invoices    Invoice[]              @relation("StructureInvoices")
 
   @@index([status])
   @@index([startDate, endDate])
@@ -708,6 +766,7 @@ model FeeItem {
   updatedAt      DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
 
   feeStructure FeeStructure @relation("FeeStructureItems", fields: [feeStructureId], references: [id], onDelete: Cascade)
+  invoiceItems InvoiceItem[] @relation("InvoiceSourceItems")
 
   @@unique([feeStructureId, itemName])
   @@index([feeStructureId, displayOrder])
@@ -737,9 +796,206 @@ model CourseFeeAssignment {
   academicSession AcademicSession @relation("SessionFeeAssignments", fields: [academicSessionId], references: [id], onDelete: Restrict)
   feeStructure    FeeStructure    @relation("FeeStructureAssignments", fields: [feeStructureId], references: [id], onDelete: Restrict)
 
-  @@unique([courseId, curriculumId, academicYearId, academicSessionId, status])
+  @@unique([courseId, curriculumId, academicYearId, academicSessionId, status, deletedAt])
   @@index([feeStructureId, status])
   @@index([academicSessionId, status])
   @@index([deletedAt])
   @@map("course_fee_assignments")
+}
+
+// =============================================================
+// FINANCE: invoices, payments, and the student ledger. An invoice is a
+// snapshot of what a student owes; a line item is either sourced from a
+// frozen FeeItem (fee_structure billing) or free-form ad-hoc (fines, other
+// charges). Payments allocate against invoices; every financial movement is
+// mirrored into the double-entry student ledger.
+// =============================================================
+
+enum InvoiceType {
+  FEES
+  ADHOC
+}
+
+enum InvoiceStatus {
+  ISSUED
+  PARTIAL
+  PAID
+  CANCELLED
+}
+
+enum PaymentStatus {
+  COMPLETED
+  REVERSED
+}
+
+enum AdhocChargeType {
+  FINE
+  PENALTY
+  HOSTEL
+  OTHER
+}
+
+enum PaymentMethod {
+  CASH
+  BANK_TRANSFER
+  M_PESA
+  CHEQUE
+  CARD
+  OTHER
+}
+
+enum LedgerEntryType {
+  INVOICE
+  INVOICE_REVERSAL
+  PAYMENT
+  PAYMENT_REVERSAL
+}
+
+model Invoice {
+  id                 Int           @id @default(autoincrement())
+  invoiceNumber      String        @unique @map("invoice_number") @db.VarChar(50)
+  studentId          Int           @map("student_id")
+  courseId           Int?          @map("course_id")
+  courseCurriculumId Int?          @map("course_curriculum_id")
+  curriculumId       Int?          @map("curriculum_id")
+  academicYearId     Int?          @map("academic_year_id")
+  academicSessionId  Int?          @map("academic_session_id")
+  feeStructureId     Int?          @map("fee_structure_id")
+  type               InvoiceType   @default(FEES) @map("type")
+  chargeType         AdhocChargeType? @map("charge_type")
+  status             InvoiceStatus @default(ISSUED) @map("status")
+  amountDue          Decimal       @map("amount_due") @db.Decimal(12, 2)
+  computedAmount     Decimal       @map("computed_amount") @db.Decimal(12, 2)
+  issueDate          DateTime      @map("issue_date") @db.Date
+  dueDate            DateTime      @map("due_date") @db.Date
+  notes              String?       @map("notes") @db.Text
+  reason             String?       @map("reason") @db.Text
+  reversedAt         DateTime?     @map("reversed_at") @db.Timestamptz(6)
+  reversedBy         Int?          @map("reversed_by")
+  createdBy          Int?          @map("created_by")
+  deletedAt          DateTime?     @map("deleted_at") @db.Timestamptz(6)
+  createdAt          DateTime      @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt          DateTime      @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  student          StudentProfile              @relation("StudentInvoices", fields: [studentId], references: [id], onDelete: Cascade)
+  course           Course?                     @relation("CourseInvoices", fields: [courseId], references: [id], onDelete: SetNull)
+  courseCurriculum CourseCurriculum?           @relation("CurriculumInvoices", fields: [courseCurriculumId], references: [id], onDelete: SetNull)
+  curriculum       Curriculum?                 @relation("CurriculumInvoiceSource", fields: [curriculumId], references: [id], onDelete: SetNull)
+  academicYear     AcademicYear?               @relation("YearInvoices", fields: [academicYearId], references: [id], onDelete: SetNull)
+  academicSession  AcademicSession?            @relation("SessionInvoices", fields: [academicSessionId], references: [id], onDelete: SetNull)
+  feeStructure     FeeStructure?               @relation("StructureInvoices", fields: [feeStructureId], references: [id], onDelete: SetNull)
+
+  items            InvoiceItem[]               @relation("InvoiceItems")
+  allocations      InvoicePaymentAllocation[]  @relation("InvoiceAllocations")
+  ledgerEntries    StudentLedgerEntry[]        @relation("InvoiceLedgerEntries")
+
+  @@index([studentId, status, issueDate])
+  @@index([academicSessionId, status])
+  @@index([academicYearId, status])
+  @@index([feeStructureId, academicSessionId, status])
+  @@index([status, dueDate])
+  @@index([status])
+  @@index([deletedAt])
+  @@map("invoices")
+}
+
+model InvoiceItem {
+  id          Int     @id @default(autoincrement())
+  invoiceId   Int     @map("invoice_id")
+  feeItemId   Int?    @map("fee_item_id")
+  itemName    String  @map("item_name") @db.VarChar(255)
+  description String? @map("description") @db.Text
+  amount      Decimal @db.Decimal(12, 2)
+  quantity    Int     @default(1)
+  totalAmount Decimal @map("total_amount") @db.Decimal(12, 2)
+  snapshot    Json?   @map("snapshot")
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  invoice Invoice @relation("InvoiceItems", fields: [invoiceId], references: [id], onDelete: Cascade)
+  feeItem FeeItem? @relation("InvoiceSourceItems", fields: [feeItemId], references: [id], onDelete: SetNull)
+
+  @@index([invoiceId])
+  @@map("invoice_items")
+}
+
+model Payment {
+  id                Int           @id @default(autoincrement())
+  studentId         Int?          @map("student_id")
+  academicSessionId Int?          @map("academic_session_id")
+  amount            Decimal       @db.Decimal(12, 2)
+  paymentDate       DateTime      @map("payment_date") @db.Date
+  method            PaymentMethod @map("method")
+  reference         String?       @map("reference") @db.VarChar(100)
+  status            PaymentStatus @default(COMPLETED) @map("status")
+  reversedAt        DateTime?     @map("reversed_at") @db.Timestamptz(6)
+  reversedBy        Int?          @map("reversed_by")
+  reversalReason    String?       @map("reversal_reason") @db.VarChar(255)
+  notes             String?       @map("notes") @db.Text
+  createdBy         Int?          @map("created_by")
+  createdAt         DateTime      @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt         DateTime      @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  student          StudentProfile?           @relation("StudentPayments", fields: [studentId], references: [id], onDelete: SetNull)
+  academicSession  AcademicSession?          @relation("SessionPayments", fields: [academicSessionId], references: [id], onDelete: SetNull)
+  allocations      InvoicePaymentAllocation[] @relation("PaymentAllocations")
+  ledgerEntries    StudentLedgerEntry[]      @relation("PaymentLedgerEntries")
+
+  @@unique([studentId, reference])
+  @@index([studentId, status, paymentDate])
+  @@index([academicSessionId, status])
+  @@index([status, paymentDate])
+  @@index([status])
+  @@map("payments")
+}
+
+model InvoicePaymentAllocation {
+  id                Int      @id @default(autoincrement())
+  paymentId         Int      @map("payment_id")
+  invoiceId         Int      @map("invoice_id")
+  academicSessionId Int?     @map("academic_session_id")
+  amount            Decimal  @db.Decimal(12, 2)
+  allocatedAt       DateTime @default(now()) @map("allocated_at") @db.Timestamptz(6)
+
+  payment Payment @relation("PaymentAllocations", fields: [paymentId], references: [id], onDelete: Cascade)
+  invoice Invoice @relation("InvoiceAllocations", fields: [invoiceId], references: [id], onDelete: Cascade)
+
+  @@index([invoiceId])
+  @@index([paymentId])
+  @@map("invoice_payment_allocations")
+}
+
+model StudentLedgerEntry {
+  id                Int      @id @default(autoincrement())
+  studentId         Int      @map("student_id")
+  invoiceId         Int?     @map("invoice_id")
+  paymentId         Int?     @map("payment_id")
+  academicSessionId Int?     @map("academic_session_id")
+  type              LedgerEntryType @map("type")
+  debit             Decimal  @default(0) @db.Decimal(12, 2)
+  credit            Decimal  @default(0) @db.Decimal(12, 2)
+  reference         String?  @map("reference") @db.VarChar(100)
+  description       String?  @map("description") @db.Text
+  transactionDate   DateTime @map("transaction_date") @db.Date
+  createdBy         Int?     @map("created_by")
+  createdAt         DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  student         StudentProfile?  @relation("StudentLedger", fields: [studentId], references: [id], onDelete: Cascade)
+  invoice         Invoice?         @relation("InvoiceLedgerEntries", fields: [invoiceId], references: [id], onDelete: SetNull)
+  payment         Payment?         @relation("PaymentLedgerEntries", fields: [paymentId], references: [id], onDelete: SetNull)
+  academicSession AcademicSession? @relation("SessionLedgerEntries", fields: [academicSessionId], references: [id], onDelete: SetNull)
+
+  @@index([studentId, transactionDate, id])
+  @@index([studentId, transactionDate])
+  @@index([studentId, academicSessionId])
+  @@index([invoiceId])
+  @@index([paymentId])
+  @@map("student_ledger_entries")
+}
+
+model InvoiceSequence {
+  id        Int @id @default(autoincrement())
+  year      Int @unique @map("year")
+  lastValue Int @default(0) @map("last_value")
+
+  @@map("invoice_sequences")
 }

@@ -1,52 +1,77 @@
 import { z } from "zod";
 
 export const studentStatusSchema = z.enum(["ACTIVE", "INACTIVE", "GRADUATED"]);
+export const studentGenderSchema = z.enum(["MALE", "FEMALE", "OTHER"]);
+export const nextOfKinRelationshipSchema = z.enum([
+  "Partner",
+  "Sibling",
+  "Father",
+  "Mother",
+  "Relative",
+  "Guardian",
+]);
 
-export const createStudentSchema = z.object({
-  // Account + login
-  username: z
+const optionalText = (max: number, message: string) =>
+  z
     .string()
-    .min(3, "Username must be at least 3 characters")
-    .max(100, "Username must be 100 characters or fewer"),
-  email: z.string().email("Enter a valid email address"),
-  password: z
-    .string()
-    .min(8, "Password must be at least 8 characters")
-    .max(255, "Password must be 255 characters or fewer"),
-  name: z
-    .string()
-    .min(1, "Full name is required")
-    .max(255, "Name must be 255 characters or fewer"),
+    .max(max, message)
+    .optional();
 
-  // Personal
-  gender: z.enum(["MALE", "FEMALE", "OTHER"]).optional(),
-  dateOfBirth: z.string().optional(),
-  nationality: z.string().max(100, "Nationality must be 100 characters or fewer").optional(),
-  county: z.string().max(100, "County must be 100 characters or fewer").optional(),
-  religion: z.string().max(100, "Religion must be 100 characters or fewer").optional(),
-  phone: z.string().max(50, "Phone must be 50 characters or fewer").optional(),
-  alternativePhoneNumber: z
-    .string()
-    .max(50, "Alternative phone must be 50 characters or fewer")
-    .optional(),
-  address: z.string().max(100, "Address must be 100 characters or fewer").optional(),
-  city: z.string().max(100, "City must be 100 characters or fewer").optional(),
-  isPwd: z.boolean().optional(),
-  disabilityType: z.string().max(100, "Disability must be 100 characters or fewer").optional(),
-  disabilityDescription: z
-    .string()
-    .max(1000, "Description must be 1000 characters or fewer")
-    .optional(),
+const optionalEmail = z
+  .union([z.string().email("Enter a valid email address"), z.literal("")])
+  .optional();
 
-  // Admission (ids sent as strings, converted in the form submit)
-  admissionNumber: z
-    .string()
-    .max(50, "Admission number must be 50 characters or fewer")
-    .optional(),
-  courseId: z.string().optional(),
+export const studentFormSchema = z.object({
+  // Admission (select values are strings — converted to numbers on submit)
+  courseId: z.string().min(1, "Course is required"),
+  curriculumId: z.string().min(1, "Curriculum is required"),
   level: z.string().optional(),
   admDate: z.string().optional(),
-  status: studentStatusSchema.optional(),
+  status: studentStatusSchema,
+
+  // Personal
+  firstName: z
+    .string()
+    .min(1, "First name is required")
+    .max(255, "First name must be 255 characters or fewer"),
+  middleName: optionalText(255, "Middle name must be 255 characters or fewer"),
+  lastName: z
+    .string()
+    .min(1, "Last name is required")
+    .max(255, "Last name must be 255 characters or fewer"),
+  email: z.string().email("Enter a valid email address"),
+  gender: studentGenderSchema.optional(),
+  dateOfBirth: z.string().optional(),
+  nationality: optionalText(100, "Nationality must be 100 characters or fewer"),
+  nationalId: optionalText(50, "National ID must be 50 characters or fewer"),
+  placeOfBirth: optionalText(100, "Place of birth must be 100 characters or fewer"),
+  religion: optionalText(100, "Religion must be 100 characters or fewer"),
+  phone: z
+    .string()
+    .min(1, "Phone number is required")
+    .max(50, "Phone must be 50 characters or fewer"),
+  alternativePhoneNumber: optionalText(
+    50,
+    "Alternative phone must be 50 characters or fewer"
+  ),
+  county: optionalText(100, "County must be 100 characters or fewer"),
+  address: optionalText(100, "Address must be 100 characters or fewer"),
+  city: optionalText(100, "City must be 100 characters or fewer"),
+  postalCode: optionalText(20, "Postal code must be 20 characters or fewer"),
+  isPwd: z.boolean(),
+  disabilityType: optionalText(100, "Disability must be 100 characters or fewer"),
+  disabilityDescription: optionalText(
+    1000,
+    "Description must be 1000 characters or fewer"
+  ),
+
+  // Next of kin
+  nextOfKinFirstName: optionalText(100, "Name must be 100 characters or fewer"),
+  nextOfKinLastName: optionalText(100, "Name must be 100 characters or fewer"),
+  nextOfKinPhone: optionalText(50, "Phone must be 50 characters or fewer"),
+  nextOfKinAltPhone: optionalText(50, "Phone must be 50 characters or fewer"),
+  nextOfKinEmail: optionalEmail,
+  nextOfKinRelationship: nextOfKinRelationshipSchema.optional(),
 });
 
-export type CreateStudentValues = z.infer<typeof createStudentSchema>;
+export type StudentFormValues = z.infer<typeof studentFormSchema>;

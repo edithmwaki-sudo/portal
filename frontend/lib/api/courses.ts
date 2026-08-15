@@ -107,6 +107,28 @@ export async function getCourseAuthorityOptions(
   return response.data.options;
 }
 
+/** All active exam bodies (certification authorities) — preloads a cascade. */
+export async function getAllCourseAuthorityOptions(
+  limit = 50
+): Promise<AsyncOption[]> {
+  const response = await apiClient.get<{ options: AsyncOption[] }>(
+    "/courses/meta/authorities",
+    { params: { limit } }
+  );
+  return response.data.options;
+}
+
+/** Active curricula linked to a course — what is open for enrolment. */
+export async function getCourseCurriculaByCourse(
+  courseId: number
+): Promise<AsyncOption[]> {
+  const response = await apiClient.get<{ options: AsyncOption[] }>(
+    "/courses/meta/curricula-by-course",
+    { params: { courseId } }
+  );
+  return response.data.options;
+}
+
 export async function getCourseLevelOptions(
   authorityId: number,
   search: string

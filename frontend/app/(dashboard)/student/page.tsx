@@ -1,5 +1,5 @@
-import { StudentAdmissionClient } from "@/components/dashboard/users/student-admission-client";
+import { StudentsClient } from "@/components/dashboard/students/students-client";
 
 export default function StudentPage() {
-  return <StudentAdmissionClient />;
+  return <StudentsClient />;
 }

@@ -80,6 +80,13 @@ export const Permissions = {
   canManageFeeStructure: 'fee_structure.manage',
   canViewFeeAssignment: 'fee_assignment.view',
   canManageFeeAssignment: 'fee_assignment.manage',
+
+  canViewInvoice: 'invoice.view',
+  canManageInvoice: 'invoice.manage',
+  canViewPayment: 'payment.view',
+  canManagePayment: 'payment.manage',
+
+  canViewFinanceReport: 'finance.reports.view',
 } as const;
 
 export type PermissionName = (typeof Permissions)[keyof typeof Permissions];
@@ -153,4 +160,10 @@ export const PERMISSION_DESCRIPTIONS: Record<PermissionName, string> = {
   'fee_structure.manage': 'Create, edit and deactivate fee structures',
   'fee_assignment.view': 'View course fee assignments',
   'fee_assignment.manage': 'Assign fee structures to courses',
+
+  'invoice.view': 'View invoices',
+  'invoice.manage': 'Create and reverse invoices',
+  'payment.view': 'View payments',
+  'payment.manage': 'Record and reverse payments',
+  'finance.reports.view': 'View finance reports and analytics',
 };

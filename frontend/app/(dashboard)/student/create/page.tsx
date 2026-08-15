@@ -3,7 +3,7 @@
 import { useRouter } from "next/navigation";
 
 import { PageToolbar } from "@/components/dashboard/page-toolbar";
-import { StudentForm } from "@/components/dashboard/users/student-form";
+import { StudentForm } from "@/components/dashboard/students/student-form";
 
 export default function CreateStudentPage() {
   const router = useRouter();
@@ -11,8 +11,8 @@ export default function CreateStudentPage() {
   return (
     <>
       <PageToolbar
-        title="Add Student"
-        description="Admit a student and create their account and admission record."
+        title="Admit Student"
+        description="Create the student account, admission record and course enrolment."
       />
       <div className="mx-[50px] mb-[30px]">
         <div className="w-full rounded-lg bg-white p-6 shadow-lg shadow-black/5">

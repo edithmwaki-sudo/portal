@@ -1,9 +1,7 @@
-import { FormLabel } from "@/components/ui/form";
-
 export function RequiredLabel({ children }: { children: React.ReactNode }) {
   return (
-    <FormLabel>
+    <label className="flex items-center gap-1 text-sm font-medium">
       {children} <span className="text-red-500">*</span>
-    </FormLabel>
+    </label>
   );
 }
