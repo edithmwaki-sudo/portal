@@ -326,10 +326,9 @@ export interface FeeStatementFilters extends FeeStatementScopeQuery {
 }
 
 function buildParams(filters: FeeStatementFilters) {
-  const params: Record<string, string | number> = {
-    page: filters.page ?? 1,
-    limit: filters.limit ?? 25,
-  };
+  const params: Record<string, string | number> = {};
+  if (filters.page) params.page = filters.page;
+  if (filters.limit) params.limit = filters.limit;
   if (filters.search) params.search = filters.search;
   if (filters.scope) params.scope = filters.scope;
   if (filters.academicYearId) params.academicYearId = filters.academicYearId;

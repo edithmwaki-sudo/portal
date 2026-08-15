@@ -232,7 +232,16 @@ export class FeeStatementsService {
         ON e."student_id" = s.id AND ${this.ledgerSessionWhere(scope, 'e')}
       WHERE s."deleted_at" IS NULL ${searchClause}
       GROUP BY s.id, s."admission_number", u.name, c.code
-      ORDER BY (invoiced - paid) DESC, u.name ASC
+      ORDER BY (
+        COALESCE(SUM(CASE
+          WHEN e.type = 'INVOICE' THEN e."debit"
+          WHEN e.type = 'INVOICE_REVERSAL' THEN -e."credit"
+          ELSE 0 END), 0)
+        - COALESCE(SUM(CASE
+          WHEN e.type = 'PAYMENT' THEN e."credit"
+          WHEN e.type = 'PAYMENT_REVERSAL' THEN -e."debit"
+          ELSE 0 END), 0)
+      ) DESC, u.name ASC
       LIMIT ${params.limit} OFFSET ${(params.page - 1) * params.limit}`;
 
     const total = await this.prisma.$queryRaw<Numberish[]>`
