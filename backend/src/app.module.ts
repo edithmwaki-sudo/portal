@@ -65,6 +65,19 @@ import { getLogFilePath } from './logs/log-file';
           }) => ({ id: req.id, method: req.method, url: req.url, query: req.query, params: req.params }),
           res: (res: { statusCode?: number }) => ({ statusCode: res.statusCode }),
         },
+        customLogLevel: (req, res, err) => {
+          const status = res.statusCode ?? 500;
+          if (err || status >= 500) return 'error';
+          if (status >= 400) return 'warn';
+          // Successful requests are suppressed by default (they log at debug).
+          // Slow ones are elevated to warn so anomalies stay visible.
+          const threshold = Number(process.env.SLOW_THRESHOLD_MS ?? 2000);
+          const responseTime = (res as { responseTime?: number }).responseTime ?? 0;
+          if (Number.isFinite(threshold) && threshold > 0 && responseTime >= threshold) {
+            return 'warn';
+          }
+          return 'debug';
+        },
         transport: {
           targets: [
             // Pretty console output in dev; JSON lines on stdout in prod.
@@ -76,14 +89,16 @@ import { getLogFilePath } from './logs/log-file';
                     options: { singleLine: true, translateTime: 'HH:MM:ss' },
                   },
                 ]),
-            // Always mirror JSON lines to disk so the app logs are queryable
-            // through GET /logs (Security > App Logs).
+            // Mirror JSON lines to disk so the app logs are queryable through
+            // GET /logs (Security > App Logs). Rotate daily and keep the last
+            // 14 files so disk usage stays bounded at high request volume.
             {
-              target: 'pino/file',
+              target: 'pino-roll',
               options: {
-                destination: getLogFilePath(),
+                file: getLogFilePath(),
+                frequency: 'daily',
+                limit: { count: 14 },
                 mkdir: true,
-                append: true,
               },
             },
           ],

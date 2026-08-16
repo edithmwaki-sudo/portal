@@ -120,7 +120,7 @@ export default function FeeStatementsPage() {
         ]}
       />
       <div className="mx-[50px] mb-[30px]">
-        <div className="overflow-hidden rounded-lg bg-white shadow-lg shadow-black/5">
+        <div className="overflow-hidden rounded-lg bg-card shadow-lg shadow-black/5">
           <div className="flex flex-col gap-3 border-b px-4 py-4 md:flex-row md:items-center">
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
@@ -207,9 +207,9 @@ export default function FeeStatementsPage() {
                     <TableCell
                       className={`text-right font-medium tabular-nums ${
                         item.balance > 0
-                          ? "text-red-600"
+                          ? "text-destructive"
                           : item.balance < 0
-                            ? "text-green-600"
+                            ? "text-primary"
                             : ""
                       }`}
                     >

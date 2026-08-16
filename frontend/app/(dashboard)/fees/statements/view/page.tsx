@@ -53,8 +53,8 @@ function formatDate(value: string): string {
 }
 
 function balanceClass(value: number): string {
-  if (value > 0) return "text-red-600";
-  if (value < 0) return "text-green-600";
+  if (value > 0) return "text-destructive";
+  if (value < 0) return "text-primary";
   return "";
 }
 
@@ -68,14 +68,14 @@ function StatCard({
   tone?: "positive" | "negative";
 }) {
   return (
-    <div className="rounded-lg bg-white p-5 shadow-lg shadow-black/5">
+    <div className="rounded-lg bg-card p-5 shadow-lg shadow-black/5">
       <p className="text-sm font-medium text-muted-foreground">{label}</p>
       <p
         className={`mt-1 text-2xl font-semibold tabular-nums ${
           tone === "positive"
-            ? "text-green-600"
+            ? "text-primary"
             : tone === "negative"
-              ? "text-red-600"
+              ? "text-destructive"
               : ""
         }`}
       >
@@ -169,22 +169,22 @@ export default function FeeStatementViewPage() {
       />
       <div className="mx-[50px] mb-[30px] grid gap-6">
         {!id ? (
-          <div className="rounded-lg bg-white p-6 text-center text-sm text-muted-foreground shadow-lg shadow-black/5">
+          <div className="rounded-lg bg-card p-6 text-center text-sm text-muted-foreground shadow-lg shadow-black/5">
             Missing student id.
           </div>
         ) : loading ? (
-          <div className="grid gap-4 rounded-lg bg-white p-6 shadow-lg shadow-black/5">
+          <div className="grid gap-4 rounded-lg bg-card p-6 shadow-lg shadow-black/5">
             <Skeleton className="h-10 w-full" />
             <Skeleton className="h-10 w-full" />
             <Skeleton className="h-10 w-full" />
           </div>
         ) : error || !data ? (
-          <div className="rounded-lg bg-white p-6 text-center text-sm text-muted-foreground shadow-lg shadow-black/5">
+          <div className="rounded-lg bg-card p-6 text-center text-sm text-muted-foreground shadow-lg shadow-black/5">
             {error ?? "Could not load the fee statement."}
           </div>
         ) : (
           <>
-            <div className="flex flex-col gap-3 rounded-lg bg-white p-6 shadow-lg shadow-black/5 md:flex-row md:items-center md:justify-between">
+            <div className="flex flex-col gap-3 rounded-lg bg-card p-6 shadow-lg shadow-black/5 md:flex-row md:items-center md:justify-between">
               <div className="grid gap-1">
                 <div className="flex items-center gap-3">
                   <h2 className="text-lg font-semibold">{data.student.name}</h2>
@@ -234,7 +234,7 @@ export default function FeeStatementViewPage() {
               <StatCard label="Unallocated" value={CURRENCY.format(data.summary.unallocated)} />
             </div>
 
-            <div className="overflow-hidden rounded-lg bg-white shadow-lg shadow-black/5">
+            <div className="overflow-hidden rounded-lg bg-card shadow-lg shadow-black/5">
               <div className="border-b px-6 py-4">
                 <h3 className="text-base font-semibold">Session Summary</h3>
               </div>
@@ -270,7 +270,7 @@ export default function FeeStatementViewPage() {
               </Table>
             </div>
 
-            <div className="overflow-hidden rounded-lg bg-white shadow-lg shadow-black/5">
+            <div className="overflow-hidden rounded-lg bg-card shadow-lg shadow-black/5">
               <div className="border-b px-6 py-4">
                 <h3 className="text-base font-semibold">Ledger</h3>
               </div>

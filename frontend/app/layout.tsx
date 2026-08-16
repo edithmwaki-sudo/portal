@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { Toaster } from "@/components/ui/sonner";
 import { AuthProvider } from "@/lib/auth/auth-context";
+import { ThemeProvider } from "@/components/theme-provider";
 import "./globals.css";
 
 /**
@@ -20,7 +21,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className="h-full antialiased">
+    <html lang="en" className="h-full antialiased" suppressHydrationWarning>
       <link rel="preconnect" href="https://fonts.googleapis.com" />
       <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
       <link
@@ -28,12 +29,19 @@ export default function RootLayout({
         rel="stylesheet"
       />
       <body className="h-full overflow-hidden">
-        <TooltipProvider>
-          <AuthProvider>
-            {children}
-            <Toaster />
-          </AuthProvider>
-        </TooltipProvider>
+        <ThemeProvider
+          attribute="class"
+          defaultTheme="system"
+          enableSystem
+          disableTransitionOnChange
+        >
+          <TooltipProvider>
+            <AuthProvider>
+              {children}
+              <Toaster theme="system" />
+            </AuthProvider>
+          </TooltipProvider>
+        </ThemeProvider>
       </body>
     </html>
   );

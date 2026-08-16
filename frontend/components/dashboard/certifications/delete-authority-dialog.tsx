@@ -55,7 +55,7 @@ export function DeleteAuthorityDialog({
       <AlertDialogContent size="sm">
         <AlertDialogHeader>
           <AlertDialogMedia>
-            <Trash2 className="text-red-600" />
+            <Trash2 className="text-destructive" />
           </AlertDialogMedia>
           <AlertDialogTitle>Delete Certification Authority</AlertDialogTitle>
           <AlertDialogDescription>

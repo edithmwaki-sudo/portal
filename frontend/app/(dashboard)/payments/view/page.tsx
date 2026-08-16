@@ -134,7 +134,7 @@ export default function PaymentViewPage() {
       />
       <div className="mx-[50px] mb-[30px] grid gap-6">
         {invalid ? (
-          <div className="rounded-lg bg-white p-8 text-center shadow-lg shadow-black/5">
+          <div className="rounded-lg bg-card p-8 text-center shadow-lg shadow-black/5">
             <p className="text-sm text-muted-foreground">Missing payment id.</p>
             <Button variant="outline" className="mt-4" asChild>
               <Link href="/payments">
@@ -149,7 +149,7 @@ export default function PaymentViewPage() {
             <Skeleton className="h-48" />
           </div>
         ) : error || !payment ? (
-          <div className="rounded-lg bg-white p-8 text-center shadow-lg shadow-black/5">
+          <div className="rounded-lg bg-card p-8 text-center shadow-lg shadow-black/5">
             <p className="text-sm text-muted-foreground">{error ?? "Not found"}</p>
             <Button variant="outline" className="mt-4" asChild>
               <Link href="/payments">
@@ -160,7 +160,7 @@ export default function PaymentViewPage() {
           </div>
         ) : (
           <>
-            <div className="grid gap-4 rounded-lg bg-white p-6 shadow-lg shadow-black/5 sm:grid-cols-2 xl:grid-cols-4">
+            <div className="grid gap-4 rounded-lg bg-card p-6 shadow-lg shadow-black/5 sm:grid-cols-2 xl:grid-cols-4">
               <div>
                 <p className="text-sm font-medium text-muted-foreground">Status</p>
                 <div className="mt-1">
@@ -225,7 +225,7 @@ export default function PaymentViewPage() {
               ) : null}
             </div>
 
-            <div className="rounded-lg bg-white shadow-lg shadow-black/5">
+            <div className="rounded-lg bg-card shadow-lg shadow-black/5">
               <div className="border-b px-6 py-4">
                 <h2 className="text-base font-semibold">Allocations</h2>
               </div>

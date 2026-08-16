@@ -6,7 +6,7 @@ export function StatusBadge({ active }: { active: boolean }) {
       className={cn(
         "inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium",
         active
-          ? "bg-emerald-100 text-emerald-700"
+          ? "bg-primary/10 text-primary"
           : "bg-muted text-muted-foreground"
       )}
     >

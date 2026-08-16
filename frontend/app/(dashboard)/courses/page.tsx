@@ -236,7 +236,7 @@ export default function CoursesPage() {
         }
       />
       <div className="mx-[50px] mb-[30px]">
-        <div className="overflow-hidden rounded-lg bg-white shadow-lg shadow-black/5">
+        <div className="overflow-hidden rounded-lg bg-card shadow-lg shadow-black/5">
           <form
             className="border-b px-4 py-4"
             onSubmit={(event) => event.preventDefault()}

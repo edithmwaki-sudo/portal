@@ -20,7 +20,6 @@ export interface AuditEntry {
 export class AuditService {
   constructor(private readonly prisma: PrismaService) {}
 
-  // eslint-disable-next-line @typescript-eslint/require-await -- no-op while audit logging is disabled
   async log(
     action: string,
     userId: number | null,
@@ -30,30 +29,19 @@ export class AuditService {
     client?: ClientInfo | null,
     requestId?: string | null,
   ): Promise<void> {
-    // NOTE: audit logging is disabled for now — revisit later. Nothing is
-    // written to audit_logs; the signature is kept so all call sites stay intact.
-    void action;
-    void userId;
-    void entityType;
-    void entityId;
-    void values;
-    void client;
-    void requestId;
-    return;
-
-    // await this.prisma.auditLog.create({
-    //   data: {
-    //     userId,
-    //     action,
-    //     entityType: entityType ?? null,
-    //     entityId: entityId != null ? String(entityId) : null,
-    //     oldValues: (values?.oldValues as never) ?? null,
-    //     newValues: (values?.newValues as never) ?? null,
-    //     ipAddress: client?.ipAddress ?? null,
-    //     userAgent: client?.userAgent ?? null,
-    //     requestId: requestId ?? null,
-    //   },
-    // });
+    await this.prisma.auditLog.create({
+      data: {
+        userId,
+        action,
+        entityType: entityType ?? null,
+        entityId: entityId != null ? String(entityId) : null,
+        oldValues: (values?.oldValues as never) ?? null,
+        newValues: (values?.newValues as never) ?? null,
+        ipAddress: client?.ipAddress ?? null,
+        userAgent: client?.userAgent ?? null,
+        requestId: requestId ?? null,
+      },
+    });
   }
 
   async findAll(

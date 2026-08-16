@@ -15,7 +15,7 @@ export default function CreateCourseFeeAssignmentPage() {
         description="Assign a fee structure to a course within a curriculum period."
       />
       <div className="mx-[50px] mb-[30px]">
-        <div className="w-full rounded-lg bg-white p-6 shadow-lg shadow-black/5">
+        <div className="w-full rounded-lg bg-card p-6 shadow-lg shadow-black/5">
           <CourseFeeAssignmentForm
             onSuccess={() => router.push("/fees/assignments")}
             onCancel={() => router.push("/fees/assignments")}

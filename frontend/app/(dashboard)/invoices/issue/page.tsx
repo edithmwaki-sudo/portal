@@ -104,7 +104,7 @@ export default function IssueInvoicePage() {
       />
       <div className="mx-[50px] mb-[30px] max-w-3xl">
         <div className="grid gap-6">
-          <div className="rounded-lg bg-white p-6 shadow-lg shadow-black/5">
+          <div className="rounded-lg bg-card p-6 shadow-lg shadow-black/5">
             <div className="grid gap-2">
               <RequiredLabel>Student</RequiredLabel>
               <AsyncSearchSelect
@@ -123,18 +123,18 @@ export default function IssueInvoicePage() {
           </div>
 
           {loadingPreview ? (
-            <div className="grid gap-3 rounded-lg bg-white p-6 shadow-lg shadow-black/5">
+            <div className="grid gap-3 rounded-lg bg-card p-6 shadow-lg shadow-black/5">
               <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
               <p className="text-sm text-muted-foreground">
                 Loading fee preview...
               </p>
             </div>
           ) : previewError ? (
-            <div className="rounded-lg bg-white p-6 text-sm text-muted-foreground shadow-lg shadow-black/5">
+            <div className="rounded-lg bg-card p-6 text-sm text-muted-foreground shadow-lg shadow-black/5">
               {previewError}
             </div>
           ) : preview ? (
-            <div className="rounded-lg bg-white shadow-lg shadow-black/5">
+            <div className="rounded-lg bg-card shadow-lg shadow-black/5">
               <div className="border-b px-6 py-4">
                 <h2 className="text-lg font-semibold">
                   {preview.feeStructureName ?? "Fee preview"}

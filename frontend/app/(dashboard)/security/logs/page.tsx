@@ -20,12 +20,12 @@ import { Button } from "@/components/ui/button";
 const LIMIT = 25;
 
 const LEVEL_STYLES: Record<string, string> = {
-  trace: "bg-slate-100 text-slate-700",
+  trace: "bg-muted text-muted-foreground",
   debug: "bg-sky-100 text-sky-700",
-  info: "bg-emerald-100 text-emerald-700",
-  warn: "bg-amber-100 text-amber-700",
-  error: "bg-red-100 text-red-700",
-  fatal: "bg-red-200 text-red-800",
+  info: "bg-primary/10 text-primary",
+  warn: "bg-amber-100 text-amber-700 dark:bg-amber-500/15 dark:text-amber-300",
+  error: "bg-destructive/10 text-destructive",
+  fatal: "bg-destructive/15 text-destructive",
 };
 
 function formatTime(value: string): string {
@@ -90,7 +90,7 @@ export default function AppLogsPage() {
         primaryActions={[{ label: "Refresh", onClick: loadMore }]}
       />
       <div className="mx-[50px] mb-[30px]">
-        <div className="overflow-hidden rounded-lg bg-white shadow-lg shadow-black/5">
+        <div className="overflow-hidden rounded-lg bg-card shadow-lg shadow-black/5">
           <form
             className="flex items-center gap-2 border-b px-4 pb-4 pt-4"
             role="search"
@@ -177,7 +177,7 @@ export default function AppLogsPage() {
                         <span
                           className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${
                             LEVEL_STYLES[entry.level] ??
-                            "bg-slate-100 text-slate-700"
+                            "bg-muted text-muted-foreground"
                           }`}
                         >
                           {entry.level}

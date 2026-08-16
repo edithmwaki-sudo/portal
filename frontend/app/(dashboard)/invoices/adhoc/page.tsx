@@ -115,7 +115,7 @@ export default function AdhocInvoicePage() {
       />
       <div className="mx-[50px] mb-[30px] max-w-3xl">
         <div className="grid gap-6">
-          <div className="grid gap-4 rounded-lg bg-white p-6 shadow-lg shadow-black/5 md:grid-cols-2">
+          <div className="grid gap-4 rounded-lg bg-card p-6 shadow-lg shadow-black/5 md:grid-cols-2">
             <div className="grid gap-2">
               <RequiredLabel>Student</RequiredLabel>
               <AsyncSearchSelect
@@ -156,7 +156,7 @@ export default function AdhocInvoicePage() {
             </div>
           </div>
 
-          <div className="rounded-lg bg-white p-6 shadow-lg shadow-black/5">
+          <div className="rounded-lg bg-card p-6 shadow-lg shadow-black/5">
             <h2 className="mb-4 text-base font-semibold">Line Items</h2>
             <div className="grid gap-3">
               {lines.map((line, index) => (
@@ -216,7 +216,7 @@ export default function AdhocInvoicePage() {
             </div>
           </div>
 
-          <div className="rounded-lg bg-white p-6 shadow-lg shadow-black/5">
+          <div className="rounded-lg bg-card p-6 shadow-lg shadow-black/5">
             <label className="mb-2 block text-sm font-medium">Notes</label>
             <Textarea
               rows={3}

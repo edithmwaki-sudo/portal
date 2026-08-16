@@ -45,7 +45,7 @@ function StatCard({
   hint?: string;
 }) {
   return (
-    <div className="rounded-lg bg-white p-5 shadow-lg shadow-black/5">
+    <div className="rounded-lg bg-card p-5 shadow-lg shadow-black/5">
       <p className="text-sm font-medium text-muted-foreground">{label}</p>
       <p className="mt-1 text-2xl font-semibold tabular-nums">{value}</p>
       {hint ? (
@@ -125,7 +125,7 @@ export default function FinanceReportsPage() {
             ))}
           </div>
         ) : error ? (
-          <div className="rounded-lg bg-white p-8 text-center shadow-lg shadow-black/5">
+          <div className="rounded-lg bg-card p-8 text-center shadow-lg shadow-black/5">
             <AlertTriangle className="mx-auto mb-3 h-8 w-8 text-muted-foreground" />
             <p className="text-sm text-muted-foreground">{error}</p>
           </div>
@@ -145,7 +145,7 @@ export default function FinanceReportsPage() {
             </div>
 
             <div className="grid gap-6 xl:grid-cols-2">
-              <div className="rounded-lg bg-white p-5 shadow-lg shadow-black/5">
+              <div className="rounded-lg bg-card p-5 shadow-lg shadow-black/5">
                 <CardTitle>Aging of Outstanding Balances</CardTitle>
                 <Table>
                   <TableHeader>
@@ -175,7 +175,7 @@ export default function FinanceReportsPage() {
                 </Table>
               </div>
 
-              <div className="rounded-lg bg-white p-5 shadow-lg shadow-black/5">
+              <div className="rounded-lg bg-card p-5 shadow-lg shadow-black/5">
                 <CardTitle>Billing Summary by Course</CardTitle>
                 <Table>
                   <TableHeader>
@@ -218,7 +218,7 @@ export default function FinanceReportsPage() {
             </div>
 
             <div className="grid gap-6 xl:grid-cols-2">
-              <div className="rounded-lg bg-white p-5 shadow-lg shadow-black/5">
+              <div className="rounded-lg bg-card p-5 shadow-lg shadow-black/5">
                 <CardTitle>Defaulters</CardTitle>
                 <Table>
                   <TableHeader>
@@ -250,7 +250,7 @@ export default function FinanceReportsPage() {
                 </Table>
               </div>
 
-              <div className="rounded-lg bg-white p-5 shadow-lg shadow-black/5">
+              <div className="rounded-lg bg-card p-5 shadow-lg shadow-black/5">
                 <CardTitle>Credit Balances</CardTitle>
                 <Table>
                   <TableHeader>
@@ -284,7 +284,7 @@ export default function FinanceReportsPage() {
             </div>
 
             <div className="grid gap-6 xl:grid-cols-2">
-              <div className="rounded-lg bg-white p-5 shadow-lg shadow-black/5">
+              <div className="rounded-lg bg-card p-5 shadow-lg shadow-black/5">
                 <CardTitle>Collections</CardTitle>
                 <Table>
                   <TableHeader>
@@ -322,7 +322,7 @@ export default function FinanceReportsPage() {
                 </Table>
               </div>
 
-              <div className="rounded-lg bg-white p-5 shadow-lg shadow-black/5">
+              <div className="rounded-lg bg-card p-5 shadow-lg shadow-black/5">
                 <CardTitle>Reversal Register</CardTitle>
                 <Table>
                   <TableHeader>

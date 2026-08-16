@@ -15,6 +15,7 @@ import {
 import { useSidebar } from "@/components/ui/sidebar"
 import { siteConfig } from "@/config/site"
 import { useAuth } from "@/lib/auth/auth-context"
+import { ThemeToggle } from "@/components/theme-toggle"
 
 /**
  * Static hamburger: three stacked bars. Icon never changes regardless of the
@@ -67,6 +68,7 @@ export function Navbar({ title = siteConfig.name }: NavbarProps) {
       </Button>
       <div className="text-sm font-semibold tracking-tight">{title}</div>
       <div className="ml-auto flex items-center gap-1.5">
+        <ThemeToggle />
         <Button variant="ghost" size="icon-sm" aria-label="Notifications">
           <Bell />
         </Button>

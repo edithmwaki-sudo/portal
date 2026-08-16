@@ -871,7 +871,7 @@ export function StaffForm({ onSuccess, onCancel }: StaffFormProps) {
           </div>
         </FormSection>
 
-        <div className="flex items-center justify-end gap-2 rounded-lg bg-white p-6 shadow-lg shadow-black/5">
+        <div className="flex items-center justify-end gap-2 rounded-lg bg-card p-6 shadow-lg shadow-black/5">
           <Button
             type="button"
             variant="outline"

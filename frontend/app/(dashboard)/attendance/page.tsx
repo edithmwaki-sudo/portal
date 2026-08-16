@@ -159,9 +159,9 @@ export default function AttendancePage() {
 
   function statusBadge(status: string) {
     const classes: Record<string, string> = {
-      present: "bg-emerald-100 text-emerald-700",
-      absent: "bg-red-100 text-red-700",
-      late: "bg-amber-100 text-amber-700",
+      present: "bg-primary/10 text-primary",
+      absent: "bg-destructive/10 text-destructive",
+      late: "bg-amber-100 text-amber-700 dark:bg-amber-500/15 dark:text-amber-300",
       excused: "bg-sky-100 text-sky-700",
     };
     return (
@@ -183,7 +183,7 @@ export default function AttendancePage() {
         description="Mark and review class attendance for your assigned units."
       />
       <div className="mx-[50px] mb-[30px] space-y-[30px]">
-        <div className="overflow-hidden rounded-lg bg-white shadow-lg shadow-black/5">
+        <div className="overflow-hidden rounded-lg bg-card shadow-lg shadow-black/5">
           <div className="border-b px-4 py-4">
             <div className="flex flex-wrap items-end gap-4">
               <div className="w-full max-w-sm space-y-1.5">
@@ -314,7 +314,7 @@ export default function AttendancePage() {
         </div>
 
         {records.length > 0 && (
-          <div className="overflow-hidden rounded-lg bg-white shadow-lg shadow-black/5">
+          <div className="overflow-hidden rounded-lg bg-card shadow-lg shadow-black/5">
             <div className="border-b px-6 py-4">
               <h2 className="text-lg font-semibold">
                 Records for {sessionDate}
@@ -322,15 +322,15 @@ export default function AttendancePage() {
             </div>
             <div className="flex flex-wrap gap-3 px-6 py-3 text-sm text-muted-foreground">
               <span className="inline-flex items-center gap-1.5">
-                <CheckCircle2 className="h-4 w-4 text-emerald-600" />
+                <CheckCircle2 className="h-4 w-4 text-primary" />
                 {records.filter((r) => r.status === "present").length} Present
               </span>
               <span className="inline-flex items-center gap-1.5">
-                <XCircle className="h-4 w-4 text-red-600" />
+                <XCircle className="h-4 w-4 text-destructive" />
                 {records.filter((r) => r.status === "absent").length} Absent
               </span>
               <span className="inline-flex items-center gap-1.5">
-                <Clock3 className="h-4 w-4 text-amber-600" />
+                <Clock3 className="h-4 w-4 text-amber-600 dark:text-amber-400" />
                 {records.filter((r) => r.status === "late").length} Late
               </span>
               <span className="inline-flex items-center gap-1.5">

@@ -107,7 +107,7 @@ export function SearchStudentClient() {
       <div className="mx-[50px] mb-[30px]">
         <div className="grid gap-4 lg:grid-cols-2">
           <div className="space-y-4">
-            <section className="rounded-lg bg-white p-6 shadow-lg shadow-black/5">
+            <section className="rounded-lg bg-card p-6 shadow-lg shadow-black/5">
               <h2 className="text-sm font-semibold text-foreground">
                 Select a student
               </h2>
@@ -127,7 +127,7 @@ export function SearchStudentClient() {
               </div>
             </section>
 
-            <section className="rounded-lg bg-white shadow-lg shadow-black/5">
+            <section className="rounded-lg bg-card shadow-lg shadow-black/5">
               <div className="border-b px-6 py-4">
                 <h2 className="text-sm font-semibold text-foreground">
                   Confirm the student
@@ -171,7 +171,7 @@ export function SearchStudentClient() {
             </section>
           </div>
 
-          <section className="w-full max-w-[256px] rounded-lg bg-white shadow-lg shadow-black/5">
+          <section className="w-full max-w-[256px] rounded-lg bg-card shadow-lg shadow-black/5">
             <div className="border-b px-4 py-3">
               <h2 className="text-sm font-semibold text-foreground">
                 Student actions
@@ -208,7 +208,7 @@ export function SearchStudentClient() {
                       <button
                         type="button"
                         onClick={() => setStudentToDelete(selected)}
-                        className="flex w-full items-center gap-2.5 rounded-md border-l-[3px] border-l-transparent px-3 py-2.5 text-sm text-red-600 transition-colors duration-200 hover:bg-red-50 hover:text-red-700"
+                        className="flex w-full items-center gap-2.5 rounded-md border-l-[3px] border-l-transparent px-3 py-2.5 text-sm text-destructive transition-colors duration-200 hover:bg-destructive/10 hover:text-destructive"
                       >
                         {inner}
                       </button>

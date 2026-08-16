@@ -272,7 +272,7 @@ export default function TimetablesPage() {
         }
       />
       <div className="mx-[50px] mb-[30px] space-y-[30px]">
-        <div className="overflow-hidden rounded-lg bg-white shadow-lg shadow-black/5">
+        <div className="overflow-hidden rounded-lg bg-card shadow-lg shadow-black/5">
           <div className="border-b px-4 py-4">
             <div className="flex flex-wrap items-end gap-4">
               <div className="w-full max-w-sm space-y-1.5">
@@ -381,7 +381,7 @@ export default function TimetablesPage() {
                                   </p>
                                   {canDelete && (
                                     <button
-                                      className="mt-0.5 text-[11px] text-red-600 hover:underline"
+                                      className="mt-0.5 text-[11px] text-destructive hover:underline"
                                       onClick={() => setDeleteTarget(entry)}
                                     >
                                       Delete
@@ -407,7 +407,7 @@ export default function TimetablesPage() {
         </div>
 
         {entries.length > 0 && (
-          <div className="overflow-hidden rounded-lg bg-white shadow-lg shadow-black/5">
+          <div className="overflow-hidden rounded-lg bg-card shadow-lg shadow-black/5">
             <div className="border-b px-6 py-4">
               <h2 className="text-lg font-semibold">All Entries</h2>
             </div>
@@ -438,7 +438,7 @@ export default function TimetablesPage() {
                       size="icon"
                       onClick={() => setDeleteTarget(entry)}
                     >
-                      <Trash2 className="h-4 w-4 text-red-600" />
+                      <Trash2 className="h-4 w-4 text-destructive" />
                     </Button>
                   )}
                 </div>
@@ -481,7 +481,7 @@ export default function TimetablesPage() {
                 </SelectContent>
               </Select>
               {form.formState.errors.unitId && (
-                <p className="text-sm text-red-600">
+                <p className="text-sm text-destructive">
                   {form.formState.errors.unitId.message}
                 </p>
               )}
@@ -515,7 +515,7 @@ export default function TimetablesPage() {
                 </SelectContent>
               </Select>
               {form.formState.errors.trainerStaffId && (
-                <p className="text-sm text-red-600">
+                <p className="text-sm text-destructive">
                   {form.formState.errors.trainerStaffId.message}
                 </p>
               )}
@@ -547,7 +547,7 @@ export default function TimetablesPage() {
                 </SelectContent>
               </Select>
               {form.formState.errors.lectureRoomId && (
-                <p className="text-sm text-red-600">
+                <p className="text-sm text-destructive">
                   {form.formState.errors.lectureRoomId.message}
                 </p>
               )}
@@ -582,7 +582,7 @@ export default function TimetablesPage() {
                   {...form.register("startTime")}
                 />
                 {form.formState.errors.startTime && (
-                  <p className="text-sm text-red-600">
+                  <p className="text-sm text-destructive">
                     {form.formState.errors.startTime.message}
                   </p>
                 )}
@@ -591,7 +591,7 @@ export default function TimetablesPage() {
                 <Label>End Time</Label>
                 <Input type="time" {...form.register("endTime")} />
                 {form.formState.errors.endTime && (
-                  <p className="text-sm text-red-600">
+                  <p className="text-sm text-destructive">
                     {form.formState.errors.endTime.message}
                   </p>
                 )}

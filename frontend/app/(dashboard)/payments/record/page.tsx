@@ -95,7 +95,7 @@ export default function RecordPaymentPage() {
       />
       <div className="mx-[50px] mb-[30px] max-w-3xl">
         <div className="grid gap-6">
-          <div className="grid gap-4 rounded-lg bg-white p-6 shadow-lg shadow-black/5 md:grid-cols-2">
+          <div className="grid gap-4 rounded-lg bg-card p-6 shadow-lg shadow-black/5 md:grid-cols-2">
             <div className="grid gap-2 md:col-span-2">
               <RequiredLabel>Student</RequiredLabel>
               <AsyncSearchSelect

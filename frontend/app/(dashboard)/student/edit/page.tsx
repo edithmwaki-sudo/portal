@@ -50,17 +50,17 @@ export default function EditStudentPage() {
       />
       <div className="mx-[50px] mb-[30px]">
         {!id ? (
-          <div className="rounded-lg bg-white p-6 text-center text-sm text-muted-foreground shadow-lg shadow-black/5">
+          <div className="rounded-lg bg-card p-6 text-center text-sm text-muted-foreground shadow-lg shadow-black/5">
             Missing student id.
           </div>
         ) : loading ? (
-          <div className="grid gap-4 rounded-lg bg-white p-6 shadow-lg shadow-black/5">
+          <div className="grid gap-4 rounded-lg bg-card p-6 shadow-lg shadow-black/5">
             <Skeleton className="h-10 w-full" />
             <Skeleton className="h-10 w-full" />
             <Skeleton className="h-10 w-full" />
           </div>
         ) : error ? (
-          <div className="rounded-lg bg-white p-6 text-center text-sm text-muted-foreground shadow-lg shadow-black/5">
+          <div className="rounded-lg bg-card p-6 text-center text-sm text-muted-foreground shadow-lg shadow-black/5">
             {error}
           </div>
         ) : student ? (

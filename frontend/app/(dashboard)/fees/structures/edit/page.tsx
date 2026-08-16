@@ -49,7 +49,7 @@ export default function EditFeeStructurePage() {
         description="Update the fee structure and its line items."
       />
       <div className="mx-[50px] mb-[30px]">
-        <div className="w-full rounded-lg bg-white p-6 shadow-lg shadow-black/5">
+        <div className="w-full rounded-lg bg-card p-6 shadow-lg shadow-black/5">
           {!id ? (
             <p className="py-8 text-center text-sm text-muted-foreground">
               Missing fee structure id.

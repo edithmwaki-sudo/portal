@@ -15,7 +15,7 @@ export default function CreateAuthorityPage() {
         description="Create a certification authority (e.g. an examination body)."
       />
       <div className="mx-[50px] mb-[30px]">
-        <div className="w-full rounded-lg bg-white p-6 shadow-lg shadow-black/5">
+        <div className="w-full rounded-lg bg-card p-6 shadow-lg shadow-black/5">
           <AuthorityForm
             onSuccess={() => router.push("/certification/authorities")}
             onCancel={() => router.push("/certification/authorities")}

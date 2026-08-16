@@ -166,7 +166,7 @@ export default function UnitsPage() {
         }
       />
       <div className="mx-[50px] mb-[30px]">
-        <div className="overflow-hidden rounded-lg bg-white shadow-lg shadow-black/5">
+        <div className="overflow-hidden rounded-lg bg-card shadow-lg shadow-black/5">
           {!courseId ? (
             <div className="px-6 py-16 text-center">
               <p className="text-sm text-muted-foreground">

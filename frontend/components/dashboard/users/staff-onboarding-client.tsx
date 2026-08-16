@@ -56,7 +56,7 @@ export function StaffOnboardingClient() {
         ]}
       />
       <div className="mx-[50px] mb-[30px]">
-        <div className="overflow-hidden rounded-lg bg-white shadow-lg shadow-black/5">
+        <div className="overflow-hidden rounded-lg bg-card shadow-lg shadow-black/5">
           <form
             className="flex items-center gap-2 border-b px-4 pb-4 pt-4"
             role="search"
@@ -151,8 +151,8 @@ export function StaffOnboardingClient() {
                       <span
                         className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${
                           member.status
-                            ? "bg-emerald-100 text-emerald-700"
-                            : "bg-red-100 text-red-700"
+                            ? "bg-primary/10 text-primary"
+                            : "bg-destructive/10 text-destructive"
                         }`}
                       >
                         {member.status ? "Active" : "Inactive"}

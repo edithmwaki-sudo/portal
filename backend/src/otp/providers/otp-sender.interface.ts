@@ -20,6 +20,9 @@ export class ConsoleOtpSender implements OtpSender {
   private readonly logger = new Logger('OtpSender');
 
   async send({ destination, code, purpose }: OtpSendParams): Promise<void> {
-    this.logger.log(`[${purpose}] OTP for ${destination}: ${code}`);
+    this.logger.log(`[${purpose}] OTP issued to ${destination}`);
+    // The code itself is only emitted at debug level (LOG_LEVEL=debug) so it
+    // never lands in the production log while remaining available for dev.
+    this.logger.debug(`[${purpose}] OTP code for ${destination}: ${code}`);
   }
 }

@@ -97,12 +97,12 @@ export default function DashboardPage() {
             {Array.from({ length: 6 }).map((_, index) => (
               <div
                 key={index}
-                className="h-40 animate-pulse rounded-lg bg-white shadow-lg shadow-black/5"
+                className="h-40 animate-pulse rounded-lg bg-card shadow-lg shadow-black/5"
               />
             ))}
           </div>
         ) : visibleModules.length === 0 ? (
-          <div className="rounded-lg bg-white p-8 text-center shadow-lg shadow-black/5">
+          <div className="rounded-lg bg-card p-8 text-center shadow-lg shadow-black/5">
             <Users className="mx-auto mb-3 h-8 w-8 text-muted-foreground" />
             <p className="text-sm text-muted-foreground">
               No modules are available for your account yet. Ask an administrator
@@ -115,9 +115,9 @@ export default function DashboardPage() {
               <Link
                 key={mod.href}
                 href={mod.href}
-                className="group flex flex-col gap-3 rounded-lg bg-white p-6 shadow-lg shadow-black/5 transition-colors hover:bg-muted/40"
+                className="group flex flex-col gap-3 rounded-lg bg-card p-6 shadow-lg shadow-black/5 transition-colors hover:bg-muted/40"
               >
-                <span className="flex size-11 items-center justify-center rounded-md bg-emerald-100 text-emerald-700">
+                <span className="flex size-11 items-center justify-center rounded-md bg-emerald-100 text-primary">
                   <mod.icon className="size-5" />
                 </span>
                 <div className="grid gap-1">

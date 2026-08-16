@@ -107,7 +107,7 @@ export default function CertificationLevelsPage() {
           <ArrowLeft className="h-4 w-4" />
           Back to authorities
         </Link>
-        <div className="overflow-hidden rounded-lg bg-white shadow-lg shadow-black/5">
+        <div className="overflow-hidden rounded-lg bg-card shadow-lg shadow-black/5">
           <form
             className="flex items-center gap-2 border-b px-4 py-4"
             role="search"

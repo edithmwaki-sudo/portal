@@ -134,7 +134,7 @@ export default function InvoiceViewPage() {
       />
       <div className="mx-[50px] mb-[30px] grid gap-6">
         {invalid ? (
-          <div className="rounded-lg bg-white p-8 text-center shadow-lg shadow-black/5">
+          <div className="rounded-lg bg-card p-8 text-center shadow-lg shadow-black/5">
             <p className="text-sm text-muted-foreground">Missing invoice id.</p>
             <Button variant="outline" className="mt-4" asChild>
               <Link href="/invoices">
@@ -149,7 +149,7 @@ export default function InvoiceViewPage() {
             <Skeleton className="h-64" />
           </div>
         ) : error || !invoice ? (
-          <div className="rounded-lg bg-white p-8 text-center shadow-lg shadow-black/5">
+          <div className="rounded-lg bg-card p-8 text-center shadow-lg shadow-black/5">
             <p className="text-sm text-muted-foreground">{error ?? "Not found"}</p>
             <Button variant="outline" className="mt-4" asChild>
               <Link href="/invoices">
@@ -160,7 +160,7 @@ export default function InvoiceViewPage() {
           </div>
         ) : (
           <>
-            <div className="grid gap-4 rounded-lg bg-white p-6 shadow-lg shadow-black/5 sm:grid-cols-2 xl:grid-cols-4">
+            <div className="grid gap-4 rounded-lg bg-card p-6 shadow-lg shadow-black/5 sm:grid-cols-2 xl:grid-cols-4">
               <div>
                 <p className="text-sm font-medium text-muted-foreground">Status</p>
                 <div className="mt-1">
@@ -227,7 +227,7 @@ export default function InvoiceViewPage() {
               ) : null}
             </div>
 
-            <div className="rounded-lg bg-white shadow-lg shadow-black/5">
+            <div className="rounded-lg bg-card shadow-lg shadow-black/5">
               <div className="border-b px-6 py-4">
                 <h2 className="text-base font-semibold">Line Items</h2>
               </div>
@@ -267,7 +267,7 @@ export default function InvoiceViewPage() {
               </Table>
             </div>
 
-            <div className="rounded-lg bg-white shadow-lg shadow-black/5">
+            <div className="rounded-lg bg-card shadow-lg shadow-black/5">
               <div className="grid gap-4 border-b px-6 py-4 sm:grid-cols-4">
                 <h2 className="text-base font-semibold sm:col-span-4">
                   Student Fee Statement

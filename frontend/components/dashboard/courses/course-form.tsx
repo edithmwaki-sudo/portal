@@ -342,7 +342,7 @@ export function CourseForm({ course, onSuccess, onCancel }: CourseFormProps) {
                   <span className="font-medium">{item.cycleName}</span>
                   <span
                     className={
-                      item.isActive ? "text-emerald-600" : "text-muted-foreground"
+                      item.isActive ? "text-primary" : "text-muted-foreground"
                     }
                   >
                     {item.isActive ? "Active" : "Inactive"}

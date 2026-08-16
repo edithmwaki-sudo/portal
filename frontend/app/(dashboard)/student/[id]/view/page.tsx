@@ -89,22 +89,22 @@ export default function ViewStudentPage() {
       />
       <div className="mx-[50px] mb-[30px]">
         {!id ? (
-          <div className="rounded-lg bg-white p-6 text-center text-sm text-muted-foreground shadow-lg shadow-black/5">
+          <div className="rounded-lg bg-card p-6 text-center text-sm text-muted-foreground shadow-lg shadow-black/5">
             Missing student id.
           </div>
         ) : loading ? (
-          <div className="grid gap-4 rounded-lg bg-white p-6 shadow-lg shadow-black/5">
+          <div className="grid gap-4 rounded-lg bg-card p-6 shadow-lg shadow-black/5">
             <Skeleton className="h-10 w-64" />
             <Skeleton className="h-40 w-full" />
             <Skeleton className="h-40 w-full" />
           </div>
         ) : error ? (
-          <div className="rounded-lg bg-white p-6 text-center text-sm text-muted-foreground shadow-lg shadow-black/5">
+          <div className="rounded-lg bg-card p-6 text-center text-sm text-muted-foreground shadow-lg shadow-black/5">
             {error}
           </div>
         ) : student ? (
           <div className="space-y-4">
-            <div className="flex flex-wrap items-center justify-between gap-2 rounded-lg bg-white px-6 py-4 shadow-lg shadow-black/5">
+            <div className="flex flex-wrap items-center justify-between gap-2 rounded-lg bg-card px-6 py-4 shadow-lg shadow-black/5">
               <div className="flex min-w-0 flex-col gap-1">
                 <h1 className="truncate text-xl font-semibold tracking-tight">
                   {student.user.name}
@@ -124,7 +124,7 @@ export default function ViewStudentPage() {
             </div>
 
             <div className="grid gap-4 lg:grid-cols-2">
-              <section className="rounded-lg bg-white p-6 shadow-lg shadow-black/5">
+              <section className="rounded-lg bg-card p-6 shadow-lg shadow-black/5">
                 <h2 className="mb-3 text-sm font-semibold text-foreground">
                   Personal &amp; Contact
                 </h2>
@@ -157,7 +157,7 @@ export default function ViewStudentPage() {
               </section>
 
               <section className="space-y-4">
-                <div className="rounded-lg bg-white p-6 shadow-lg shadow-black/5">
+                <div className="rounded-lg bg-card p-6 shadow-lg shadow-black/5">
                   <h2 className="mb-3 text-sm font-semibold text-foreground">
                     Admission
                   </h2>
@@ -177,7 +177,7 @@ export default function ViewStudentPage() {
                   />
                 </div>
 
-                <div className="rounded-lg bg-white p-6 shadow-lg shadow-black/5">
+                <div className="rounded-lg bg-card p-6 shadow-lg shadow-black/5">
                   <h2 className="mb-3 text-sm font-semibold text-foreground">
                     Next of Kin
                   </h2>

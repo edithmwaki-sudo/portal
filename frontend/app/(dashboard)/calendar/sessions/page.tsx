@@ -138,7 +138,7 @@ export default function CalendarSessionsPage() {
         ]}
       />
       <div className="mx-[50px] mb-[30px]">
-        <div className="overflow-hidden rounded-lg bg-white shadow-lg shadow-black/5">
+        <div className="overflow-hidden rounded-lg bg-card shadow-lg shadow-black/5">
           <form
             className="border-b px-4 py-4"
             onSubmit={(event) => event.preventDefault()}
@@ -244,7 +244,7 @@ export default function CalendarSessionsPage() {
                         className={cn(
                           "inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium",
                           session.isActive
-                            ? "bg-emerald-100 text-emerald-700"
+                            ? "bg-primary/10 text-primary"
                             : "bg-muted text-muted-foreground"
                         )}
                       >

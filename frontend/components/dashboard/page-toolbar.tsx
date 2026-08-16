@@ -75,7 +75,7 @@ export function PageToolbar({
   }, [menuActions, pathname]);
 
   return (
-    <div className="mx-[50px] my-[30px] flex flex-col gap-3 rounded-lg bg-white px-6 py-4 shadow-lg shadow-black/5">
+    <div className="mx-[50px] my-[30px] flex flex-col gap-3 rounded-lg bg-card px-6 py-4 shadow-lg shadow-black/5">
       <div className="flex min-w-0 items-center justify-between gap-4">
         <div className="flex min-w-0 flex-col gap-1">
           <h1 className="truncate text-2xl font-semibold tracking-tight">{title}</h1>
@@ -121,7 +121,7 @@ export function PageToolbar({
                 {menuActions.map((action) => {
                   const className = cn(
                     "whitespace-nowrap",
-                    action.destructive && "text-red-600 focus:text-red-600"
+                    action.destructive && "text-destructive focus:text-destructive"
                   );
                   return action.href ? (
                     <DropdownMenuItem

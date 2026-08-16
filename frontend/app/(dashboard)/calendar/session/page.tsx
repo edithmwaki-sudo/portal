@@ -339,7 +339,7 @@ export default function SessionCalendarPage() {
       />
       <div className="mx-[50px] mb-[30px] space-y-[30px]">
         {canGenerate && (
-          <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg bg-white px-6 py-4 shadow-lg shadow-black/5">
+          <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg bg-card px-6 py-4 shadow-lg shadow-black/5">
             <p className="text-sm text-muted-foreground">
               Generate system events (public holidays) for this session, or sync
               Kenyan public holidays from the Nager.Date API.
@@ -361,7 +361,7 @@ export default function SessionCalendarPage() {
           </div>
         )}
 
-        <div className="overflow-hidden rounded-lg bg-white shadow-lg shadow-black/5">
+        <div className="overflow-hidden rounded-lg bg-card shadow-lg shadow-black/5">
           <div className="flex items-center justify-between border-b px-6 py-4">
             <h2 className="text-lg font-semibold">
               {MONTH_LABELS[cursor.getMonth()]} {cursor.getFullYear()}
@@ -428,7 +428,7 @@ export default function SessionCalendarPage() {
                       key={key}
                       className={cn(
                         "flex min-h-[70px] cursor-pointer flex-col border-r border-b p-1 last:border-r-0",
-                        isWeekend && "bg-slate-50"
+                        isWeekend && "bg-muted/50"
                       )}
                       onClick={() => canAdd && openCreateDialog(key)}
                     >
@@ -479,7 +479,7 @@ export default function SessionCalendarPage() {
         </div>
 
         {events.length > 0 && (
-          <div className="overflow-hidden rounded-lg bg-white shadow-lg shadow-black/5">
+          <div className="overflow-hidden rounded-lg bg-card shadow-lg shadow-black/5">
             <div className="flex items-center justify-between border-b px-6 py-4">
               <h2 className="text-lg font-semibold">Events</h2>
             </div>
@@ -541,7 +541,7 @@ export default function SessionCalendarPage() {
                                   size="icon-sm"
                                   variant="outline"
                                   aria-label={`Delete ${event.title}`}
-                                  className="text-red-600 hover:text-red-600"
+                                  className="text-destructive hover:text-destructive"
                                   onClick={() => setDeleteTarget(event)}
                                 >
                                   <Trash2 />

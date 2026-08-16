@@ -92,7 +92,7 @@ export default function PermissionsPage() {
         ]}
       />
       <div className="mx-[50px] mb-[30px]">
-        <div className="overflow-hidden rounded-lg bg-white shadow-lg shadow-black/5">
+        <div className="overflow-hidden rounded-lg bg-card shadow-lg shadow-black/5">
           <Table>
             <TableHeader>
               <TableRow>

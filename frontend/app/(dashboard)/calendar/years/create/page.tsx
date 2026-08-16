@@ -35,7 +35,7 @@ export default function CreateAcademicYearPage() {
         ]}
       />
       <div className="mx-[50px] mb-[30px]">
-        <div className="w-full rounded-lg bg-white p-6 shadow-lg shadow-black/5">
+        <div className="w-full rounded-lg bg-card p-6 shadow-lg shadow-black/5">
           <AcademicYearForm
             onSuccess={() => router.push("/calendar")}
             onCancel={() => router.push("/calendar")}

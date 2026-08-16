@@ -80,7 +80,7 @@ export default function CertificationAuthoritiesPage() {
         ]}
       />
       <div className="mx-[50px] mb-[30px]">
-        <div className="overflow-hidden rounded-lg bg-white shadow-lg shadow-black/5">
+        <div className="overflow-hidden rounded-lg bg-card shadow-lg shadow-black/5">
           <form
             className="flex items-center gap-2 border-b px-4 py-4"
             role="search"

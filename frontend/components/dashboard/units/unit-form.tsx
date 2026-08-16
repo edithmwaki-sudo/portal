@@ -373,7 +373,7 @@ function ContextValue({ label, value }: { label: string; value?: string | null }
   return (
     <div className="space-y-1.5">
       <FormLabel>{label}</FormLabel>
-      <p className="min-h-9 rounded-md border border-input bg-white px-3 py-2 text-sm font-medium">
+      <p className="min-h-9 rounded-md border border-input bg-card px-3 py-2 text-sm font-medium">
         {value ?? <span className="text-muted-foreground">—</span>}
       </p>
     </div>

@@ -142,7 +142,7 @@ export function AssignPermissions({ roleId }: { roleId: number | null }) {
             permissions appear at the top.
           </p>
         </div>
-        <div className="overflow-hidden rounded-lg bg-white shadow-lg shadow-black/5">
+        <div className="overflow-hidden rounded-lg bg-card shadow-lg shadow-black/5">
           <Table>
             <TableHeader>
               <TableRow>

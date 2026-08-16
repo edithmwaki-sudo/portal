@@ -76,7 +76,7 @@ export default function AuditLogsPage() {
         description="Review who did what, when, and from where."
       />
       <div className="mx-[50px] mb-[30px]">
-        <div className="overflow-hidden rounded-lg bg-white shadow-lg shadow-black/5">
+        <div className="overflow-hidden rounded-lg bg-card shadow-lg shadow-black/5">
           <form
             className="flex items-center gap-2 border-b px-4 pb-4 pt-4"
             role="search"
@@ -168,7 +168,7 @@ export default function AuditLogsPage() {
                       )}
                     </TableCell>
                     <TableCell className="px-4">
-                      <span className="font-mono text-xs text-emerald-700">
+                      <span className="font-mono text-xs text-primary">
                         {entry.action}
                       </span>
                     </TableCell>

@@ -58,7 +58,7 @@ export default function AdmissionLetterPage() {
         }
       `}</style>
 
-      <div className="mx-[50px] my-[30px] flex items-center justify-between rounded-lg bg-white px-6 py-4 shadow-lg shadow-black/5 print:hidden">
+      <div className="mx-[50px] my-[30px] flex items-center justify-between rounded-lg bg-card px-6 py-4 shadow-lg shadow-black/5 print:hidden">
         <div className="flex min-w-0 flex-col gap-1">
           <h1 className="truncate text-2xl font-semibold tracking-tight">
             Admission Letter
