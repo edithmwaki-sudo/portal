@@ -55,6 +55,16 @@ import { getLogFilePath } from './logs/log-file';
           ],
           censor: '[REDACTED]',
         },
+        serializers: {
+          req: (req: {
+            id?: string | number;
+            method?: string;
+            url?: string;
+            query?: unknown;
+            params?: unknown;
+          }) => ({ id: req.id, method: req.method, url: req.url, query: req.query, params: req.params }),
+          res: (res: { statusCode?: number }) => ({ statusCode: res.statusCode }),
+        },
         transport: {
           targets: [
             // Pretty console output in dev; JSON lines on stdout in prod.
@@ -89,8 +99,12 @@ import { getLogFilePath } from './logs/log-file';
     ThrottlerModule.forRoot({
       throttlers: [
         {
-          ttl: 60_000,
-          limit: 100,
+          // Per-IP rate limit for general (mostly read) traffic. Default is
+          // intentionally high so a deployment where many users share a single
+          // public IP (e.g. school NAT) is not blocked; override via env:
+          // THROTTLE_LIMIT (requests) and THROTTLE_TTL_MS (window).
+          ttl: Number(process.env.THROTTLE_TTL_MS ?? 60_000),
+          limit: Number(process.env.THROTTLE_LIMIT ?? 6000),
         },
       ],
       errorMessage: 'Too many requests. Please try again later.',

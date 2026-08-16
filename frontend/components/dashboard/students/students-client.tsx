@@ -1,14 +1,10 @@
 "use client"
 
 import { useCallback, useEffect, useState } from "react";
-import { FileDown, Pencil, Plus, ScrollText, Search, Trash2 } from "lucide-react";
-import Link from "next/link";
+import { FileDown, Plus } from "lucide-react";
 import { toast } from "sonner";
 
 import { PageToolbar } from "@/components/dashboard/page-toolbar";
-import { DeleteStudentDialog } from "@/components/dashboard/students/delete-student-dialog";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   Select,
@@ -32,7 +28,7 @@ import {
   getStudents,
   type StudentResponse,
 } from "@/lib/api/students";
-import { usePermissions, hasAnyPermission } from "@/hooks/use-current-user";
+import { usePermissions } from "@/hooks/use-current-user";
 
 const STATUS_STYLES: Record<string, string> = {
   ACTIVE: "bg-emerald-100 text-emerald-700",
@@ -44,27 +40,15 @@ type StatusFilter = "all" | "ACTIVE" | "INACTIVE" | "GRADUATED";
 type LevelFilter = "all" | "1" | "2" | "3" | "4" | "5" | "6";
 
 export function StudentsClient() {
-  const { permissions, loading: permissionsLoading } = usePermissions();
-  const canUpdate = hasAnyPermission(permissions, [
-    "student.update",
-    "student.manage",
-  ]);
-  const canDelete = hasAnyPermission(permissions, [
-    "student.delete",
-    "student.manage",
-  ]);
+  const { loading: permissionsLoading } = usePermissions();
 
   const [students, setStudents] = useState<StudentResponse[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [query, setQuery] = useState("");
   const [status, setStatus] = useState<StatusFilter>("all");
   const [level, setLevel] = useState<LevelFilter>("all");
   const [courseId, setCourseId] = useState<string>("");
   const [curriculumId, setCurriculumId] = useState<string>("");
-  const [refresh, setRefresh] = useState(0);
-  const [studentToDelete, setStudentToDelete] =
-    useState<StudentResponse | null>(null);
 
   const [courseOptions, setCourseOptions] = useState<
     { id: number; label: string }[]
@@ -112,7 +96,6 @@ export function StudentsClient() {
       getStudents({
         page: 1,
         limit: 100,
-        search: query.trim() || undefined,
         status: status === "all" ? undefined : status,
         level: level === "all" ? undefined : Number(level),
         courseId: courseId ? Number(courseId) : undefined,
@@ -135,17 +118,14 @@ export function StudentsClient() {
       clearTimeout(timer);
     };
   }, [
-    query,
     status,
     level,
     courseId,
     curriculumId,
-    refresh,
     permissionsLoading,
   ]);
 
   const hasActiveFilters =
-    query.trim() !== "" ||
     status !== "all" ||
     level !== "all" ||
     courseId !== "" ||
@@ -154,7 +134,6 @@ export function StudentsClient() {
   const handleExport = useCallback(async () => {
     try {
       await exportStudents({
-        search: query.trim() || undefined,
         status: status === "all" ? undefined : status,
         level: level === "all" ? undefined : Number(level),
         courseId: courseId ? Number(courseId) : undefined,
@@ -163,7 +142,7 @@ export function StudentsClient() {
     } catch {
       toast.error("Failed to export students. Please try again.");
     }
-  }, [query, status, level, courseId, curriculumId]);
+  }, [status, level, courseId, curriculumId]);
 
   return (
     <>
@@ -184,17 +163,8 @@ export function StudentsClient() {
         <div className="overflow-hidden rounded-lg bg-white shadow-lg shadow-black/5">
           <form
             className="flex flex-wrap items-center gap-2 border-b px-4 pb-4 pt-4"
-            role="search"
             onSubmit={(event) => event.preventDefault()}
           >
-            <Search className="h-4 w-4 text-muted-foreground" />
-            <Input
-              type="search"
-              placeholder="Search by name, admission number, email or phone..."
-              value={query}
-              onChange={(event) => setQuery(event.target.value)}
-              className="max-w-sm"
-            />
             <Select
               value={status}
               onValueChange={(value) => setStatus(value as StatusFilter)}
@@ -266,7 +236,6 @@ export function StudentsClient() {
                 <TableHead className="px-4">Level</TableHead>
                 <TableHead className="px-4">Status</TableHead>
                 <TableHead className="px-4">Admission Date</TableHead>
-                <TableHead className="px-4 text-right">Action</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -297,15 +266,12 @@ export function StudentsClient() {
                     <TableCell className="px-4">
                       <Skeleton className="h-4 w-24" />
                     </TableCell>
-                    <TableCell className="px-4">
-                      <Skeleton className="ml-auto h-8 w-24" />
-                    </TableCell>
                   </TableRow>
                 ))
               ) : error ? (
                 <TableRow>
                   <TableCell
-                    colSpan={9}
+                    colSpan={8}
                     className="px-4 py-8 text-center text-sm text-muted-foreground"
                   >
                     {error}
@@ -314,7 +280,7 @@ export function StudentsClient() {
               ) : students.length === 0 ? (
                 <TableRow>
                   <TableCell
-                    colSpan={9}
+                    colSpan={8}
                     className="px-4 py-8 text-center text-sm text-muted-foreground"
                   >
                     {hasActiveFilters
@@ -357,44 +323,6 @@ export function StudentsClient() {
                     <TableCell className="px-4">
                       {student.admDate?.slice(0, 10) ?? "—"}
                     </TableCell>
-                    <TableCell className="px-4">
-                      <div className="flex items-center justify-end gap-2">
-                        <Button
-                          size="icon-sm"
-                          variant="outline"
-                          aria-label={`Admission letter for ${student.user.name}`}
-                          asChild
-                        >
-                          <Link
-                            href={`/student/${student.id}/admission-letter`}
-                          >
-                            <ScrollText />
-                          </Link>
-                        </Button>
-                        {canUpdate && (
-                          <Button
-                            size="icon-sm"
-                            variant="outline"
-                            aria-label={`Edit student ${student.user.name}`}
-                            asChild
-                          >
-                            <Link href={`/student/edit?id=${student.id}`}>
-                              <Pencil />
-                            </Link>
-                          </Button>
-                        )}
-                        {canDelete && (
-                          <Button
-                            size="icon-sm"
-                            variant="destructive"
-                            aria-label={`Delete student ${student.user.name}`}
-                            onClick={() => setStudentToDelete(student)}
-                          >
-                            <Trash2 />
-                          </Button>
-                        )}
-                      </div>
-                    </TableCell>
                   </TableRow>
                 ))
               )}
@@ -402,14 +330,6 @@ export function StudentsClient() {
           </Table>
         </div>
       </div>
-      <DeleteStudentDialog
-        student={studentToDelete}
-        open={!!studentToDelete}
-        onOpenChange={(open) => {
-          if (!open) setStudentToDelete(null);
-        }}
-        onDeleted={() => setRefresh((value) => value + 1)}
-      />
     </>
   );
 }

@@ -19,10 +19,11 @@ import {
   NotebookText,
   ReceiptText,
   ScrollText,
+  Search,
   Settings,
   Shield,
   ShieldCheck,
-  Users,
+UserPlus,
   Wallet,
   type LucideIcon,
 } from "lucide-react"
@@ -52,19 +53,31 @@ export interface NavItem {
 export const navItems: NavItem[] = [
   { label: "Dashboard", href: "/", icon: LayoutDashboard },
   {
-    label: "Users",
-    icon: Users,
+    label: "Staff",
+    href: "/staff",
+    icon: Briefcase,
+    permissions: ["staff.view"],
+  },
+  {
+    label: "Students",
+    icon: GraduationCap,
     children: [
       {
-        label: "Staff",
-        href: "/staff",
-        icon: Briefcase,
-        permissions: ["staff.view"],
-      },
-      {
-        label: "Students",
+        label: "View Students",
         href: "/student",
         icon: GraduationCap,
+        permissions: ["student.view"],
+      },
+      {
+        label: "Add Student",
+        href: "/student/create",
+        icon: UserPlus,
+        permissions: ["student.view"],
+      },
+      {
+        label: "Search Student",
+        href: "/student/search",
+        icon: Search,
         permissions: ["student.view"],
       },
     ],

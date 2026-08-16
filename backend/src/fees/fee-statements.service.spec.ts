@@ -16,7 +16,7 @@ describe('FeeStatementsService', () => {
   let service: FeeStatementsService;
 
   beforeEach(async () => {
-    jest.clearAllMocks();
+    jest.resetAllMocks();
     prismaMock.academicYear.findUnique.mockResolvedValue(mockActiveYear());
     const module: TestingModule = await Test.createTestingModule({
       providers: [

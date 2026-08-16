@@ -3,16 +3,18 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { LedgerEntryType, Prisma } from '@prisma/client';
+import { LedgerEntryType, Prisma, type AcademicSession } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import {
-  renderStatementPdf,
   StatementPdfData,
   StatementScope,
   StatementScopeMode,
 } from './pdf/statement-pdf';
+import { pdfRenderPool } from './pdf/statement-pdf.pool';
 
 type Numberish = { n?: string | number | bigint };
+
+type YearLike = { id: number; name: string; isActive: boolean };
 
 const TYPE_LABELS: Record<LedgerEntryType, string> = {
   INVOICE: 'Invoice',
@@ -38,7 +40,70 @@ export interface FeeStatementDetailParams {
 
 @Injectable()
 export class FeeStatementsService {
+  /** Scope data (active year + its sessions) is near-constant; cache it. */
+  private static readonly SCOPE_CACHE_TTL_MS = 60_000;
+  private scopeCache: {
+    year: YearLike;
+    sessions: AcademicSession[];
+    at: number;
+  } | null = null;
+
   constructor(private readonly prisma: PrismaService) {}
+
+  /**
+   * Resolves the year + sessions backing a scope. Explicit year lookups are
+   * never cached; the default active-year path is cached (TTL) to keep the
+   * hot path to one query instead of four.
+   */
+  private async getActiveScopeData(
+    explicitYearId?: number,
+  ): Promise<{ year: YearLike; sessions: AcademicSession[] }> {
+    if (explicitYearId) {
+      const found = await this.prisma.academicYear.findUnique({
+        where: { id: explicitYearId },
+      });
+      if (!found) {
+        throw new BadRequestException('Academic year not found');
+      }
+      const sessions = await this.prisma.academicSession.findMany({
+        where: { academicYearId: found.id },
+        orderBy: [{ startDate: 'asc' }, { code: 'asc' }, { id: 'asc' }],
+      });
+      return {
+        year: { id: found.id, name: found.name, isActive: found.isActive },
+        sessions,
+      };
+    }
+
+    const cached = this.scopeCache;
+    if (cached && Date.now() - cached.at < FeeStatementsService.SCOPE_CACHE_TTL_MS) {
+      return { year: cached.year, sessions: cached.sessions };
+    }
+
+    const active = await this.prisma.academicYear.findFirst({
+      where: { isActive: true },
+      orderBy: { id: 'desc' },
+    });
+    const latest =
+      active ??
+      (await this.prisma.academicYear.findFirst({
+        orderBy: { id: 'desc' },
+      }));
+    if (!latest) {
+      throw new BadRequestException('No academic year is set up yet');
+    }
+    const year: YearLike = {
+      id: latest.id,
+      name: latest.name,
+      isActive: latest.isActive,
+    };
+    const sessions = await this.prisma.academicSession.findMany({
+      where: { academicYearId: latest.id },
+      orderBy: [{ startDate: 'asc' }, { code: 'asc' }, { id: 'asc' }],
+    });
+    this.scopeCache = { year, sessions, at: Date.now() };
+    return { year, sessions };
+  }
 
   private async resolveScope(
     params: { scope?: StatementScopeMode; academicYearId?: number; academicSessionId?: number },
@@ -73,34 +138,21 @@ export class FeeStatementsService {
     }
 
     let yearId = params.academicYearId;
+    let data: { year: YearLike; sessions: AcademicSession[] } | null = null;
+
     if (!yearId) {
-      const active = await this.prisma.academicYear.findFirst({
-        where: { isActive: true },
-        orderBy: { id: 'desc' },
-      });
-      yearId = active?.id;
+      const cached = this.scopeCache;
+      if (cached && Date.now() - cached.at < FeeStatementsService.SCOPE_CACHE_TTL_MS) {
+        data = { year: cached.year, sessions: cached.sessions };
+        yearId = cached.year.id;
+      }
     }
-    if (!yearId) {
-      const latest = await this.prisma.academicYear.findFirst({
-        orderBy: { id: 'desc' },
-      });
-      yearId = latest?.id;
-    }
-    if (!yearId) {
-      throw new BadRequestException('No academic year is set up yet');
+    if (!data) {
+      data = await this.getActiveScopeData(yearId);
+      yearId = data.year.id;
     }
 
-    const year = await this.prisma.academicYear.findUnique({
-      where: { id: yearId },
-    });
-    if (!year) {
-      throw new BadRequestException('Academic year not found');
-    }
-
-    const sessions = await this.prisma.academicSession.findMany({
-      where: { academicYearId: year.id },
-      orderBy: [{ startDate: 'asc' }, { code: 'asc' }, { id: 'asc' }],
-    });
+    const { year, sessions } = data;
 
     if (mode === 'per_year') {
       return {
@@ -185,13 +237,14 @@ export class FeeStatementsService {
         : Prisma.sql`AND FALSE`;
 
     const rows = await this.prisma.$queryRaw<Numberish[]>`
-      SELECT COALESCE(SUM(p."amount" - COALESCE(a.alloc, 0)), 0) AS n
+      SELECT COALESCE(SUM(
+        p."amount" - COALESCE((
+          SELECT SUM(a."amount")
+          FROM "invoice_payment_allocations" a
+          WHERE a."payment_id" = p.id
+        ), 0)
+      ), 0) AS n
       FROM "payments" p
-      LEFT JOIN (
-        SELECT "payment_id", SUM("amount") AS alloc
-        FROM "invoice_payment_allocations"
-        GROUP BY "payment_id"
-      ) a ON a."payment_id" = p.id
       WHERE p."student_id" = ${studentId}
         AND p."status" = 'COMPLETED'
         ${scopeClause}`;
@@ -215,40 +268,42 @@ export class FeeStatementsService {
         paid: string | number | bigint;
       }[]
     >`
-      SELECT s.id, s."admission_number" AS "admissionNumber", u.name,
-        c.code AS "courseCode",
-        COALESCE(SUM(CASE
-          WHEN e.type = 'INVOICE' THEN e."debit"
-          WHEN e.type = 'INVOICE_REVERSAL' THEN -e."credit"
-          ELSE 0 END), 0) AS invoiced,
-        COALESCE(SUM(CASE
-          WHEN e.type = 'PAYMENT' THEN e."credit"
-          WHEN e.type = 'PAYMENT_REVERSAL' THEN -e."debit"
-          ELSE 0 END), 0) AS paid
-      FROM "student_profiles" s
-      JOIN "users" u ON u.id = s."user_id"
-      LEFT JOIN "courses" c ON c.id = s."course_id"
-      LEFT JOIN "student_ledger_entries" e
-        ON e."student_id" = s.id AND ${this.ledgerSessionWhere(scope, 'e')}
-      WHERE s."deleted_at" IS NULL ${searchClause}
-      GROUP BY s.id, s."admission_number", u.name, c.code
-      ORDER BY (
-        COALESCE(SUM(CASE
-          WHEN e.type = 'INVOICE' THEN e."debit"
-          WHEN e.type = 'INVOICE_REVERSAL' THEN -e."credit"
-          ELSE 0 END), 0)
-        - COALESCE(SUM(CASE
-          WHEN e.type = 'PAYMENT' THEN e."credit"
-          WHEN e.type = 'PAYMENT_REVERSAL' THEN -e."debit"
-          ELSE 0 END), 0)
-      ) DESC, u.name ASC
+      SELECT * FROM (
+        SELECT s.id, s."admission_number" AS "admissionNumber", u.name,
+          c.code AS "courseCode",
+          COALESCE(SUM(CASE
+            WHEN e.type = 'INVOICE' THEN e."debit"
+            WHEN e.type = 'INVOICE_REVERSAL' THEN -e."credit"
+            ELSE 0 END), 0) AS invoiced,
+          COALESCE(SUM(CASE
+            WHEN e.type = 'PAYMENT' THEN e."credit"
+            WHEN e.type = 'PAYMENT_REVERSAL' THEN -e."debit"
+            ELSE 0 END), 0) AS paid
+        FROM "student_profiles" s
+        JOIN "users" u ON u.id = s."user_id"
+        LEFT JOIN "courses" c ON c.id = s."course_id"
+        LEFT JOIN "student_ledger_entries" e
+          ON e."student_id" = s.id AND ${this.ledgerSessionWhere(scope, 'e')}
+        WHERE s."deleted_at" IS NULL ${searchClause}
+        GROUP BY s.id, s."admission_number", u.name, c.code
+      ) t
+      ORDER BY (t.invoiced - t.paid) DESC, t.name ASC
       LIMIT ${params.limit} OFFSET ${(params.page - 1) * params.limit}`;
 
-    const total = await this.prisma.$queryRaw<Numberish[]>`
-      SELECT COUNT(*) AS n
-      FROM "student_profiles" s
-      JOIN "users" u ON u.id = s."user_id"
-      WHERE s."deleted_at" IS NULL ${searchClause}`;
+    // When the page is not full we can infer the total without a second
+    // (count) query — the common case on page 1 with fewer rows than `limit`.
+    const pageFull = rows.length >= params.limit;
+    const total = pageFull
+      ? Number(
+          (
+            await this.prisma.$queryRaw<Numberish[]>`
+            SELECT COUNT(*) AS n
+            FROM "student_profiles" s
+            JOIN "users" u ON u.id = s."user_id"
+            WHERE s."deleted_at" IS NULL ${searchClause}`
+          )[0]?.n ?? 0,
+        )
+      : (params.page - 1) * params.limit + rows.length;
 
     return {
       items: rows.map((row) => {
@@ -264,7 +319,7 @@ export class FeeStatementsService {
           balance: invoiced - paid,
         };
       }),
-      total: Number(total[0]?.n ?? 0),
+      total,
       page: params.page,
       limit: params.limit,
       scope: this.scopeSummary(scope),
@@ -399,7 +454,7 @@ export class FeeStatementsService {
         email: student.user.email,
         phone: student.user.phone,
         level: student.level,
-        admissionYear: student.admDate ? student.admDate.getFullYear() : null,
+        admissionYear: student.admDate ? student.admDate.getUTCFullYear() : null,
         studentType: student.status,
       },
       course: student.course
@@ -429,6 +484,6 @@ export class FeeStatementsService {
     params: FeeStatementDetailParams,
   ): Promise<Buffer> {
     const data = await this.statementDetail(studentId, params);
-    return renderStatementPdf(data);
+    return pdfRenderPool.render(data);
   }
 }

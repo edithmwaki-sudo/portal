@@ -2,6 +2,8 @@ import { ValidationPipe } from '@nestjs/common';
 import { ClassSerializerInterceptor } from '@nestjs/common';
 import { NestFactory, Reflector } from '@nestjs/core';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
+import cluster from 'cluster';
+import * as os from 'os';
 import { Logger } from 'nestjs-pino';
 import helmet from 'helmet';
 import cookieParser from 'cookie-parser';
@@ -98,4 +100,24 @@ async function bootstrap() {
 
   await app.listen(process.env.PORT ?? 3000);
 }
-bootstrap();
+
+// Multi-process mode: fork one worker per logical CPU (override with WORKERS).
+// Each worker owns its own Prisma engine + connection pool, so throughput
+// scales with cores. Set WORKERS=1 to run a single process (default is all CPUs).
+if (cluster.isPrimary) {
+  const requested = Number(process.env.WORKERS);
+  const workerCount =
+    Number.isFinite(requested) && requested >= 1
+      ? Math.floor(requested)
+      : os.cpus().length;
+  console.log(`[primary ${process.pid}] forking ${workerCount} worker(s)`);
+  for (let i = 0; i < workerCount; i++) cluster.fork();
+  cluster.on('exit', (worker, code, signal) => {
+    console.log(
+      `[primary] worker ${worker.process.pid} exited (code=${code} signal=${signal}); restarting`,
+    );
+    cluster.fork();
+  });
+} else {
+  bootstrap();
+}

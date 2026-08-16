@@ -42,6 +42,18 @@ const navButtonClass = cn(
   "data-active:border-l-[var(--brand)] data-active:bg-white/5 data-active:text-white data-active:hover:bg-white/10",
 )
 
+/**
+ * A route counts as active for a nav destination when it is an exact match or
+ * any of its descendants (pathname starts with `href + "/"`). This keeps a
+ * group's label highlighted across its whole tree, e.g. Students stays active
+ * on /student, /student/search or /student/26/view.
+ */
+function isActiveHref(href: string | undefined, pathname: string): boolean {
+  if (!href) return false
+  const base = href.replace(/\/+$/, "")
+  return pathname === base || pathname.startsWith(base + "/")
+}
+
 function GroupChildren({
   item,
   pathname,
@@ -133,7 +145,8 @@ function SidebarNavItem({
   const pathname = usePathname()
   const { state } = useSidebar()
   const childActive =
-    item.children?.some((child) => child.href === pathname) ?? false
+    item.children?.some((child) => isActiveHref(child.href, pathname)) ??
+    false
 
   if (item.children) {
     if (state === "collapsed") {
@@ -152,7 +165,7 @@ function SidebarNavItem({
               tooltip={item.label}
               className={cn(
                 navButtonClass,
-                childActive && !open &&
+                childActive &&
                   "border-l-[var(--brand)] bg-white/5 text-white",
                 open && "bg-white/5 text-white",
               )}
@@ -199,7 +212,7 @@ export function AppSidebar() {
   const [openGroup, setOpenGroup] = useState<string | null>(
     () =>
       navItems.find((item) =>
-        item.children?.some((child) => child.href === pathname),
+        item.children?.some((child) => isActiveHref(child.href, pathname)),
       )?.label ?? null,
   )
 
