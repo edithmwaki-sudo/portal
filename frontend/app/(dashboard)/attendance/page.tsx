@@ -126,8 +126,8 @@ export default function AttendancePage() {
   const recordStatusByStudent = useMemo(() => {
     const map = new Map<number, AttendanceEntry>();
     for (const record of records) {
-      if (record.studentUserId !== null) {
-        map.set(record.studentUserId, record);
+      if (record.studentProfileId !== null) {
+        map.set(record.studentProfileId, record);
       }
     }
     return map;
@@ -141,7 +141,7 @@ export default function AttendancePage() {
         unitId,
         sessionDate,
         startTime,
-        studentUserIds: roster.map((student) => student.id),
+        studentProfileIds: roster.map((student) => student.id),
         status,
       });
       toast.success(`Marked ${result.marked} student(s) as ${status}`);

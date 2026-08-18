@@ -121,7 +121,14 @@ export function PageToolbar({
                 {menuActions.map((action) => {
                   const className = cn(
                     "whitespace-nowrap",
-                    action.destructive && "text-destructive focus:text-destructive"
+                    action.destructive &&
+                      "text-destructive focus:text-destructive"
+                  );
+                  const content = (
+                    <>
+                      {action.icon && <action.icon className="mr-2 h-4 w-4" />}
+                      {action.label}
+                    </>
                   );
                   return action.href ? (
                     <DropdownMenuItem
@@ -129,7 +136,7 @@ export function PageToolbar({
                       asChild
                       className={className}
                     >
-                      <Link href={action.href}>{action.label}</Link>
+                      <Link href={action.href}>{content}</Link>
                     </DropdownMenuItem>
                   ) : (
                     <DropdownMenuItem
@@ -137,7 +144,7 @@ export function PageToolbar({
                       onClick={action.onClick}
                       className={className}
                     >
-                      {action.label}
+                      {content}
                     </DropdownMenuItem>
                   );
                 })}

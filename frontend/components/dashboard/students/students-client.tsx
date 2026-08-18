@@ -1,10 +1,32 @@
 "use client"
 
-import { useCallback, useEffect, useState } from "react";
-import { FileDown, Plus } from "lucide-react";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import {
+  FileDown,
+  FileText,
+  MoreHorizontal,
+  Pencil,
+  Plus,
+  Search,
+  Trash2,
+  User,
+  X,
+} from "lucide-react";
+import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import { toast } from "sonner";
 
 import { PageToolbar } from "@/components/dashboard/page-toolbar";
+import { DeleteStudentDialog } from "@/components/dashboard/students/delete-student-dialog";
+import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   Select,
@@ -28,7 +50,7 @@ import {
   getStudents,
   type StudentResponse,
 } from "@/lib/api/students";
-import { usePermissions } from "@/hooks/use-current-user";
+import { hasAnyPermission, usePermissions } from "@/hooks/use-current-user";
 
 const STATUS_STYLES: Record<string, string> = {
   ACTIVE: "bg-primary/10 text-primary",
@@ -40,15 +62,25 @@ type StatusFilter = "all" | "ACTIVE" | "INACTIVE" | "GRADUATED";
 type LevelFilter = "all" | "1" | "2" | "3" | "4" | "5" | "6";
 
 export function StudentsClient() {
-  const { loading: permissionsLoading } = usePermissions();
+  const { loading: permissionsLoading, permissions } = usePermissions();
+  const searchParams = useSearchParams();
+  const canDelete = hasAnyPermission(permissions, [
+    "student.delete",
+    "student.manage",
+  ]);
 
   const [students, setStudents] = useState<StudentResponse[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [studentToDelete, setStudentToDelete] =
+    useState<StudentResponse | null>(null);
   const [status, setStatus] = useState<StatusFilter>("all");
   const [level, setLevel] = useState<LevelFilter>("all");
   const [courseId, setCourseId] = useState<string>("");
   const [curriculumId, setCurriculumId] = useState<string>("");
+  const [search, setSearch] = useState<string>(
+    () => searchParams.get("search") ?? ""
+  );
 
   const [courseOptions, setCourseOptions] = useState<
     { id: number; label: string }[]
@@ -96,6 +128,7 @@ export function StudentsClient() {
       getStudents({
         page: 1,
         limit: 100,
+        search: search.trim() || undefined,
         status: status === "all" ? undefined : status,
         level: level === "all" ? undefined : Number(level),
         courseId: courseId ? Number(courseId) : undefined,
@@ -118,6 +151,7 @@ export function StudentsClient() {
       clearTimeout(timer);
     };
   }, [
+    search,
     status,
     level,
     courseId,
@@ -126,14 +160,22 @@ export function StudentsClient() {
   ]);
 
   const hasActiveFilters =
+    search.trim() !== "" ||
     status !== "all" ||
     level !== "all" ||
     courseId !== "" ||
     curriculumId !== "";
 
+  /** The list URL carrying the current search query, used as the return target. */
+  const returnHref = useMemo(() => {
+    const query = search.trim();
+    return query ? `/student?search=${encodeURIComponent(query)}` : "/student";
+  }, [search]);
+
   const handleExport = useCallback(async () => {
     try {
       await exportStudents({
+        search: search.trim() || undefined,
         status: status === "all" ? undefined : status,
         level: level === "all" ? undefined : Number(level),
         courseId: courseId ? Number(courseId) : undefined,
@@ -142,7 +184,103 @@ export function StudentsClient() {
     } catch {
       toast.error("Failed to export students. Please try again.");
     }
-  }, [status, level, courseId, curriculumId]);
+  }, [search, status, level, courseId, curriculumId]);
+
+  function renderStudentRow(student: StudentResponse, index: number) {
+    return (
+      <TableRow key={student.id}>
+        <TableCell className="px-4">{index + 1}</TableCell>
+        <TableCell className="px-4">
+          <span className="font-medium">{student.user.name}</span>
+          <span className="block text-xs text-muted-foreground">
+            {student.user.email}
+          </span>
+        </TableCell>
+        <TableCell className="px-4 font-mono">
+          {student.admissionNumber ?? "—"}
+        </TableCell>
+        <TableCell className="px-4">
+          {student.activeEnrolment?.courseName ?? "—"}
+        </TableCell>
+        <TableCell className="px-4">
+          {student.activeEnrolment?.curriculumName ?? "—"}
+        </TableCell>
+        <TableCell className="px-4">
+          {student.level ? `Year ${student.level}` : "—"}
+        </TableCell>
+        <TableCell className="px-4">
+          <span
+            className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${
+              STATUS_STYLES[student.status ?? ""] ??
+              "bg-muted text-muted-foreground"
+            }`}
+          >
+            {student.status ?? "—"}
+          </span>
+        </TableCell>
+        <TableCell className="px-4">
+          {student.admDate?.slice(0, 10) ?? "—"}
+        </TableCell>
+        <TableCell className="px-4">
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                variant="ghost"
+                size="icon-sm"
+                aria-label={`Actions for ${student.user.name}`}
+              >
+                <MoreHorizontal />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem asChild>
+                <Link
+                  href={`/student/${student.id}/view?return=${encodeURIComponent(
+                    returnHref
+                  )}`}
+                >
+                  <User />
+                  View Student
+                </Link>
+              </DropdownMenuItem>
+              <DropdownMenuItem asChild>
+                <Link
+                  href={`/student/edit?id=${student.id}&return=${encodeURIComponent(
+                    returnHref
+                  )}`}
+                >
+                  <Pencil />
+                  Edit
+                </Link>
+              </DropdownMenuItem>
+              <DropdownMenuItem asChild>
+                <Link
+                  href={`/student/${student.id}/admission-letter?return=${encodeURIComponent(
+                    returnHref
+                  )}`}
+                >
+                  <FileText />
+                  Admission Letter
+                </Link>
+              </DropdownMenuItem>
+              {canDelete && (
+                <>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem
+                    variant="destructive"
+                    onClick={() => setStudentToDelete(student)}
+                  >
+                    <Trash2 />
+                    Delete
+                  </DropdownMenuItem>
+                </>
+              )}
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </TableCell>
+      </TableRow>
+    );
+  }
 
   return (
     <>
@@ -165,6 +303,25 @@ export function StudentsClient() {
             className="flex flex-wrap items-center gap-2 border-b px-4 pb-4 pt-4"
             onSubmit={(event) => event.preventDefault()}
           >
+            <div className="relative w-64">
+              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+              <Input
+                value={search}
+                onChange={(event) => setSearch(event.target.value)}
+                placeholder="Search by name or admission no..."
+                className="h-10 pl-9 pr-8"
+              />
+              {search && (
+                <button
+                  type="button"
+                  onClick={() => setSearch("")}
+                  aria-label="Clear search"
+                  className="absolute right-2 top-1/2 -translate-y-1/2 rounded-sm text-muted-foreground hover:text-foreground"
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              )}
+            </div>
             <Select
               value={status}
               onValueChange={(value) => setStatus(value as StatusFilter)}
@@ -236,6 +393,7 @@ export function StudentsClient() {
                 <TableHead className="px-4">Level</TableHead>
                 <TableHead className="px-4">Status</TableHead>
                 <TableHead className="px-4">Admission Date</TableHead>
+                <TableHead className="w-12 px-4">Action</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -266,12 +424,15 @@ export function StudentsClient() {
                     <TableCell className="px-4">
                       <Skeleton className="h-4 w-24" />
                     </TableCell>
+                    <TableCell className="px-4">
+                      <Skeleton className="h-4 w-8" />
+                    </TableCell>
                   </TableRow>
                 ))
               ) : error ? (
                 <TableRow>
                   <TableCell
-                    colSpan={8}
+                    colSpan={9}
                     className="px-4 py-8 text-center text-sm text-muted-foreground"
                   >
                     {error}
@@ -280,7 +441,7 @@ export function StudentsClient() {
               ) : students.length === 0 ? (
                 <TableRow>
                   <TableCell
-                    colSpan={8}
+                    colSpan={9}
                     className="px-4 py-8 text-center text-sm text-muted-foreground"
                   >
                     {hasActiveFilters
@@ -289,47 +450,27 @@ export function StudentsClient() {
                   </TableCell>
                 </TableRow>
               ) : (
-                students.map((student, index) => (
-                  <TableRow key={student.id}>
-                    <TableCell className="px-4">{index + 1}</TableCell>
-                    <TableCell className="px-4">
-                      <span className="font-medium">{student.user.name}</span>
-                      <span className="block text-xs text-muted-foreground">
-                        {student.user.email}
-                      </span>
-                    </TableCell>
-                    <TableCell className="px-4 font-mono">
-                      {student.admissionNumber ?? "—"}
-                    </TableCell>
-                    <TableCell className="px-4">
-                      {student.activeEnrolment?.courseName ?? "—"}
-                    </TableCell>
-                    <TableCell className="px-4">
-                      {student.activeEnrolment?.curriculumName ?? "—"}
-                    </TableCell>
-                    <TableCell className="px-4">
-                      {student.level ? `Year ${student.level}` : "—"}
-                    </TableCell>
-                    <TableCell className="px-4">
-                      <span
-                        className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${
-                          STATUS_STYLES[student.status ?? ""] ??
-                          "bg-muted text-muted-foreground"
-                        }`}
-                      >
-                        {student.status ?? "—"}
-                      </span>
-                    </TableCell>
-                    <TableCell className="px-4">
-                      {student.admDate?.slice(0, 10) ?? "—"}
-                    </TableCell>
-                  </TableRow>
-                ))
+                students.map((student, index) =>
+                  renderStudentRow(student, index)
+                )
               )}
             </TableBody>
           </Table>
         </div>
       </div>
+      <DeleteStudentDialog
+        student={studentToDelete}
+        open={!!studentToDelete}
+        onOpenChange={(open) => {
+          if (!open) setStudentToDelete(null);
+        }}
+        onDeleted={() => {
+          setStudents((prev) =>
+            prev.filter((student) => student.id !== studentToDelete?.id)
+          );
+          setStudentToDelete(null);
+        }}
+      />
     </>
   );
 }

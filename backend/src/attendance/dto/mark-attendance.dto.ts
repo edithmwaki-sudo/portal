@@ -15,7 +15,7 @@ export class MarkAttendanceDto {
 
   @IsInt()
   @IsOptional()
-  trainerUserId?: number;
+  trainerProfileId?: number;
 
   @IsDateString()
   sessionDate: string;
@@ -27,7 +27,7 @@ export class MarkAttendanceDto {
 
   @IsArray()
   @IsInt({ each: true })
-  studentUserIds: number[];
+  studentProfileIds: number[];
 
   @IsIn(['present', 'absent', 'late', 'excused'])
   status: string;

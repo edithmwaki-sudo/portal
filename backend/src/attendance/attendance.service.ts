@@ -11,21 +11,19 @@ import { MarkAttendanceDto } from './dto/mark-attendance.dto';
 const ENTRY_SELECT = {
   id: true,
   unitId: true,
-  studentUserId: true,
-  trainerUserId: true,
+  studentProfileId: true,
+  trainerProfileId: true,
   sessionDate: true,
   startTime: true,
   status: true,
   remarks: true,
   createdAt: true,
   updatedAt: true,
-  studentUser: {
+  studentProfile: {
     select: {
       id: true,
-      name: true,
-      firstName: true,
-      lastName: true,
-      studentProfile: { select: { admissionNumber: true } },
+      admissionNumber: true,
+      user: { select: { id: true, name: true, firstName: true, lastName: true } },
     },
   },
 } satisfies Prisma.ClassAttendanceSelect;
@@ -33,20 +31,23 @@ const ENTRY_SELECT = {
 type EntryRecord = {
   id: number;
   unitId: number;
-  studentUserId: number | null;
-  trainerUserId: number | null;
+  studentProfileId: number | null;
+  trainerProfileId: number | null;
   sessionDate: Date;
   startTime: Date;
   status: string;
   remarks: string | null;
   createdAt: Date;
   updatedAt: Date;
-  studentUser: {
+  studentProfile: {
     id: number;
-    name: string;
-    firstName: string | null;
-    lastName: string | null;
-    studentProfile: { admissionNumber: string | null } | null;
+    admissionNumber: string | null;
+    user: {
+      id: number;
+      name: string;
+      firstName: string | null;
+      lastName: string | null;
+    };
   } | null;
 };
 
@@ -61,20 +62,19 @@ function toView(row: EntryRecord) {
   return {
     id: row.id,
     unitId: row.unitId,
-    studentUserId: row.studentUserId,
-    trainerUserId: row.trainerUserId,
+    studentProfileId: row.studentProfileId,
+    trainerProfileId: row.trainerProfileId,
     sessionDate: row.sessionDate.toISOString().slice(0, 10),
     startTime: toTimeString(row.startTime),
     status: row.status,
     remarks: row.remarks,
     createdAt: row.createdAt,
     updatedAt: row.updatedAt,
-    student: row.studentUser
+    student: row.studentProfile
       ? {
-          id: row.studentUser.id,
-          name: row.studentUser.firstName || row.studentUser.name,
-          admissionNumber:
-            row.studentUser.studentProfile?.admissionNumber ?? null,
+          id: row.studentProfile.id,
+          name: row.studentProfile.user.firstName || row.studentProfile.user.name,
+          admissionNumber: row.studentProfile.admissionNumber ?? null,
         }
       : null,
   };
@@ -151,21 +151,22 @@ export class AttendanceService {
       },
       orderBy: [{ firstName: 'asc' }],
       select: {
-        id: true,
         name: true,
         firstName: true,
         lastName: true,
-        studentProfile: { select: { admissionNumber: true, level: true } },
+        studentProfile: { select: { id: true, admissionNumber: true, level: true } },
       },
       take: 500,
     });
 
-    return students.map((s) => ({
-      id: s.id,
-      name: s.firstName || s.name,
-      admissionNumber: s.studentProfile?.admissionNumber ?? null,
-      level: s.studentProfile?.level ?? null,
-    }));
+    return students
+      .filter((s) => s.studentProfile)
+      .map((s) => ({
+        id: s.studentProfile!.id,
+        name: s.firstName || s.name,
+        admissionNumber: s.studentProfile?.admissionNumber ?? null,
+        level: s.studentProfile?.level ?? null,
+      }));
   }
 
   /** Attendance already recorded for a unit on a given date/time. */
@@ -194,12 +195,11 @@ export class AttendanceService {
       throw new BadRequestException('Invalid session date');
     }
 
-    const uniqueIds = [...new Set(dto.studentUserIds)];
-    const students = await this.prisma.user.findMany({
+    const uniqueIds = [...new Set(dto.studentProfileIds)];
+    const students = await this.prisma.studentProfile.findMany({
       where: {
         id: { in: uniqueIds },
         deletedAt: null,
-        studentProfile: { isNot: null },
       },
       select: { id: true },
     });
@@ -211,15 +211,15 @@ export class AttendanceService {
 
     const existingRows = await this.prisma.classAttendance.findMany({
       where: {
-        studentUserId: { in: uniqueIds },
+        studentProfileId: { in: uniqueIds },
         sessionDate,
         startTime,
       },
-      select: { id: true, studentUserId: true },
+      select: { id: true, studentProfileId: true },
     });
 
     const existingByStudent = new Map(
-      existingRows.map((row) => [row.studentUserId, row.id]),
+      existingRows.map((row) => [row.studentProfileId, row.id]),
     );
     const toCreate = uniqueIds.filter((id) => !existingByStudent.has(id));
     const existingIds = uniqueIds
@@ -228,7 +228,7 @@ export class AttendanceService {
 
     const updateData = {
       unitId: dto.unitId,
-      trainerUserId: dto.trainerUserId ?? null,
+      trainerProfileId: dto.trainerProfileId ?? null,
       status: dto.status,
       remarks: dto.remarks ?? null,
       updatedBy: actorUserId,
@@ -236,10 +236,10 @@ export class AttendanceService {
 
     await this.prisma.$transaction([
       this.prisma.classAttendance.createMany({
-        data: toCreate.map((studentUserId) => ({
+        data: toCreate.map((studentProfileId) => ({
           unitId: dto.unitId,
-          studentUserId,
-          trainerUserId: dto.trainerUserId ?? null,
+          studentProfileId,
+          trainerProfileId: dto.trainerProfileId ?? null,
           sessionDate,
           startTime,
           status: dto.status,

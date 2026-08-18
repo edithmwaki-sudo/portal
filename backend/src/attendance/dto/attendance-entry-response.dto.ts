@@ -3,8 +3,8 @@ import { Expose, Type } from 'class-transformer';
 export class AttendanceEntryDto {
   @Expose() id: number;
   @Expose() unitId: number;
-  @Expose() studentUserId: number | null;
-  @Expose() trainerUserId: number | null;
+  @Expose() studentProfileId: number | null;
+  @Expose() trainerProfileId: number | null;
   @Expose() sessionDate: string;
   @Expose() startTime: string;
   @Expose() status: string;

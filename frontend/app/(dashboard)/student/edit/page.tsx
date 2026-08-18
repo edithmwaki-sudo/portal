@@ -7,11 +7,13 @@ import { PageToolbar } from "@/components/dashboard/page-toolbar";
 import { StudentForm } from "@/components/dashboard/students/student-form";
 import { Skeleton } from "@/components/ui/skeleton";
 import { getStudent, type StudentResponse } from "@/lib/api/students";
+import { getReturnHref } from "@/lib/student-nav";
 
 export default function EditStudentPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const id = Number(searchParams.get("id")) || undefined;
+  const returnParam = searchParams.get("return");
 
   const [student, setStudent] = useState<StudentResponse | null>(null);
   const [loading, setLoading] = useState(true);
@@ -67,8 +69,8 @@ export default function EditStudentPage() {
           <StudentForm
             key={student.id}
             student={student}
-            onSuccess={() => router.push("/student")}
-            onCancel={() => router.push("/student")}
+            onSuccess={() => router.push(getReturnHref(returnParam))}
+            onCancel={() => router.push(getReturnHref(returnParam))}
           />
         ) : null}
       </div>

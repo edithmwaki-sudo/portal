@@ -66,6 +66,13 @@ enum Gender {
   OTHER
 }
 
+enum EnrolmentStatus {
+  ENROLLED
+  WITHDRAWN
+  COMPLETED
+  TRANSFERRED
+}
+
 model User {
   id                      Int        @id @default(autoincrement())
   roleId                  Int?       @map("role_id")
@@ -116,8 +123,6 @@ model User {
   loginAttempts LoginAttempt[]
   auditLogs   AuditLog[]
   otpCodes    OtpCode[]
-  attendanceAsStudent ClassAttendance[] @relation("StudentAttendance")
-  attendanceAsTrainer ClassAttendance[] @relation("TrainerAttendance")
 
   @@index([roleId])
   @@index([status])
@@ -164,10 +169,11 @@ model StaffProfile {
   createdAt             DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt             DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
 
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Restrict)
   department Department? @relation("StaffDepartment", fields: [departmentId], references: [id], onDelete: SetNull)
   headOfDepartments Department[] @relation("DepartmentHead")
   timetables AcademicTimetable[] @relation("TrainerTimetables")
+  attendanceRecords ClassAttendance[] @relation("TrainerAttendance")
 
   @@index([departmentId])
   @@index([deletedAt])
@@ -412,13 +418,14 @@ model StudentProfile {
   createdAt     DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt     DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
 
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Restrict)
   course Course? @relation("CourseStudentProfiles", fields: [courseId], references: [id], onDelete: SetNull)
 
   courseEnrolments CourseEnrolment[] @relation("StudentEnrolments")
   invoices         Invoice[]         @relation("StudentInvoices")
   payments         Payment[]         @relation("StudentPayments")
   ledgerEntries    StudentLedgerEntry[] @relation("StudentLedger")
+  attendanceRecords ClassAttendance[] @relation("StudentAttendance")
 
   @@index([courseId])
   @@index([deletedAt])
@@ -436,7 +443,7 @@ model CourseEnrolment {
   academicSessionId  Int?      @map("academic_session_id")
   academicYearId     Int?      @map("academic_year_id")
   enrolmentDate      DateTime  @map("enrolment_date") @db.Date
-  status             String    @default("enrolled") @map("status") @db.VarChar(50)
+  status             EnrolmentStatus @default(ENROLLED) @map("status")
   remarks            String?   @map("remarks") @db.Text
   createdBy          Int?      @map("created_by")
   updatedBy          Int?      @map("updated_by")
@@ -449,7 +456,11 @@ model CourseEnrolment {
   academicSession  AcademicSession? @relation("SessionEnrolments", fields: [academicSessionId], references: [id], onDelete: SetNull)
   academicYear     AcademicYear?    @relation("YearEnrolments", fields: [academicYearId], references: [id], onDelete: SetNull)
 
-  @@unique([studentId, courseCurriculumId])
+  // A student keeps a history of enrolments (re-admission, transfer). At most
+  // one ACTIVE (non-deleted, status ENROLLED) enrolment per student+course is
+  // enforced in the service layer, not by a table-wide unique — a student may
+  // legitimately re-enrol into the same course in a later session.
+  @@index([studentId, courseCurriculumId, status])
   @@index([courseCurriculumId, status])
   @@index([academicSessionId, status])
   @@index([academicYearId, status])
@@ -614,8 +625,8 @@ model AcademicTimetable {
 model ClassAttendance {
   id            Int       @id @default(autoincrement())
   unitId        Int       @map("unit_id")
-  studentUserId Int?      @map("student_user_id")
-  trainerUserId Int?      @map("trainer_user_id")
+  studentProfileId Int?   @map("student_profile_id")
+  trainerProfileId Int?   @map("trainer_profile_id")
   sessionDate   DateTime  @map("session_date") @db.Date
   startTime     DateTime  @map("start_time") @db.Time(6)
   status        String    @map("status") @db.VarChar(20)
@@ -625,13 +636,14 @@ model ClassAttendance {
   createdAt     DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt     DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
 
-  unit        Unit @relation("UnitAttendance", fields: [unitId], references: [id], onDelete: Cascade)
-  studentUser User? @relation("StudentAttendance", fields: [studentUserId], references: [id], onDelete: SetNull)
-  trainerUser User? @relation("TrainerAttendance", fields: [trainerUserId], references: [id], onDelete: SetNull)
+  unit           Unit           @relation("UnitAttendance", fields: [unitId], references: [id], onDelete: Cascade)
+  studentProfile StudentProfile? @relation("StudentAttendance", fields: [studentProfileId], references: [id], onDelete: SetNull)
+  trainerProfile StaffProfile?   @relation("TrainerAttendance", fields: [trainerProfileId], references: [id], onDelete: SetNull)
 
-  @@unique([studentUserId, sessionDate, startTime])
+  @@unique([studentProfileId, sessionDate, startTime])
   @@index([unitId, sessionDate])
   @@index([unitId, sessionDate, startTime])
+  @@index([trainerProfileId, sessionDate])
   @@map("class_attendances")
 }
 

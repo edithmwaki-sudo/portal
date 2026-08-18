@@ -46,7 +46,7 @@ const navButtonClass = cn(
  * A route counts as active for a nav destination when it is an exact match or
  * any of its descendants (pathname starts with `href + "/"`). This keeps a
  * group's label highlighted across its whole tree, e.g. Students stays active
- * on /student, /student/search or /student/26/view.
+ * on /student or /student/26/view.
  */
 function isActiveHref(href: string | undefined, pathname: string): boolean {
   if (!href) return false

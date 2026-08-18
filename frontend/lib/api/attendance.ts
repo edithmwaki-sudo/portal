@@ -21,8 +21,8 @@ export interface RosterStudent {
 export interface AttendanceEntry {
   id: number;
   unitId: number;
-  studentUserId: number | null;
-  trainerUserId: number | null;
+  studentProfileId: number | null;
+  trainerProfileId: number | null;
   sessionDate: string;
   startTime: string;
   status: string;
@@ -34,10 +34,10 @@ export interface AttendanceEntry {
 
 export interface MarkAttendancePayload {
   unitId: number;
-  trainerUserId?: number;
+  trainerProfileId?: number;
   sessionDate: string;
   startTime: string;
-  studentUserIds: number[];
+  studentProfileIds: number[];
   status: "present" | "absent" | "late" | "excused";
   remarks?: string;
 }

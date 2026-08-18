@@ -2,11 +2,12 @@
 
 import { useEffect, useState } from "react";
 import { Printer, Undo2 } from "lucide-react";
-import { useParams, useRouter } from "next/navigation";
+import { useParams, useRouter, useSearchParams } from "next/navigation";
 
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { getAdmissionLetter, type AdmissionLetter } from "@/lib/api/students";
+import { getReturnHref } from "@/lib/student-nav";
 
 function formatDate(value: string | null): string {
   if (!value) return "—";
@@ -22,7 +23,9 @@ function formatDate(value: string | null): string {
 export default function AdmissionLetterPage() {
   const router = useRouter();
   const params = useParams<{ id: string }>();
+  const searchParams = useSearchParams();
   const id = Number(params.id) || undefined;
+  const returnParam = searchParams.get("return");
 
   const [letter, setLetter] = useState<AdmissionLetter | null>(null);
   const [loading, setLoading] = useState(true);
@@ -68,7 +71,10 @@ export default function AdmissionLetterPage() {
           </p>
         </div>
         <div className="flex shrink-0 items-center gap-2">
-          <Button variant="outline" onClick={() => router.push("/student")}>
+          <Button
+            variant="outline"
+            onClick={() => router.push(getReturnHref(returnParam))}
+          >
             <Undo2 className="mr-2 h-4 w-4" />
             Back to Students
           </Button>

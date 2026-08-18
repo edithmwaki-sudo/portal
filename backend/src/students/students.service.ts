@@ -179,7 +179,7 @@ export class StudentsService {
                 academicSessionId: activeSession?.id ?? null,
                 academicYearId: enrolmentYearId,
                 enrolmentDate: admDate,
-                status: 'enrolled',
+                status: 'ENROLLED',
                 createdBy: actorId,
                 updatedBy: actorId,
               },

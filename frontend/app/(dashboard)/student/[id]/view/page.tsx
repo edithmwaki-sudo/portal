@@ -2,12 +2,13 @@
 
 import { useEffect, useState } from "react";
 import { Pencil, Undo2 } from "lucide-react";
-import { useParams, useRouter } from "next/navigation";
+import { useParams, useRouter, useSearchParams } from "next/navigation";
 
 import { PageToolbar } from "@/components/dashboard/page-toolbar";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { getStudent, type StudentResponse } from "@/lib/api/students";
+import { getReturnHref } from "@/lib/student-nav";
 
 function formatDate(value: string | null): string {
   if (!value) return "—";
@@ -46,7 +47,9 @@ function DetailRows({ rows }: { rows: [string, string | number | null | undefine
 export default function ViewStudentPage() {
   const router = useRouter();
   const params = useParams<{ id: string }>();
+  const searchParams = useSearchParams();
   const id = Number(params.id) || undefined;
+  const returnParam = searchParams.get("return");
 
   const [student, setStudent] = useState<StudentResponse | null>(null);
   const [loading, setLoading] = useState(true);
@@ -83,7 +86,13 @@ export default function ViewStudentPage() {
           {
             label: "Edit Student",
             icon: Pencil,
-            href: id ? `/student/edit?id=${id}` : undefined,
+            href: id
+              ? returnParam
+                ? `/student/edit?id=${id}&return=${encodeURIComponent(
+                    returnParam
+                  )}`
+                : `/student/edit?id=${id}`
+              : undefined,
           },
         ]}
       />
@@ -116,10 +125,10 @@ export default function ViewStudentPage() {
               </div>
               <Button
                 variant="outline"
-                onClick={() => router.push("/student/search")}
+                onClick={() => router.push(getReturnHref(returnParam))}
               >
                 <Undo2 className="mr-2 h-4 w-4" />
-                Back to Search
+                Back to Students
               </Button>
             </div>
 
