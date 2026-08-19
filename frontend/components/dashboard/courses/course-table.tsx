@@ -1,9 +1,16 @@
 "use client"
 
-import { Eye, Layers, Pencil, Trash2 } from "lucide-react";
+import { Eye, Layers, MoreHorizontal, Pencil, Trash2 } from "lucide-react";
 import Link from "next/link";
 
 import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   Table,
@@ -47,7 +54,7 @@ export function CourseTable({
           <TableHead className="px-4">Certification Authority</TableHead>
           <TableHead className="px-4">Certification Level</TableHead>
           <TableHead className="px-4">Course Units</TableHead>
-          <TableHead className="px-4 text-right">Action</TableHead>
+          <TableHead className="w-12 px-4">Action</TableHead>
         </TableRow>
       </TableHeader>
       <TableBody>
@@ -73,7 +80,7 @@ export function CourseTable({
                 <Skeleton className="h-4 w-24" />
               </TableCell>
               <TableCell className="px-4">
-                <Skeleton className="ml-auto h-8 w-24" />
+                <Skeleton className="h-8 w-8" />
               </TableCell>
             </TableRow>
           ))
@@ -127,40 +134,43 @@ export function CourseTable({
                 )}
               </TableCell>
               <TableCell className="px-4">
-                <div className="flex items-center justify-end gap-2">
-                  <Button
-                    size="icon-sm"
-                    variant="outline"
-                    aria-label={`View ${course.name} details`}
-                    asChild
-                  >
-                    <Link href={`/courses/view?id=${course.id}`}>
-                      <Eye />
-                    </Link>
-                  </Button>
-                  {canEdit && (
-                    <>
-                      <Button
-                        size="icon-sm"
-                        variant="outline"
-                        aria-label={`Edit ${course.name}`}
-                        asChild
-                      >
-                        <Link href={`/courses/edit?id=${course.id}`}>
-                          <Pencil />
-                        </Link>
-                      </Button>
-                      <Button
-                        size="icon-sm"
-                        variant="destructive"
-                        aria-label={`Delete ${course.name}`}
-                        onClick={() => onDelete(course)}
-                      >
-                        <Trash2 />
-                      </Button>
-                    </>
-                  )}
-                </div>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="icon-sm"
+                      aria-label={`Actions for ${course.name}`}
+                    >
+                      <MoreHorizontal />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                    <DropdownMenuItem asChild>
+                      <Link href={`/courses/view?id=${course.id}`}>
+                        <Eye />
+                        View Course
+                      </Link>
+                    </DropdownMenuItem>
+                    {canEdit && (
+                      <>
+                        <DropdownMenuItem asChild>
+                          <Link href={`/courses/edit?id=${course.id}`}>
+                            <Pencil />
+                            Edit
+                          </Link>
+                        </DropdownMenuItem>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem
+                          variant="destructive"
+                          onClick={() => onDelete(course)}
+                        >
+                          <Trash2 />
+                          Delete
+                        </DropdownMenuItem>
+                      </>
+                    )}
+                  </DropdownMenuContent>
+                </DropdownMenu>
               </TableCell>
             </TableRow>
           ))

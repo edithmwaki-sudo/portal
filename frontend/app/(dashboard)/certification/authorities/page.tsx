@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import {
   BookOpen,
   Layers,
+  MoreHorizontal,
   Pencil,
   Plus,
   Search,
@@ -15,6 +16,13 @@ import { PageToolbar } from "@/components/dashboard/page-toolbar";
 import { StatusBadge } from "@/components/dashboard/certifications/status-badge";
 import { DeleteAuthorityDialog } from "@/components/dashboard/certifications/delete-authority-dialog";
 import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
@@ -103,7 +111,7 @@ export default function CertificationAuthoritiesPage() {
                 <TableHead className="px-4">Name</TableHead>
                 <TableHead className="px-4">Status</TableHead>
                 <TableHead className="px-4">Levels</TableHead>
-                <TableHead className="px-4 text-right">Action</TableHead>
+                <TableHead className="w-12 px-4">Action</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -126,7 +134,7 @@ export default function CertificationAuthoritiesPage() {
                       <Skeleton className="h-4 w-8" />
                     </TableCell>
                     <TableCell className="px-4">
-                      <Skeleton className="ml-auto h-8 w-28" />
+                      <Skeleton className="h-8 w-8" />
                     </TableCell>
                   </TableRow>
                 ))
@@ -167,52 +175,45 @@ export default function CertificationAuthoritiesPage() {
                       {authority.levelsCount}
                     </TableCell>
                     <TableCell className="px-4">
-                      <div className="flex items-center justify-end gap-1.5">
-                        <Link
-                          href={`/certification/levels?authorityId=${authority.id}`}
-                        >
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
                           <Button
-                            size="icon-sm"
                             variant="ghost"
-                            aria-label={`Levels for ${authority.name}`}
-                            title="View levels"
-                          >
-                            <Layers />
-                          </Button>
-                        </Link>
-                        <Link
-                          href={`/certification/grades?authorityId=${authority.id}`}
-                        >
-                          <Button
                             size="icon-sm"
-                            variant="ghost"
-                            aria-label={`Grades for ${authority.name}`}
-                            title="View grades"
+                            aria-label={`Actions for ${authority.name}`}
                           >
-                            <BookOpen />
+                            <MoreHorizontal />
                           </Button>
-                        </Link>
-                        <Button
-                          size="icon-sm"
-                          variant="outline"
-                          aria-label={`Edit ${authority.name}`}
-                          asChild
-                        >
-                          <Link
-                            href={`/certification/authorities/edit?id=${authority.id}`}
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuItem asChild>
+                            <Link href={`/certification/levels?authorityId=${authority.id}`}>
+                              <Layers />
+                              View Levels
+                            </Link>
+                          </DropdownMenuItem>
+                          <DropdownMenuItem asChild>
+                            <Link href={`/certification/grades?authorityId=${authority.id}`}>
+                              <BookOpen />
+                              View Grades
+                            </Link>
+                          </DropdownMenuItem>
+                          <DropdownMenuItem asChild>
+                            <Link href={`/certification/authorities/edit?id=${authority.id}`}>
+                              <Pencil />
+                              Edit
+                            </Link>
+                          </DropdownMenuItem>
+                          <DropdownMenuSeparator />
+                          <DropdownMenuItem
+                            variant="destructive"
+                            onClick={() => setDeleteAuthority(authority)}
                           >
-                            <Pencil />
-                          </Link>
-                        </Button>
-                        <Button
-                          size="icon-sm"
-                          variant="destructive"
-                          aria-label={`Delete ${authority.name}`}
-                          onClick={() => setDeleteAuthority(authority)}
-                        >
-                          <Trash2 />
-                        </Button>
-                      </div>
+                            <Trash2 />
+                            Delete
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
                     </TableCell>
                   </TableRow>
                 ))

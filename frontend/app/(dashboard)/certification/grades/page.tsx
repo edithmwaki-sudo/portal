@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useState } from "react";
-import { ArrowLeft, Pencil, Plus, Search, Trash2 } from "lucide-react";
+import { ArrowLeft, MoreHorizontal, Pencil, Plus, Search, Trash2 } from "lucide-react";
 import Link from "next/link";
 import { useSearchParams, useRouter } from "next/navigation";
 
@@ -9,6 +9,13 @@ import { PageToolbar } from "@/components/dashboard/page-toolbar";
 import { StatusBadge } from "@/components/dashboard/certifications/status-badge";
 import { DeleteGradeDialog } from "@/components/dashboard/certifications/delete-grade-dialog";
 import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
@@ -132,7 +139,7 @@ export default function CertificationGradesPage() {
                 <TableHead className="px-4">Range</TableHead>
                 <TableHead className="px-4">Remark</TableHead>
                 <TableHead className="px-4">Status</TableHead>
-                <TableHead className="px-4 text-right">Action</TableHead>
+                <TableHead className="w-12 px-4">Action</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -164,7 +171,7 @@ export default function CertificationGradesPage() {
                       <Skeleton className="h-4 w-14" />
                     </TableCell>
                     <TableCell className="px-4">
-                      <Skeleton className="ml-auto h-8 w-20" />
+                      <Skeleton className="h-8 w-8" />
                     </TableCell>
                   </TableRow>
                 ))
@@ -207,28 +214,35 @@ export default function CertificationGradesPage() {
                       <StatusBadge active={grade.isActive} />
                     </TableCell>
                     <TableCell className="px-4">
-                      <div className="flex items-center justify-end gap-2">
-                        <Button
-                          size="icon-sm"
-                          variant="outline"
-                          aria-label={`Edit grade ${grade.grade}`}
-                          asChild
-                        >
-                          <Link
-                            href={`/certification/grades/edit?id=${grade.id}&authorityId=${grade.certificationAuthorityId}`}
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button
+                            variant="ghost"
+                            size="icon-sm"
+                            aria-label={`Actions for grade ${grade.grade}`}
                           >
-                            <Pencil />
-                          </Link>
-                        </Button>
-                        <Button
-                          size="icon-sm"
-                          variant="destructive"
-                          aria-label={`Delete grade ${grade.grade}`}
-                          onClick={() => setDeleteGrade(grade)}
-                        >
-                          <Trash2 />
-                        </Button>
-                      </div>
+                            <MoreHorizontal />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuItem asChild>
+                            <Link
+                              href={`/certification/grades/edit?id=${grade.id}&authorityId=${grade.certificationAuthorityId}`}
+                            >
+                              <Pencil />
+                              Edit
+                            </Link>
+                          </DropdownMenuItem>
+                          <DropdownMenuSeparator />
+                          <DropdownMenuItem
+                            variant="destructive"
+                            onClick={() => setDeleteGrade(grade)}
+                          >
+                            <Trash2 />
+                            Delete
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
                     </TableCell>
                   </TableRow>
                 ))

@@ -6,6 +6,7 @@ import {
   ChevronLeft,
   ChevronRight,
   Loader2,
+  MoreHorizontal,
   Pencil,
   Plus,
   RefreshCw,
@@ -16,6 +17,13 @@ import { toast } from "sonner";
 
 import { PageToolbar } from "@/components/dashboard/page-toolbar";
 import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -491,7 +499,7 @@ export default function SessionCalendarPage() {
                   <TableHead className="px-4">Start Date</TableHead>
                   <TableHead className="px-4">End Date</TableHead>
                   {(canEdit || canDelete) && (
-                    <TableHead className="px-4 text-right">Action</TableHead>
+                    <TableHead className="w-12 px-4">Action</TableHead>
                   )}
                 </TableRow>
               </TableHeader>
@@ -525,29 +533,39 @@ export default function SessionCalendarPage() {
                         </TableCell>
                         {(canEdit || canDelete) && (
                           <TableCell className="px-4">
-                            <div className="flex items-center justify-end gap-2">
-                              {canEdit && !event.isLocked && (
+                            <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
                                 <Button
+                                  variant="ghost"
                                   size="icon-sm"
-                                  variant="outline"
-                                  aria-label={`Edit ${event.title}`}
-                                  onClick={() => openEditDialog(event)}
+                                  aria-label={`Actions for ${event.title}`}
                                 >
-                                  <Pencil />
+                                  <MoreHorizontal />
                                 </Button>
-                              )}
-                              {canDelete && event.source === "manual" && (
-                                <Button
-                                  size="icon-sm"
-                                  variant="outline"
-                                  aria-label={`Delete ${event.title}`}
-                                  className="text-destructive hover:text-destructive"
-                                  onClick={() => setDeleteTarget(event)}
-                                >
-                                  <Trash2 />
-                                </Button>
-                              )}
-                            </div>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent align="end">
+                                {canEdit && !event.isLocked && (
+                                  <DropdownMenuItem
+                                    onClick={() => openEditDialog(event)}
+                                  >
+                                    <Pencil />
+                                    Edit
+                                  </DropdownMenuItem>
+                                )}
+                                {canDelete && event.source === "manual" && (
+                                  <>
+                                    <DropdownMenuSeparator />
+                                    <DropdownMenuItem
+                                      variant="destructive"
+                                      onClick={() => setDeleteTarget(event)}
+                                    >
+                                      <Trash2 />
+                                      Delete
+                                    </DropdownMenuItem>
+                                  </>
+                                )}
+                              </DropdownMenuContent>
+                            </DropdownMenu>
                           </TableCell>
                         )}
                       </TableRow>

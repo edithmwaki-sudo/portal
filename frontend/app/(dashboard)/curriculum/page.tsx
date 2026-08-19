@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import {
   ArrowLeft,
+  MoreHorizontal,
   Pencil,
   Plus,
   Search,
@@ -15,6 +16,13 @@ import { PageToolbar } from "@/components/dashboard/page-toolbar";
 import { StatusBadge } from "@/components/dashboard/certifications/status-badge";
 import { DeleteCurriculumDialog } from "@/components/dashboard/certifications/delete-curriculum-dialog";
 import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
@@ -142,7 +150,7 @@ export default function CurriculumPage() {
                 <TableHead className="px-4">Start Date</TableHead>
                 <TableHead className="px-4">End Date</TableHead>
                 <TableHead className="px-4">Status</TableHead>
-                <TableHead className="px-4 text-right">Action</TableHead>
+                <TableHead className="w-12 px-4">Action</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -170,7 +178,7 @@ export default function CurriculumPage() {
                       <Skeleton className="h-4 w-14" />
                     </TableCell>
                     <TableCell className="px-4">
-                      <Skeleton className="ml-auto h-8 w-24" />
+                      <Skeleton className="h-8 w-8" />
                     </TableCell>
                   </TableRow>
                 ))
@@ -218,28 +226,33 @@ export default function CurriculumPage() {
                       <StatusBadge active={curriculum.isActive} />
                     </TableCell>
                     <TableCell className="px-4">
-                      <div className="flex items-center justify-end gap-2">
-                        <Button
-                          size="icon-sm"
-                          variant="outline"
-                          aria-label={`Edit ${curriculum.cycleName}`}
-                          asChild
-                        >
-                          <Link
-                            href={`/curriculum/edit?id=${curriculum.id}`}
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button
+                            variant="ghost"
+                            size="icon-sm"
+                            aria-label={`Actions for ${curriculum.cycleName}`}
                           >
-                            <Pencil />
-                          </Link>
-                        </Button>
-                        <Button
-                          size="icon-sm"
-                          variant="destructive"
-                          aria-label={`Delete ${curriculum.cycleName}`}
-                          onClick={() => setCurriculumToDelete(curriculum)}
-                        >
-                          <Trash2 />
-                        </Button>
-                      </div>
+                            <MoreHorizontal />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuItem asChild>
+                            <Link href={`/curriculum/edit?id=${curriculum.id}`}>
+                              <Pencil />
+                              Edit
+                            </Link>
+                          </DropdownMenuItem>
+                          <DropdownMenuSeparator />
+                          <DropdownMenuItem
+                            variant="destructive"
+                            onClick={() => setCurriculumToDelete(curriculum)}
+                          >
+                            <Trash2 />
+                            Delete
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
                     </TableCell>
                   </TableRow>
                 ))

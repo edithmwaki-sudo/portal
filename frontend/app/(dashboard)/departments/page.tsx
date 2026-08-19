@@ -1,12 +1,19 @@
 "use client"
 
 import { useEffect, useState } from "react";
-import { Pencil, Plus, Search, Trash2 } from "lucide-react";
+import { MoreHorizontal, Pencil, Plus, Search, Trash2 } from "lucide-react";
 import Link from "next/link";
 
 import { PageToolbar } from "@/components/dashboard/page-toolbar";
 import { DeleteDepartmentDialog } from "@/components/dashboard/departments/delete-department-dialog";
 import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
@@ -89,7 +96,7 @@ export default function DepartmentsPage() {
                 <TableHead className="px-4">Code</TableHead>
                 <TableHead className="px-4">Name</TableHead>
                 <TableHead className="px-4">Head of Department</TableHead>
-                <TableHead className="px-4 text-right">Action</TableHead>
+                <TableHead className="w-12 px-4">Action</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -109,7 +116,7 @@ export default function DepartmentsPage() {
                       <Skeleton className="h-4 w-36" />
                     </TableCell>
                     <TableCell className="px-4">
-                      <Skeleton className="ml-auto h-8 w-24" />
+                      <Skeleton className="h-8 w-8" />
                     </TableCell>
                   </TableRow>
                 ))
@@ -160,26 +167,33 @@ export default function DepartmentsPage() {
                       )}
                     </TableCell>
                     <TableCell className="px-4">
-                      <div className="flex items-center justify-end gap-2">
-                        <Button
-                          size="icon-sm"
-                          variant="outline"
-                          aria-label={`Edit ${department.name}`}
-                          asChild
-                        >
-                          <Link href={`/departments/edit?id=${department.id}`}>
-                            <Pencil />
-                          </Link>
-                        </Button>
-                        <Button
-                          size="icon-sm"
-                          variant="destructive"
-                          aria-label={`Delete ${department.name}`}
-                          onClick={() => setDeleteDepartment(department)}
-                        >
-                          <Trash2 />
-                        </Button>
-                      </div>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button
+                            variant="ghost"
+                            size="icon-sm"
+                            aria-label={`Actions for ${department.name}`}
+                          >
+                            <MoreHorizontal />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuItem asChild>
+                            <Link href={`/departments/edit?id=${department.id}`}>
+                              <Pencil />
+                              Edit
+                            </Link>
+                          </DropdownMenuItem>
+                          <DropdownMenuSeparator />
+                          <DropdownMenuItem
+                            variant="destructive"
+                            onClick={() => setDeleteDepartment(department)}
+                          >
+                            <Trash2 />
+                            Delete
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
                     </TableCell>
                   </TableRow>
                 ))

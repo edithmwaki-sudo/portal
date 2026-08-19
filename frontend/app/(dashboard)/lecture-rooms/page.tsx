@@ -1,11 +1,17 @@
 "use client"
 
 import { useCallback, useEffect, useState } from "react";
-import { Plus, Search } from "lucide-react";
+import { MoreHorizontal, Pencil, Plus, Search } from "lucide-react";
 import { useRouter } from "next/navigation";
 
 import { PageToolbar } from "@/components/dashboard/page-toolbar";
 import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
 import {
   Table,
@@ -133,7 +139,7 @@ export default function LectureRoomsPage() {
                   <TableHead>Capacity</TableHead>
                   <TableHead>Location</TableHead>
                   <TableHead>Status</TableHead>
-                  {canEdit && <TableHead className="text-right">Actions</TableHead>}
+                  {canEdit && <TableHead className="w-12 px-4">Action</TableHead>}
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -160,16 +166,28 @@ export default function LectureRoomsPage() {
                       </span>
                     </TableCell>
                     {canEdit && (
-                      <TableCell className="text-right">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() =>
-                            router.push(`/lecture-rooms/edit?id=${room.id}`)
-                          }
-                        >
-                          Edit
-                        </Button>
+                      <TableCell className="px-4">
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button
+                              variant="ghost"
+                              size="icon-sm"
+                              aria-label={`Actions for ${room.name}`}
+                            >
+                              <MoreHorizontal />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuItem
+                              onClick={() =>
+                                router.push(`/lecture-rooms/edit?id=${room.id}`)
+                              }
+                            >
+                              <Pencil />
+                              Edit
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
                       </TableCell>
                     )}
                   </TableRow>

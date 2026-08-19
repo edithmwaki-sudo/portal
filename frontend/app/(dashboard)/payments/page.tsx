@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useState } from "react";
-import { Plus, Search, Undo2 } from "lucide-react";
+import { Eye, MoreHorizontal, Plus, Search, Undo2 } from "lucide-react";
 import Link from "next/link";
 import axios from "axios";
 import { toast } from "sonner";
@@ -9,6 +9,13 @@ import { toast } from "sonner";
 import { PageToolbar } from "@/components/dashboard/page-toolbar";
 import { PaymentStatusBadge } from "@/components/dashboard/finance/status-badges";
 import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
@@ -175,7 +182,7 @@ export default function PaymentsPage() {
                 <TableHead className="px-4">Date</TableHead>
                 <TableHead className="px-4">Status</TableHead>
                 <TableHead className="px-4 text-right">Amount</TableHead>
-                <TableHead className="px-4 text-right">Action</TableHead>
+                <TableHead className="w-12 px-4">Action</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -238,31 +245,40 @@ export default function PaymentsPage() {
                       {CURRENCY.format(payment.amount)}
                     </TableCell>
                     <TableCell className="px-4">
-                      <div className="flex items-center justify-end gap-2">
-                        <Button
-                          size="icon-sm"
-                          variant="outline"
-                          aria-label={`View payment ${payment.id}`}
-                          asChild
-                        >
-                          <Link href={`/payments/view?id=${payment.id}`}>
-                            <Search />
-                          </Link>
-                        </Button>
-                        {canManage && payment.status !== "REVERSED" && (
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
                           <Button
+                            variant="ghost"
                             size="icon-sm"
-                            variant="destructive"
-                            aria-label={`Reverse payment ${payment.id}`}
-                            onClick={() => {
-                              setToReverse(payment);
-                              setReverseReason("");
-                            }}
+                            aria-label={`Actions for payment ${payment.id}`}
                           >
-                            <Undo2 />
+                            <MoreHorizontal />
                           </Button>
-                        )}
-                      </div>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuItem asChild>
+                            <Link href={`/payments/view?id=${payment.id}`}>
+                              <Eye />
+                              View
+                            </Link>
+                          </DropdownMenuItem>
+                          {canManage && payment.status !== "REVERSED" && (
+                            <>
+                              <DropdownMenuSeparator />
+                              <DropdownMenuItem
+                                variant="destructive"
+                                onClick={() => {
+                                  setToReverse(payment);
+                                  setReverseReason("");
+                                }}
+                              >
+                                <Undo2 />
+                                Reverse
+                              </DropdownMenuItem>
+                            </>
+                          )}
+                        </DropdownMenuContent>
+                      </DropdownMenu>
                     </TableCell>
                   </TableRow>
                 ))

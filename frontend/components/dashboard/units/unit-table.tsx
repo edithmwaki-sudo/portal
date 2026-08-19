@@ -1,10 +1,17 @@
 "use client"
 
-import { Pencil, Trash2 } from "lucide-react";
+import { MoreHorizontal, Pencil, Trash2 } from "lucide-react";
 import Link from "next/link";
 
 import { StatusBadge } from "@/components/dashboard/certifications/status-badge";
 import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   Table,
@@ -49,7 +56,7 @@ export function UnitTable({
           <TableHead className="px-4">Credit</TableHead>
           <TableHead className="px-4">Status</TableHead>
           {canEdit && (
-            <TableHead className="px-4 text-right">Action</TableHead>
+            <TableHead className="w-12 px-4">Action</TableHead>
           )}
         </TableRow>
       </TableHeader>
@@ -80,7 +87,7 @@ export function UnitTable({
               </TableCell>
               {canEdit && (
                 <TableCell className="px-4">
-                  <Skeleton className="ml-auto h-8 w-24" />
+                  <Skeleton className="h-8 w-8" />
                 </TableCell>
               )}
             </TableRow>
@@ -131,26 +138,33 @@ export function UnitTable({
               </TableCell>
               {canEdit && (
                 <TableCell className="px-4">
-                  <div className="flex items-center justify-end gap-2">
-                    <Button
-                      size="icon-sm"
-                      variant="outline"
-                      aria-label={`Edit ${unit.name}`}
-                      asChild
-                    >
-                      <Link href={`/units/edit?id=${unit.id}`}>
-                        <Pencil />
-                      </Link>
-                    </Button>
-                    <Button
-                      size="icon-sm"
-                      variant="destructive"
-                      aria-label={`Delete ${unit.name}`}
-                      onClick={() => onDelete(unit)}
-                    >
-                      <Trash2 />
-                    </Button>
-                  </div>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        size="icon-sm"
+                        aria-label={`Actions for ${unit.name}`}
+                      >
+                        <MoreHorizontal />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                      <DropdownMenuItem asChild>
+                        <Link href={`/units/edit?id=${unit.id}`}>
+                          <Pencil />
+                          Edit
+                        </Link>
+                      </DropdownMenuItem>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem
+                        variant="destructive"
+                        onClick={() => onDelete(unit)}
+                      >
+                        <Trash2 />
+                        Delete
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
                 </TableCell>
               )}
             </TableRow>

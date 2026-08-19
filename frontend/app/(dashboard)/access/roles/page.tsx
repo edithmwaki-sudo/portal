@@ -1,13 +1,20 @@
 "use client"
 
 import { useCallback, useEffect, useState } from "react";
-import { KeyRound, Pencil, Search, Trash2 } from "lucide-react";
+import { KeyRound, MoreHorizontal, Pencil, Search, Trash2 } from "lucide-react";
 import Link from "next/link";
 
 import { RolesToolbar } from "@/components/dashboard/roles/roles-toolbar";
 import { EditRoleDialog } from "@/components/dashboard/roles/edit-role-dialog";
 import { DeleteRoleDialog } from "@/components/dashboard/roles/delete-role-dialog";
 import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
@@ -82,7 +89,7 @@ export default function RolesPage() {
                 <TableHead className="w-16 px-4">S/NO</TableHead>
                 <TableHead className="px-4">Name</TableHead>
                 <TableHead className="px-4">View Permissions</TableHead>
-                <TableHead className="px-4 text-right">Action</TableHead>
+                <TableHead className="w-12 px-4">Action</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -99,7 +106,7 @@ export default function RolesPage() {
                       <Skeleton className="h-4 w-56" />
                     </TableCell>
                     <TableCell className="px-4">
-                      <Skeleton className="ml-auto h-8 w-24" />
+                      <Skeleton className="h-8 w-8" />
                     </TableCell>
                   </TableRow>
                 ))
@@ -148,24 +155,31 @@ export default function RolesPage() {
                       )}
                     </TableCell>
                     <TableCell className="px-4">
-                      <div className="flex items-center justify-end gap-2">
-                        <Button
-                          size="icon-sm"
-                          variant="outline"
-                          aria-label={`Edit ${role.name}`}
-                          onClick={() => setEditRole(role)}
-                        >
-                          <Pencil />
-                        </Button>
-                        <Button
-                          size="icon-sm"
-                          variant="destructive"
-                          aria-label={`Delete ${role.name}`}
-                          onClick={() => setDeleteRole(role)}
-                        >
-                          <Trash2 />
-                        </Button>
-                      </div>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button
+                            variant="ghost"
+                            size="icon-sm"
+                            aria-label={`Actions for ${role.name}`}
+                          >
+                            <MoreHorizontal />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuItem onClick={() => setEditRole(role)}>
+                            <Pencil />
+                            Edit
+                          </DropdownMenuItem>
+                          <DropdownMenuSeparator />
+                          <DropdownMenuItem
+                            variant="destructive"
+                            onClick={() => setDeleteRole(role)}
+                          >
+                            <Trash2 />
+                            Delete
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
                     </TableCell>
                   </TableRow>
                 ))

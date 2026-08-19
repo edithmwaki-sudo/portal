@@ -1,13 +1,20 @@
 "use client"
 
 import { useEffect, useState } from "react";
-import { Pencil, Plus, Search, Trash2 } from "lucide-react";
+import { MoreHorizontal, Pencil, Plus, Search, Trash2 } from "lucide-react";
 import Link from "next/link";
 
 import { PageToolbar } from "@/components/dashboard/page-toolbar";
 import { FeeStatusBadge } from "@/components/dashboard/fees/fee-status-badge";
 import { DeleteFeeStructureDialog } from "@/components/dashboard/fees/delete-fee-structure-dialog";
 import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
@@ -130,7 +137,7 @@ export default function FeeStructuresPage() {
                 <TableHead className="px-4 text-center">Items</TableHead>
                 <TableHead className="px-4">Start Date</TableHead>
                 <TableHead className="px-4">End Date</TableHead>
-                <TableHead className="px-4 text-right">Action</TableHead>
+                <TableHead className="w-12 px-4">Action</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -159,7 +166,7 @@ export default function FeeStructuresPage() {
                       <Skeleton className="h-4 w-24" />
                     </TableCell>
                     <TableCell className="px-4">
-                      <Skeleton className="ml-auto h-8 w-24" />
+                      <Skeleton className="h-8 w-8" />
                     </TableCell>
                   </TableRow>
                 ))
@@ -206,30 +213,37 @@ export default function FeeStructuresPage() {
                       {structure.endDate?.slice(0, 10) ?? "—"}
                     </TableCell>
                     <TableCell className="px-4">
-                      <div className="flex items-center justify-end gap-2">
-                        <Button
-                          size="icon-sm"
-                          variant="outline"
-                          aria-label={`Edit ${structure.feeName}`}
-                          asChild
-                        >
-                          <Link
-                            href={`/fees/structures/edit?id=${structure.id}`}
-                          >
-                            <Pencil />
-                          </Link>
-                        </Button>
-                        {canManage && (
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
                           <Button
+                            variant="ghost"
                             size="icon-sm"
-                            variant="destructive"
-                            aria-label={`Delete ${structure.feeName}`}
-                            onClick={() => setStructureToDelete(structure)}
+                            aria-label={`Actions for ${structure.feeName}`}
                           >
-                            <Trash2 />
+                            <MoreHorizontal />
                           </Button>
-                        )}
-                      </div>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuItem asChild>
+                            <Link href={`/fees/structures/edit?id=${structure.id}`}>
+                              <Pencil />
+                              Edit
+                            </Link>
+                          </DropdownMenuItem>
+                          {canManage && (
+                            <>
+                              <DropdownMenuSeparator />
+                              <DropdownMenuItem
+                                variant="destructive"
+                                onClick={() => setStructureToDelete(structure)}
+                              >
+                                <Trash2 />
+                                Delete
+                              </DropdownMenuItem>
+                            </>
+                          )}
+                        </DropdownMenuContent>
+                      </DropdownMenu>
                     </TableCell>
                   </TableRow>
                 ))

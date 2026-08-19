@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import {
   ArrowLeft,
   CalendarDays,
+  MoreHorizontal,
   Pencil,
   Plus,
   Search,
@@ -14,6 +15,13 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { PageToolbar } from "@/components/dashboard/page-toolbar";
 import { DeleteAcademicSessionDialog } from "@/components/dashboard/calendar/delete-academic-session-dialog";
 import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
@@ -173,7 +181,7 @@ export default function CalendarSessionsPage() {
                 <TableHead className="px-4">Period</TableHead>
                 <TableHead className="px-4">Events</TableHead>
                 <TableHead className="px-4">Status</TableHead>
-                <TableHead className="px-4 text-right">Action</TableHead>
+                <TableHead className="w-12 px-4">Action</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -199,7 +207,7 @@ export default function CalendarSessionsPage() {
                       <Skeleton className="h-4 w-16" />
                     </TableCell>
                     <TableCell className="px-4">
-                      <Skeleton className="ml-auto h-8 w-28" />
+                      <Skeleton className="h-8 w-8" />
                     </TableCell>
                   </TableRow>
                 ))
@@ -252,44 +260,53 @@ export default function CalendarSessionsPage() {
                       </span>
                     </TableCell>
                     <TableCell className="px-4">
-                      <div className="flex items-center justify-end gap-2">
-                        <Button
-                          size="icon-sm"
-                          variant="outline"
-                          aria-label={`Open calendar for ${session.name}`}
-                          onClick={() =>
-                            router.push(`/calendar/session?id=${session.id}`)
-                          }
-                        >
-                          <CalendarDays />
-                        </Button>
-                        {canEdit && (
-                          <>
-                            <Button
-                              size="icon-sm"
-                              variant="outline"
-                              aria-label={`Edit ${session.name}`}
-                              onClick={() =>
-                                router.push(
-                                  `/calendar/sessions/edit?id=${session.id}`
-                                )
-                              }
-                            >
-                              <Pencil />
-                            </Button>
-                            {canDelete && (
-                              <Button
-                                size="icon-sm"
-                                variant="destructive"
-                                aria-label={`Delete ${session.name}`}
-                                onClick={() => setSessionToDelete(session)}
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button
+                            variant="ghost"
+                            size="icon-sm"
+                            aria-label={`Actions for ${session.name}`}
+                          >
+                            <MoreHorizontal />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuItem
+                            onClick={() =>
+                              router.push(`/calendar/session?id=${session.id}`)
+                            }
+                          >
+                            <CalendarDays />
+                            Open Calendar
+                          </DropdownMenuItem>
+                          {canEdit && (
+                            <>
+                              <DropdownMenuItem
+                                onClick={() =>
+                                  router.push(
+                                    `/calendar/sessions/edit?id=${session.id}`
+                                  )
+                                }
                               >
-                                <Trash2 />
-                              </Button>
-                            )}
-                          </>
-                        )}
-                      </div>
+                                <Pencil />
+                                Edit
+                              </DropdownMenuItem>
+                              {canDelete && (
+                                <>
+                                  <DropdownMenuSeparator />
+                                  <DropdownMenuItem
+                                    variant="destructive"
+                                    onClick={() => setSessionToDelete(session)}
+                                  >
+                                    <Trash2 />
+                                    Delete
+                                  </DropdownMenuItem>
+                                </>
+                              )}
+                            </>
+                          )}
+                        </DropdownMenuContent>
+                      </DropdownMenu>
                     </TableCell>
                   </TableRow>
                 ))

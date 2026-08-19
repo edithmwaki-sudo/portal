@@ -1,11 +1,17 @@
 "use client"
 
 import { useCallback, useEffect, useState } from "react";
-import { Search, Users } from "lucide-react";
+import { Eye, MoreHorizontal, Search, Users } from "lucide-react";
 import { useRouter } from "next/navigation";
 
 import { PageToolbar } from "@/components/dashboard/page-toolbar";
 import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
@@ -177,7 +183,7 @@ export default function FeeStatementsPage() {
                   <TableHead className="text-right">Invoiced</TableHead>
                   <TableHead className="text-right">Paid</TableHead>
                   <TableHead className="text-right">Balance</TableHead>
-                  <TableHead className="text-right"></TableHead>
+                  <TableHead className="w-12 px-4">Action</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -215,17 +221,30 @@ export default function FeeStatementsPage() {
                     >
                       {CURRENCY.format(item.balance)}
                     </TableCell>
-                    <TableCell className="text-right">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={(event) => {
-                          event.stopPropagation();
-                          router.push(`/fees/statements/view?id=${item.id}`);
-                        }}
-                      >
-                        View
-                      </Button>
+                    <TableCell className="px-4">
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button
+                            variant="ghost"
+                            size="icon-sm"
+                            aria-label={`Actions for ${item.name}`}
+                            onClick={(event) => event.stopPropagation()}
+                          >
+                            <MoreHorizontal />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuItem
+                            onClick={(event) => {
+                              event.stopPropagation();
+                              router.push(`/fees/statements/view?id=${item.id}`);
+                            }}
+                          >
+                            <Eye />
+                            View Statement
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
                     </TableCell>
                   </TableRow>
                 ))}

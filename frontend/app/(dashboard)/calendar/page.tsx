@@ -1,12 +1,19 @@
 "use client"
 
 import { useCallback, useEffect, useState } from "react";
-import { CalendarDays, Pencil, Plus, Search, Trash2 } from "lucide-react";
+import { CalendarDays, MoreHorizontal, Pencil, Plus, Search, Trash2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 
 import { PageToolbar } from "@/components/dashboard/page-toolbar";
 import { DeleteAcademicYearDialog } from "@/components/dashboard/calendar/delete-academic-year-dialog";
 import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
@@ -134,7 +141,7 @@ export default function CalendarPage() {
                 <TableHead className="px-4">Period</TableHead>
                 <TableHead className="px-4">Sessions</TableHead>
                 <TableHead className="px-4">Status</TableHead>
-                <TableHead className="px-4 text-right">Action</TableHead>
+                <TableHead className="w-12 px-4">Action</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -160,7 +167,7 @@ export default function CalendarPage() {
                       <Skeleton className="h-4 w-16" />
                     </TableCell>
                     <TableCell className="px-4">
-                      <Skeleton className="ml-auto h-8 w-28" />
+                      <Skeleton className="h-8 w-8" />
                     </TableCell>
                   </TableRow>
                 ))
@@ -213,42 +220,53 @@ export default function CalendarPage() {
                       </span>
                     </TableCell>
                     <TableCell className="px-4">
-                      <div className="flex items-center justify-end gap-2">
-                        <Button
-                          size="icon-sm"
-                          variant="outline"
-                          aria-label={`View sessions for ${year.name}`}
-                          onClick={() =>
-                            router.push(`/calendar/sessions?yearId=${year.id}`)
-                          }
-                        >
-                          <CalendarDays />
-                        </Button>
-                        {canEdit && (
-                          <>
-                            <Button
-                              size="icon-sm"
-                              variant="outline"
-                              aria-label={`Edit ${year.name}`}
-                              onClick={() =>
-                                router.push(`/calendar/years/edit?id=${year.id}`)
-                              }
-                            >
-                              <Pencil />
-                            </Button>
-                            {canDelete && (
-                              <Button
-                                size="icon-sm"
-                                variant="destructive"
-                                aria-label={`Delete ${year.name}`}
-                                onClick={() => setYearToDelete(year)}
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button
+                            variant="ghost"
+                            size="icon-sm"
+                            aria-label={`Actions for ${year.name}`}
+                          >
+                            <MoreHorizontal />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuItem
+                            onClick={() =>
+                              router.push(`/calendar/sessions?yearId=${year.id}`)
+                            }
+                          >
+                            <CalendarDays />
+                            View Sessions
+                          </DropdownMenuItem>
+                          {canEdit && (
+                            <>
+                              <DropdownMenuItem
+                                onClick={() =>
+                                  router.push(
+                                    `/calendar/years/edit?id=${year.id}`
+                                  )
+                                }
                               >
-                                <Trash2 />
-                              </Button>
-                            )}
-                          </>
-                        )}
-                      </div>
+                                <Pencil />
+                                Edit
+                              </DropdownMenuItem>
+                              {canDelete && (
+                                <>
+                                  <DropdownMenuSeparator />
+                                  <DropdownMenuItem
+                                    variant="destructive"
+                                    onClick={() => setYearToDelete(year)}
+                                  >
+                                    <Trash2 />
+                                    Delete
+                                  </DropdownMenuItem>
+                                </>
+                              )}
+                            </>
+                          )}
+                        </DropdownMenuContent>
+                      </DropdownMenu>
                     </TableCell>
                   </TableRow>
                 ))
