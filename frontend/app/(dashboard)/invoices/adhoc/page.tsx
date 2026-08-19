@@ -113,7 +113,7 @@ export default function AdhocInvoicePage() {
         description="Issue an ad-hoc charge such as a fine, penalty, or hostel fee."
         quickLinks={[{ label: "Back to Invoices", href: "/invoices" }]}
       />
-      <div className="mx-[50px] mb-[30px] max-w-3xl">
+      <div className="mx-4 mb-4 sm:mx-6 sm:mb-6 lg:mx-[50px] lg:mb-[30px] max-w-3xl">
         <div className="grid gap-6">
           <div className="grid gap-4 rounded-lg bg-card p-6 shadow-lg shadow-black/5 md:grid-cols-2">
             <div className="grid gap-2">

@@ -22,7 +22,6 @@ import {
 import {
   Form,
   FormControl,
-  FormDescription,
   FormField,
   FormItem,
   FormLabel,
@@ -31,7 +30,6 @@ import {
 import { AsyncSearchSelect } from "@/components/ui/async-search-select";
 import {
   getAllCourseAuthorityOptions,
-  getAllCourseLevelOptions,
   getCourseCurriculaByCourse,
   getCourses,
   type AsyncOption,
@@ -54,12 +52,6 @@ const GENDER_OPTIONS = [
   { value: "MALE", label: "Male" },
   { value: "FEMALE", label: "Female" },
   { value: "OTHER", label: "Other" },
-];
-
-const STATUS_OPTIONS = [
-  { value: "ACTIVE", label: "Active" },
-  { value: "INACTIVE", label: "Inactive" },
-  { value: "GRADUATED", label: "Graduated" },
 ];
 
 const RELATIONSHIP_OPTIONS = [
@@ -124,15 +116,17 @@ export function StudentForm({
       ? String(student.activeEnrolment.certificationAuthorityId)
       : ""
   );
-  const [levelId, setLevelId] = useState<string>(() =>
-    student?.activeEnrolment?.certificationLevelId != null
-      ? String(student.activeEnrolment.certificationLevelId)
-      : ""
-  );
   const [authorityOptions, setAuthorityOptions] = useState<AsyncOption[]>([]);
-  const [levelOptions, setLevelOptions] = useState<AsyncOption[]>([]);
-  const [curriculumOptions, setCurriculumOptions] = useState<AsyncOption[]>([]);
   const [courseOptions, setCourseOptions] = useState<Course[]>([]);
+  const [activeCurriculum, setActiveCurriculum] = useState<AsyncOption | null>(
+    () =>
+      student?.activeEnrolment?.curriculumId
+        ? {
+            id: student.activeEnrolment.curriculumId,
+            label: student.activeEnrolment.curriculumName ?? "",
+          }
+        : null
+  );
   const [selectedCourse, setSelectedCourse] = useState<Course | null>(() =>
     student ? buildCourseFromEnrolment(student.activeEnrolment) : null
   );
@@ -148,12 +142,8 @@ export function StudentForm({
             student.activeEnrolment?.courseId != null
               ? String(student.activeEnrolment.courseId)
               : "",
-          curriculumId: student.activeEnrolment
-            ? String(student.activeEnrolment.curriculumId)
-            : "",
-          level: student.level != null ? String(student.level) : "",
+          level: student.level != null ? String(student.level) : "1",
           admDate: student.admDate?.slice(0, 10) ?? "",
-          status: student.status ?? "ACTIVE",
           firstName: student.user.firstName ?? "",
           middleName: student.user.middleName ?? "",
           lastName: student.user.lastName ?? "",
@@ -184,10 +174,8 @@ export function StudentForm({
         }
       : {
           courseId: "",
-          curriculumId: "",
-          level: "",
+          level: "1",
           admDate: new Date().toISOString().slice(0, 10),
-          status: "ACTIVE",
           firstName: "",
           middleName: "",
           lastName: "",
@@ -218,7 +206,6 @@ export function StudentForm({
 
   const isPwd = form.watch("isPwd");
   const courseIdValue = form.watch("courseId");
-  const curriculumIdValue = form.watch("curriculumId");
   const selectedCourseId = selectedCourse?.id ?? null;
 
   useEffect(() => {
@@ -236,35 +223,19 @@ export function StudentForm({
   }, []);
 
   useEffect(() => {
-    if (!authorityId) {
-      setLevelOptions([]);
-      return;
-    }
-    let cancelled = false;
-    getAllCourseLevelOptions(Number(authorityId))
-      .then((options) => {
-        if (!cancelled) setLevelOptions(options);
-      })
-      .catch(() => {
-        if (!cancelled) setLevelOptions([]);
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, [authorityId]);
-
-  useEffect(() => {
     if (!courseIdValue) {
-      setCurriculumOptions([]);
+      setActiveCurriculum(null);
       return;
     }
     let cancelled = false;
     getCourseCurriculaByCourse(Number(courseIdValue))
       .then((options) => {
-        if (!cancelled) setCurriculumOptions(options);
+        if (!cancelled) {
+          setActiveCurriculum(options[0] ?? null);
+        }
       })
       .catch(() => {
-        if (!cancelled) setCurriculumOptions([]);
+        if (!cancelled) setActiveCurriculum(null);
       });
     return () => {
       cancelled = true;
@@ -273,43 +244,39 @@ export function StudentForm({
 
   const fetchCourseOptions = useCallback(
     async (search: string) => {
-      if (!authorityId || !levelId) return [];
+      if (!authorityId) return [];
       const response = await getCourses({
         page: 1,
         limit: 10,
         search,
         certificationAuthorityId: Number(authorityId),
-        certificationLevelId: Number(levelId),
+        status: "active",
       });
-      setCourseOptions(response.items);
-      return response.items.map((course) => ({
+      // Only courses that currently have an active curriculum are offerable.
+      const offered = response.items.filter((course) =>
+        course.curricula.some((curriculum) => curriculum.isActive)
+      );
+      setCourseOptions(offered);
+      return offered.map((course) => ({
         id: course.id,
         label: `${course.code} - ${course.name}`,
       }));
     },
-    [authorityId, levelId]
+    [authorityId]
   );
 
   function handleAuthorityChange(value: string | undefined) {
     setAuthorityId(value ?? "");
-    setLevelId("");
     form.setValue("courseId", "", { shouldValidate: true });
-    form.setValue("curriculumId", "", { shouldValidate: true });
     setSelectedCourse(null);
-  }
-
-  function handleLevelChange(value: string | undefined) {
-    setLevelId(value ?? "");
-    form.setValue("courseId", "", { shouldValidate: true });
-    form.setValue("curriculumId", "", { shouldValidate: true });
-    setSelectedCourse(null);
+    setActiveCurriculum(null);
   }
 
   function handleCourseChange(value: string | undefined) {
     form.setValue("courseId", value ?? "", { shouldValidate: true });
-    form.setValue("curriculumId", "", { shouldValidate: true });
     if (!value) {
       setSelectedCourse(null);
+      setActiveCurriculum(null);
       return;
     }
     const course = courseOptions.find((item) => String(item.id) === value);
@@ -362,11 +329,10 @@ export function StudentForm({
       nextOfKinAltPhone: values.nextOfKinAltPhone?.trim() || undefined,
       nextOfKinEmail: values.nextOfKinEmail?.trim() || undefined,
       nextOfKinRelationship: values.nextOfKinRelationship,
+      authorityId: authorityId ? Number(authorityId) : undefined,
       courseId: Number(values.courseId),
-      curriculumId: Number(values.curriculumId),
       level: values.level ? Number(values.level) : undefined,
       admDate: values.admDate || undefined,
-      status: values.status,
     };
 
     try {
@@ -404,9 +370,9 @@ export function StudentForm({
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="grid gap-6">
         <FormSection title="Admission Information">
-          <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
+          <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-3">
             <FormItem>
-              <RequiredLabel>Exam Body</RequiredLabel>
+              <RequiredLabel>Certification Authority</RequiredLabel>
               <FormControl>
                 <AsyncSearchSelect<AsyncOption>
                   value={authorityId || undefined}
@@ -416,34 +382,14 @@ export function StudentForm({
                   selectedLabel={
                     student?.activeEnrolment?.authorityName ?? undefined
                   }
-                  placeholder="Select exam body"
+                  placeholder="Select certification authority"
                   searchPlaceholder="Search by code or name..."
                   disabled={isSubmitting || isEditing}
                   minChars={1}
-                  emptyMessage="No active exam bodies found."
+                  emptyMessage="No active certification authorities found."
                 />
               </FormControl>
-            </FormItem>
-            <FormItem>
-              <RequiredLabel>Certification Level</RequiredLabel>
-              <FormControl>
-                <AsyncSearchSelect<AsyncOption>
-                  value={levelId || undefined}
-                  onValueChange={handleLevelChange}
-                  getOptions={async () => levelOptions}
-                  preloadedOptions={levelOptions}
-                  selectedLabel={
-                    student?.activeEnrolment?.levelName ?? undefined
-                  }
-                  placeholder={
-                    authorityId ? "Select level" : "Select exam body first"
-                  }
-                  searchPlaceholder="Search by name or code..."
-                  disabled={isSubmitting || isEditing || !authorityId}
-                  minChars={1}
-                  emptyMessage="No levels found for this exam body."
-                />
-              </FormControl>
+              <FormMessage />
             </FormItem>
             <FormField
               control={form.control}
@@ -462,120 +408,26 @@ export function StudentForm({
                           : undefined
                       }
                       placeholder={
-                        levelId ? "Select course" : "Select level first"
+                        authorityId
+                          ? "Select course"
+                          : "Select certification authority first"
                       }
                       searchPlaceholder="Search by code or name..."
-                      disabled={isSubmitting || isEditing || !levelId}
+                      disabled={isSubmitting || isEditing || !authorityId}
                       minChars={1}
-                      emptyMessage="No courses found for this level and exam body."
+                      emptyMessage="No offerable courses found for this certification authority."
                     />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
             />
-            <FormField
-              control={form.control}
-              name="curriculumId"
-              render={({ field }) => (
-                <FormItem>
-                  <RequiredLabel>Curriculum</RequiredLabel>
-                  <FormControl>
-                    <AsyncSearchSelect
-                      key={courseIdValue ?? "none"}
-                      value={field.value || undefined}
-                      onValueChange={(next) => field.onChange(next ?? "")}
-                      getOptions={async () => curriculumOptions}
-                      preloadedOptions={curriculumOptions}
-                      selectedLabel={
-                        student?.activeEnrolment?.curriculumName ?? undefined
-                      }
-                      placeholder={
-                        courseIdValue
-                          ? "Select curriculum"
-                          : "Select course first"
-                      }
-                      searchPlaceholder="Search by cycle name..."
-                      disabled={isSubmitting || isEditing || !courseIdValue}
-                      minChars={1}
-                      emptyMessage="No active curriculum for this course."
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-          </div>
-
-          {selectedCourse ? (
-            <div className="grid gap-3 rounded-lg border bg-muted/40 p-4 text-sm md:grid-cols-2 xl:grid-cols-4">
-              <div>
-                <span className="text-muted-foreground">Course</span>
-                <p className="font-medium">
-                  {selectedCourse.code} — {selectedCourse.name}
-                </p>
-              </div>
-              <div>
-                <span className="text-muted-foreground">Certification Authority</span>
-                <p className="font-medium">
-                  {selectedCourse.certificationAuthorityName ?? "—"}
-                </p>
-              </div>
-              <div>
-                <span className="text-muted-foreground">Certification Level</span>
-                <p className="font-medium">
-                  {selectedCourse.certificationLevelName ?? "—"}
-                </p>
-              </div>
-              <div>
-                <span className="text-muted-foreground">Department</span>
-                <p className="font-medium">
-                  {selectedCourse.departmentName ?? "—"}
-                </p>
-              </div>
-              <div>
-                <span className="text-muted-foreground">Curriculum</span>
-                <p className="font-medium">
-                  {student?.activeEnrolment?.curriculumName ??
-                    curriculumOptions.find(
-                      (option) => String(option.id) === curriculumIdValue
-                    )?.label ??
-                    "—"}
-                </p>
-              </div>
-              {isEditing ? (
-                <div>
-                  <span className="text-muted-foreground">Admission Number</span>
-                  <p className="font-mono font-semibold">
-                    {student?.admissionNumber ?? "—"}
-                  </p>
-                </div>
-              ) : (
-                <div>
-                  <span className="text-muted-foreground">Next Admission Number</span>
-                  <p className="font-mono font-semibold">
-                    {admissionPreview ?? "…"}
-                  </p>
-                </div>
-              )}
-              {selectedCourse.durationMonths ? (
-                <div>
-                  <span className="text-muted-foreground">Duration</span>
-                  <p className="font-medium">
-                    {selectedCourse.durationMonths} months
-                  </p>
-                </div>
-              ) : null}
-            </div>
-          ) : null}
-
-          <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
             <FormField
               control={form.control}
               name="level"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Current Level</FormLabel>
+                  <FormLabel>Year of Entry</FormLabel>
                   <Select
                     value={field.value ?? undefined}
                     onValueChange={field.onChange}
@@ -611,39 +463,67 @@ export function StudentForm({
                 </FormItem>
               )}
             />
-            <FormField
-              control={form.control}
-              name="status"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Status</FormLabel>
-                  <Select
-                    value={field.value}
-                    onValueChange={field.onChange}
-                    disabled={isSubmitting}
-                  >
-                    <FormControl>
-                      <SelectTrigger className="w-full">
-                        <SelectValue placeholder="Select status" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      {STATUS_OPTIONS.map((option) => (
-                        <SelectItem key={option.value} value={option.value}>
-                          {option.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
           </div>
+
+          {selectedCourse ? (
+            <div className="grid gap-3 rounded-lg border bg-muted/40 p-4 text-sm md:grid-cols-2 xl:grid-cols-4">
+              <div>
+                <span className="text-muted-foreground">Course</span>
+                <p className="font-medium">
+                  {selectedCourse.code} — {selectedCourse.name}
+                </p>
+              </div>
+              <div>
+                <span className="text-muted-foreground">Certification Authority</span>
+                <p className="font-medium">
+                  {selectedCourse.certificationAuthorityName ?? "—"}
+                </p>
+              </div>
+              <div>
+                <span className="text-muted-foreground">Certification Level</span>
+                <p className="font-medium">
+                  {selectedCourse.certificationLevelName ?? "—"}
+                </p>
+              </div>
+              <div>
+                <span className="text-muted-foreground">Department</span>
+                <p className="font-medium">
+                  {selectedCourse.departmentName ?? "—"}
+                </p>
+              </div>
+              <div>
+                <span className="text-muted-foreground">Curriculum</span>
+                <p className="font-medium">{activeCurriculum?.label ?? "—"}</p>
+              </div>
+              {isEditing ? (
+                <div>
+                  <span className="text-muted-foreground">Admission Number</span>
+                  <p className="font-mono font-semibold">
+                    {student?.admissionNumber ?? "—"}
+                  </p>
+                </div>
+              ) : (
+                <div>
+                  <span className="text-muted-foreground">Next Admission Number</span>
+                  <p className="font-mono font-semibold">
+                    {admissionPreview ?? "…"}
+                  </p>
+                </div>
+              )}
+              {selectedCourse.durationMonths ? (
+                <div>
+                  <span className="text-muted-foreground">Duration</span>
+                  <p className="font-medium">
+                    {selectedCourse.durationMonths} months
+                  </p>
+                </div>
+              ) : null}
+            </div>
+          ) : null}
         </FormSection>
 
         <FormSection title="Personal Details">
-          <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
+          <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-3">
             <FormField
               control={form.control}
               name="firstName"
@@ -697,9 +577,6 @@ export function StudentForm({
                       {...field}
                     />
                   </FormControl>
-                  <FormDescription>
-                    The student&apos;s login identifier.
-                  </FormDescription>
                   <FormMessage />
                 </FormItem>
               )}
@@ -810,9 +687,6 @@ export function StudentForm({
                       {...field}
                     />
                   </FormControl>
-                  <FormDescription>
-                    Used as the student&apos;s one-time default password.
-                  </FormDescription>
                   <FormMessage />
                 </FormItem>
               )}
@@ -886,7 +760,7 @@ export function StudentForm({
         </FormSection>
 
         <FormSection title="Disability (PWD)">
-          <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
+          <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-3">
             <FormField
               control={form.control}
               name="isPwd"
@@ -941,7 +815,7 @@ export function StudentForm({
         </FormSection>
 
         <FormSection title="Next of Kin">
-          <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
+          <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-3">
             <FormField
               control={form.control}
               name="nextOfKinFirstName"

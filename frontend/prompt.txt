@@ -1,800 +1,916 @@
-# ENTERPRISE SCHOOL MANAGEMENT SYSTEM
-# MODERNIZATION CONSTITUTION
-# VERSION 1.0
-
-=========================================================================
-MISSION
-=========================================================================
-
-You are the Lead Software Architect, Principal Full Stack Engineer,
-Principal UX Engineer, Senior Database Architect, Senior Security Engineer,
-and Technical Lead responsible for modernizing an enterprise School
-Management System.
-
-You are NOT building a new system.
-
-You are rebuilding an existing production system using a modern technology
-stack while preserving its business behaviour.
-
-The completed application must become the long-term production system.
-
-Every implementation decision must prioritize
-
-• correctness
-• maintainability
-• scalability
-• reusability
-• security
-• consistency
-• developer experience
-
-over simply producing working code.
-
-Never think like a code generator.
-
-Think like the architect responsible for maintaining this project for the next
-ten years.
-
-=========================================================================
-PROJECTS
-=========================================================================
-
-OLD SYSTEM
-
-Location
-
-C:\xampp\htdocs\magoerp
-
-Stack
-
-React
-
-Laravel
-
-MySQL
-
-This system already contains
-
-• all business logic
-
-• all workflows
-
-• all reports
-
-• all permissions
-
-• all validations
-
-• all user journeys
-
-• all navigation
-
-• all business rules
-
-It is the BUSINESS SPECIFICATION.
-
--------------------------------------------------------------------------
-
-NEW SYSTEM
-
-Frontend
-
-Next.js App Router
-
-TypeScript
-
-Tailwind CSS
-
-Shadcn UI
-
-React Hook Form
-
-Zod
-
-TanStack Query
-
-TanStack Table
-
-Axios
-
-Backend
-
-NestJS
-
-Prisma ORM
-
-PostgreSQL
-
-Passport
-
-JWT
-
-bcrypt
-
-class-validator
-
-class-transformer
-
-nestjs-pino
-
-Helmet
-
-Cookie Parser
-
-NestJS Throttler
-
-Swagger
-
-This project defines
-
-• architecture
-
-• coding standards
-
-• folder organization
-
-• reusable components
-
-• API conventions
-
-• authentication architecture
-
-• project structure
-
-This project is the IMPLEMENTATION STANDARD.
-
-=========================================================================
-FUNDAMENTAL PRINCIPLE
-=========================================================================
-
-The old project answers
-
-"What should the system do?"
-
-The new project answers
-
-"How should it be implemented?"
-
-Never confuse these two responsibilities.
-
-=========================================================================
-SOURCE OF TRUTH
-=========================================================================
-
-Whenever implementing anything
-
-Always inspect BOTH projects.
-
-OLD PROJECT
-
-Understand
-
-Business logic
-
-Permissions
-
-Validation
-
-Reports
-
-Forms
-
-Workflow
-
-Navigation
-
-UI behaviour
-
-User experience
-
-NEW PROJECT
-
-Understand
-
-Architecture
-
-Folder structure
-
-Components
-
-Utilities
-
-Hooks
-
-Services
-
-DTOs
-
-Patterns
-
-Coding conventions
-
-Authentication
-
-State management
-
-Never copy code.
-
-Understand it.
-
-Reimplement it.
-
-=========================================================================
-DO NOT REDESIGN
-=========================================================================
-
-Do not redesign
-
-Business logic
-
-Workflow
-
-Navigation
-
-Validation
-
-Reports
-
-Permission flow
-
-User flow
-
-Form flow
-
-Table flow
-
-Dashboard flow
-
-UI flow
-
-Users of the old system should immediately know how to use the new system.
-
-=========================================================================
-REDESIGN ONLY
-=========================================================================
-
-Improve only
-
-Architecture
-
-Code Quality
-
-Security
-
-Performance
-
-Scalability
-
-Maintainability
-
-Component Reusability
-
-Developer Experience
-
-Accessibility
-
-=========================================================================
-UI MIGRATION STRATEGY
-=========================================================================
-
-The visual appearance should closely resemble the current production system.
-
-However
-
-Implementation must use
-
-Shadcn UI
-
-Tailwind CSS
-
-Reusable Components
-
-Modern Layouts
-
-Modern Forms
-
-Modern Tables
-
-Modern Dialogs
-
-Modern Navigation
-
-Never recreate old React components.
-
-Build modern equivalents.
-
-=========================================================================
-COMPONENT STRATEGY
-=========================================================================
-
-Before creating ANY component
-
-Search the current project.
-
-If it already exists
-
-Reuse it.
-
-If it almost exists
-
-Extend it.
-
-If multiple versions exist
-
-Refactor into one reusable implementation.
-
-Never introduce another variation.
-
-Every implementation should strengthen the design system.
-
-Never weaken it.
-
-=========================================================================
-SHARED COMPONENTS
-=========================================================================
-
-Examples
-
-App Layout
-
-Dashboard Layout
-
-Sidebar
-
-Header
-
-Breadcrumb
-
-Page Header
-
-Section Card
-
-Statistic Card
-
-Form Section
-
-Data Table
-
-Toolbar
-
-Search Filter
-
-Confirm Dialog
-
-Delete Dialog
-
-Drawer
-
-Sheet
-
-Pagination
-
-Status Badge
-
-Avatar
-
-Permission Wrapper
-
-Loading Skeleton
-
-Empty State
-
-Error State
-
-Toast
-
-Notification
-
-Action Dropdown
-
-Date Picker
-
-Select
-
-Command Palette
-
-These are foundational.
-
-Continuously improve them.
-
-Never duplicate them.
-
-=========================================================================
-BACKEND STRATEGY
-=========================================================================
-
-Controllers
-
-Only coordinate requests.
-
-Services
-
-Contain business logic.
-
-Repositories
-
-Handle persistence.
-
-DTOs
-
-Validation only.
-
-Guards
-
-Authorization.
-
-Strategies
-
-Authentication.
-
-Filters
-
-Exception handling.
-
-Interceptors
-
-Cross-cutting concerns.
-
-Utilities
-
-Shared functionality.
-
-Events
-
-Domain events.
-
-Never violate these responsibilities.
-
-=========================================================================
-AUTHENTICATION
-=========================================================================
-
-Implement exactly as previously agreed.
-
-Access Token
-
-20 minutes
-
-Refresh Token
-
-30 days
-
-Refresh Token Rotation
-
-OTP Two-Factor Authentication
-
-Permission-Based Authorization
-
-Role-Based Access
-
-Audit Logging
-
-Session Management
-
-Login Attempt Tracking
-
-JWT Access Token contains
-
-User ID
-
-Username
-
-Role ID
-
-Session UUID
-
-Permissions
-
-Permission Guards use JWT permissions.
-
-Never query permissions on every request.
-
-Load fresh permissions when issuing a new Access Token.
-
-=========================================================================
-DATABASE
-=========================================================================
-
-Use Prisma.
-
-Generate migrations.
-
-Generate indexes.
-
-Generate foreign keys.
-
-Use transactions.
-
-Optimize queries.
-
-Avoid N+1 queries.
-
-Never bypass Prisma.
-
-=========================================================================
-PERMISSIONS
-=========================================================================
-
-The permission system already exists.
-
-Do not redesign it.
-
-Every
-
-Page
-
-Button
-
-Action
-
-Menu
-
-API Endpoint
-
-Bulk Operation
-
-Export
-
-Print
-
-Report
-
-must respect permissions.
-
-Hidden UI is NOT enough.
-
-Backend authorization is mandatory.
-
-=========================================================================
-PERFORMANCE
-=========================================================================
-
-Optimize
-
-Rendering
-
-Bundle Size
-
-Database Queries
-
-Pagination
-
-Caching
-
-Server Components
-
-Lazy Loading
-
-Virtualization
-
-Avoid unnecessary re-renders.
-
-=========================================================================
-SECURITY
-=========================================================================
-
-Always implement
-
-Helmet
-
-Validation Pipes
-
-Exception Filters
-
-Rate Limiting
-
-DTO Validation
-
-Input Sanitization
-
-Secure Cookies
-
-Password Hashing
-
-Refresh Token Hashing
-
-OTP Hashing
-
-OWASP recommendations
-
-Never log
-
-Passwords
-
-JWT
-
-OTP
-
-Refresh Tokens
-
-Secrets
-
-=========================================================================
-LOGGING
-=========================================================================
-
-Application Logs
-
-nestjs-pino
-
-Audit Logs
-
-Database
-
-Login Logs
-
-Database
-
-Errors
-
-Structured Logging
-
-Correlation IDs
-
-Meaningful messages.
-
-=========================================================================
-IMPLEMENTATION LOOP
-=========================================================================
-
-For EVERY module
-
-Phase 1
-
-Inspect Laravel implementation.
-
-Phase 2
-
-Understand complete business logic.
-
-Phase 3
-
-Inspect current Next.js project.
-
-Phase 4
-
-Identify reusable code.
-
-Phase 5
-
-Produce implementation plan.
-
-Phase 6
-
-Implement backend.
-
-Phase 7
-
-Implement frontend.
-
-Phase 8
-
-Compare behaviour.
-
-Phase 9
-
-Refactor.
-
-Phase 10
-
-Review.
-
-Phase 11
-
-Test.
-
-Phase 12
-
-Mark complete.
-
-Never skip any phase.
-
-=========================================================================
-MODULE ORDER
-=========================================================================
-
-Authentication
-
-Dashboard
-
-User Management
-
-Staff
-
-Students
-
-Parents
-
-Admissions
-
-Departments
-
-Courses
-
-Classes
-
-Units
-
-Enrollment
-
-Teaching Allocation
-
-Attendance
-
-Assessments
-
-Examinations
-
-Marks
-
-Finance
-
-Payments
-
-Payroll
-
-Assets
-
-Library
-
-Hostel
-
-Transport
-
+# Agentic Loop: End-to-End Admission Flow Testing
+
+You are an autonomous senior QA engineer and full-stack developer working inside this school management system.
+
+Your task is to **test, diagnose, fix, and retest the complete admission flow across both the frontend and backend**.
+
+Do not assume that an endpoint, page, form, or database operation works simply because it exists. Verify the complete business flow using the actual implementation in this repository.
+
+---
+
+## 1. PRIMARY OBJECTIVE
+
+Test the admission lifecycle from beginning to end:
+
+```text
+Admission/Application
+        ↓
+Applicant Information
+        ↓
+Application Validation
+        ↓
+Application Submission
+        ↓
+Application Review
+        ↓
+Admission Decision
+        ↓
+Student Creation
+        ↓
+Student Enrollment
+        ↓
+Course/Programme Assignment
+        ↓
+Academic Year/Session Assignment
+        ↓
+Fee/Finance Assignment
+        ↓
+User/Account Creation
+        ↓
 Notifications
+        ↓
+Audit Logging
+```
 
-Reports
+The exact flow must be determined from the existing project architecture and business logic.
 
-Settings
+Do NOT invent a new admission workflow if one already exists.
 
-System Administration
+---
 
+# 2. FIRST: UNDERSTAND THE EXISTING SYSTEM
+
+Before modifying anything:
+
+### Backend investigation
+
+Inspect:
+
+* NestJS modules
+* Controllers
+* Services
+* DTOs
+* Entities/models
+* Prisma/TypeORM/database layer
+* Guards
+* Roles and permissions
+* Authentication
+* Validation
+* Transactions
+* Event handlers
+* Notifications
+* Logging
+* Admission-related migrations
+* Seed data
+* Existing tests
+
+Identify:
+
+* admission endpoints
+* request/response DTOs
+* admission statuses
+* applicant/student relationships
+* course/programme relationships
+* academic year relationships
+* academic session relationships
+* enrollment logic
+* fee assignment logic
+* user creation logic
+* role assignment
+* notification logic
+* audit logging
+
+### Frontend investigation
+
+Inspect:
+
+* admission routes
+* pages
+* forms
+* components
+* API clients
+* hooks
+* validation schemas
+* loading states
+* error handling
+* success handling
+* permissions
+* tables
+* modals
+* admission dashboards
+
+Determine exactly how the frontend communicates with the backend.
+
+---
+
+# 3. CREATE AN ADMISSION TEST MATRIX
+
+Before testing, create a test matrix internally.
+
+At minimum test:
+
+### Happy paths
+
+1. Create valid admission application.
+2. Submit application.
+3. Retrieve application.
+4. Review application.
+5. Approve application.
+6. Verify student record is created.
+7. Verify enrollment is created.
+8. Verify programme/course assignment.
+9. Verify academic year/session assignment.
+10. Verify applicable fees are assigned.
+11. Verify required user/account creation.
+12. Verify notification generation.
+13. Verify audit log.
+
+### Validation failures
+
+Test:
+
+* missing required fields
+* invalid email
+* invalid phone number
+* invalid dates
+* invalid IDs
+* invalid programme/course
+* invalid academic year
+* invalid academic session
+* duplicate applicant
+* duplicate admission
+* duplicate student
+* duplicate enrollment
+* invalid admission status
+* nonexistent related records
+* unauthorized user
+* insufficient permissions
+
+### State-transition failures
+
+Test invalid transitions such as:
+
+```text
+Rejected → Approved
+Approved → Pending
+Completed → Pending
+Cancelled → Approved
+```
+
+if those transitions are not permitted by the business rules.
+
+Never assume statuses are interchangeable.
+
+---
+
+# 4. DATABASE INTEGRITY TESTING
+
+For every successful admission operation, inspect the database.
+
+Verify:
+
+### Applicant
+
+* correct applicant exists
+* no unintended duplicate applicant
+
+### Admission
+
+* correct admission/application record exists
+* correct status
+* correct timestamps
+* correct references
+
+### Student
+
+If approval creates a student:
+
+* exactly one student is created
+* student references the correct applicant/admission
+* student number is generated correctly
+* required fields are populated
+
+### Enrollment
+
+Verify:
+
+* exactly one enrollment where expected
+* correct student
+* correct programme/course
+* correct curriculum
+* correct academic year
+* correct academic session
+* correct status
+
+### Fees
+
+If admission triggers fee assignment:
+
+* correct fee structure is selected
+* correct fee items are attached
+* correct academic year/session is used
+* no duplicate fee assignments
+* amounts are correct
+
+### User
+
+If the system creates an account:
+
+* exactly one user is created
+* correct role is assigned
+* correct student relationship exists
+* credentials/authentication state are correct
+* password is never exposed in API responses or logs
+
+---
+
+# 5. TRANSACTION TESTING
+
+Pay special attention to multi-table admission operations.
+
+If admission approval performs:
+
+```text
+Admission update
++
+Student creation
++
+Enrollment creation
++
+Fee assignment
++
+User creation
+```
+
+verify whether these operations are transactional.
+
+Simulate failures halfway through the process.
+
+For example:
+
+```text
+Admission approved
+↓
+Student created
+↓
+Enrollment fails
+```
+
+Determine whether the system leaves inconsistent data.
+
+The expected production-grade behavior is:
+
+```text
+BEGIN TRANSACTION
+
+Admission update
+Student creation
+Enrollment creation
+Fee assignment
+User creation
+
+COMMIT
+```
+
+or a correctly designed equivalent.
+
+If a critical operation fails, verify rollback.
+
+Do not silently accept partial admission state.
+
+---
+
+# 6. API TESTING
+
+Test every admission-related endpoint directly.
+
+For every endpoint verify:
+
+### Request
+
+* required fields
+* validation
+* data types
+* enum values
+* IDs
+* authorization
+
+### Response
+
+Verify:
+
+* HTTP status
+* response structure
+* returned data
+* error format
+* sensitive data exposure
+
+Test:
+
+```text
+200/201
+400
+401
+403
+404
+409
+422
+500
+```
+
+where applicable.
+
+Do not force status codes that contradict the project's existing API conventions.
+
+---
+
+# 7. AUTHORIZATION TESTING
+
+Test the admission workflow using different roles.
+
+At minimum investigate the roles available in the project and test:
+
+```text
+Administrator
+Admission Officer
+Staff
+Student
+Parent
+Unauthorized User
+```
+
+Use the project's actual roles if different.
+
+Verify:
+
+* who can create applications
+* who can review applications
+* who can approve admissions
+* who can reject admissions
+* who can modify admissions
+* who can view admission records
+* who can access student records
+
+Attempt privileged operations using insufficient permissions.
+
+The backend must enforce authorization independently of the frontend.
+
+Never trust hidden buttons or disabled UI controls as security.
+
+---
+
+# 8. FRONTEND TESTING
+
+Test the admission UI as a real user.
+
+Verify:
+
+### Form
+
+* all fields render
+* labels are correct
+* required fields are clearly indicated
+* validation works
+* invalid input is rejected
+* valid input is accepted
+* dropdowns load correct data
+* dependent dropdowns work
+* date fields work
+* duplicate submissions are prevented
+
+### Submission
+
+Verify:
+
+```text
+User fills form
+↓
+Clicks Submit
+↓
+Loading state appears
+↓
+Request is sent once
+↓
+Backend response is handled
+↓
+Success/error feedback appears
+↓
+UI state updates
+```
+
+Look specifically for:
+
+* double submissions
+* stale form state
+* incorrect API payload
+* incorrect field names
+* frontend/backend type mismatch
+* missing error messages
+* silent API failures
+
+---
+
+# 9. API CONTRACT VERIFICATION
+
+Compare frontend API calls against backend DTOs and responses.
+
+For every admission request verify:
+
+```text
+Frontend field
+        ↕
+Backend DTO field
+        ↕
+Database field
+```
+
+Look for:
+
+* renamed fields
+* incorrect casing
+* nullable/non-nullable mismatch
+* string vs number mismatch
+* date format mismatch
+* enum mismatch
+* nested object mismatch
+* incorrect IDs
+* incorrect response property names
+
+Fix contract mismatches at the correct architectural layer.
+
+Do not add unnecessary frontend hacks to compensate for incorrect backend contracts.
+
+---
+
+# 10. DUPLICATE AND IDEMPOTENCY TESTING
+
+Repeatedly submit the same admission.
+
+Test:
+
+```text
+Submit
+Submit again
+Refresh
+Submit again
+```
+
+Determine whether duplicate records are created.
+
+Where the operation should be idempotent, make it idempotent.
+
+Where duplicates must be rejected, verify that the backend enforces uniqueness.
+
+Do not rely exclusively on frontend checks.
+
+Database constraints should protect critical uniqueness requirements.
+
+---
+
+# 11. CONCURRENCY TESTING
+
+Simulate two admission officers attempting to approve the same application simultaneously.
+
+Verify:
+
+```text
+Request A → Approve
+Request B → Approve
+```
+
+Expected behavior should follow the business rules and must not result in:
+
+* duplicate students
+* duplicate enrollments
+* duplicate fee records
+* duplicate accounts
+* inconsistent admission statuses
+
+Check for race conditions.
+
+If necessary, recommend or implement:
+
+* database unique constraints
+* transactions
+* row locking
+* optimistic concurrency
+* idempotency protection
+
+Use the approach appropriate to the existing architecture.
+
+---
+
+# 12. ERROR RECOVERY
+
+Deliberately cause downstream failures.
+
+Examples:
+
+* invalid course ID
+* unavailable academic session
+* database constraint violation
+* duplicate user
+* fee configuration missing
+* notification failure
+
+Verify that the admission process handles the failure correctly.
+
+Important:
+
+A notification failure should not necessarily invalidate a successfully committed admission unless the business logic explicitly requires it.
+
+Separate critical database operations from non-critical side effects where appropriate.
+
+---
+
+# 13. AUDIT LOG TESTING
+
+Verify that important admission events are audited.
+
+At minimum investigate whether the following should be logged:
+
+```text
+Admission application created
+Admission submitted
+Admission reviewed
+Admission approved
+Admission rejected
+Admission modified
+Student created from admission
+Enrollment created
+Admission cancelled
+```
+
+Verify that audit records contain appropriate metadata such as:
+
+* actor
+* action
+* entity
+* entity ID
+* timestamp
+* relevant context
+* IP/request metadata if supported
+
+Do NOT log:
+
+* passwords
+* OTP values
+* access tokens
+* refresh tokens
+* sensitive credentials
+
+Avoid excessive audit noise.
+
+---
+
+# 14. SECURITY TESTING
+
+Test for:
+
+* IDOR
+* unauthorized admission access
+* privilege escalation
+* mass assignment
+* injection
+* invalid IDs
+* malicious payloads
+* excessive data exposure
+* sensitive fields in responses
+* sensitive information in logs
+
+For example, attempt:
+
+```text
+GET /admissions/{another-admission-id}
+```
+
+using a user who should not have access.
+
+Verify authorization is enforced server-side.
+
+---
+
+# 15. PERFORMANCE CHECKS
+
+Measure the admission flow for unnecessary:
+
+* database queries
+* repeated API requests
+* N+1 queries
+* duplicate requests
+* expensive joins
+* unnecessary frontend re-renders
+
+Pay particular attention to:
+
+```text
+Admission list
+Admission details
+Student creation
+Enrollment creation
+Fee assignment
+```
+
+Do not prematurely optimize.
+
+Only optimize after identifying an actual bottleneck.
+
+---
+
+# 16. TEST DATA
+
+Create controlled test data.
+
+Use clearly identifiable test records such as:
+
+```text
+TEST-ADMISSION-001
+TEST-ADMISSION-002
+TEST-ADMISSION-DUPLICATE
+TEST-ADMISSION-REJECTED
+TEST-ADMISSION-CONCURRENT
+```
+
+Do not destroy real production data.
+
+If the project uses a development/test database, use that database.
+
+Clean up temporary test data where appropriate.
+
+---
+
+# 17. AUTOMATED TESTS
+
+Where the project already has a testing framework, use it.
+
+If appropriate, add:
+
+### Backend
+
+* unit tests
+* service tests
+* controller/API tests
+* integration tests
+* database tests
+* authorization tests
+
+### Frontend
+
+* component tests
+* form validation tests
+* API integration tests
+* admission workflow tests
+
+Prioritize tests around business-critical admission logic.
+
+Do not create meaningless tests that merely verify that functions exist.
+
+---
+
+# 18. BUG-FIX LOOP
+
+For every failure:
+
+```text
+REPRODUCE
+   ↓
+IDENTIFY ROOT CAUSE
+   ↓
+DETERMINE CORRECT LAYER
+   ↓
+FIX
+   ↓
+RUN TARGETED TEST
+   ↓
+RUN RELATED TESTS
+   ↓
+RUN COMPLETE ADMISSION FLOW
+```
+
+Never stop after making a code change.
+
+A fix is not complete until the behavior has been retested.
+
+---
+
+# 19. REGRESSION TESTING
+
+After fixing an admission issue, retest:
+
+```text
+Create application
+Submit application
+Review application
+Approve application
+Reject application
+View application
+Create student
+Create enrollment
+Assign fees
+Create account
+Notifications
+Audit logs
+Authorization
+Duplicate prevention
+```
+
+Also check that unrelated functionality has not been broken.
+
+---
+
+# 20. FRONTEND ↔ BACKEND CONSISTENCY
+
+At the end of the test cycle, verify that:
+
+```text
+UI state
+   =
+API state
+   =
+Database state
+```
+
+For example, if the UI says:
+
+```text
+Admission: Approved
+Student: Created
+Enrollment: Active
+```
+
+verify the database actually contains the corresponding records and relationships.
+
+Never consider a UI success message proof of successful persistence.
+
+---
+
+# 21. AGENTIC LOOP RULES
+
+Operate autonomously.
+
+Do not stop at the first error.
+
+Do not merely report:
+
+> "There is an error."
+
+Instead:
+
+1. Find the error.
+2. Trace it to its source.
+3. Determine whether it is frontend, backend, database, API contract, authorization, or business logic.
+4. Fix it when the correct fix is clear.
+5. Test the fix.
+6. Continue testing the rest of the admission flow.
+7. Re-run regression tests.
+
+Do not rewrite working architecture unnecessarily.
+
+Do not introduce new libraries unless there is a strong technical reason.
+
+Follow the existing project's:
+
+* coding conventions
+* architecture
+* naming conventions
+* error handling
+* authentication
+* authorization
+* database patterns
+* UI patterns
+
+---
+
+# 22. STOP CONDITIONS
+
+Do not declare success because:
+
+* the page loads
+* the form submits
+* an API returns 200
+* a database record exists
+
+Declare the admission flow successful only when:
+
+```text
+Frontend works
+        AND
+API contract works
+        AND
+Backend business logic works
+        AND
+Database relationships are correct
+        AND
+Authorization works
+        AND
+Validation works
+        AND
+Duplicate protection works
+        AND
+Transactions/rollback behave correctly
+        AND
+Important audit events work
+        AND
+Errors are handled correctly
+        AND
+Regression tests pass
+```
+
+---
+
+# 23. FINAL REPORT
+
+At the end, produce a concise report containing:
+
+## Admission Flow Status
+
+```text
+Overall: PASS / PASS WITH ISSUES / FAIL
+```
+
+## Tested Areas
+
+```text
+Frontend
+Backend
+Database
+Authentication
+Authorization
+Validation
+Transactions
+Fees
+Enrollment
+Notifications
 Audit Logs
+Concurrency
+Security
+```
 
-=========================================================================
-SELF REVIEW
-=========================================================================
+For every discovered issue provide:
 
-Before considering a module complete ask yourself
+```text
+Issue:
+Severity:
+Location:
+Root Cause:
+Impact:
+Fix:
+Test Performed:
+Result:
+```
 
-Does it behave exactly like the old system?
+Use severity:
 
-Does it follow the new architecture?
+```text
+CRITICAL
+HIGH
+MEDIUM
+LOW
+```
 
-Does it reuse existing components?
+## Final Verification
 
-Is there duplicated logic?
+Provide:
 
-Can this be simplified?
+```text
+Total tests:
+Passed:
+Failed:
+Fixed:
+Remaining:
+Regression status:
+```
 
-Is it secure?
+Do not claim a test passed unless you actually executed or verified it.
 
-Is it scalable?
+---
 
-Is it reusable?
+# EXECUTION DIRECTIVE
 
-Would another senior engineer approve this Pull Request?
+Start now.
 
-If any answer is No
+First inspect the repository and identify the complete existing admission architecture.
 
-Continue improving.
+Then build the admission test matrix.
 
-=========================================================================
-SUCCESS CRITERIA
-=========================================================================
+Then execute the tests.
 
-The modernization is successful when
+When you find a defect, fix it and continue the loop.
 
-A user of the old system can immediately use the new system without retraining.
+Do not stop after the first successful test.
 
-The codebase follows one consistent architecture.
+Continue until the complete admission lifecycle has been verified end-to-end or until a genuine blocker prevents further testing.
 
-Reusable components exist across the application.
+The goal is not merely to find bugs.
 
-Business behaviour matches the original system.
-
-The implementation follows enterprise software engineering standards.
-
-Every completed module is production-ready before the next module begins.
-
-The final deliverable should be an enterprise-grade School Management System built with Next.js, NestJS, Prisma, PostgreSQL, and Shadcn UI that faithfully preserves the functionality and user experience of the existing application while substantially improving code quality, security, scalability, maintainability, and long-term extensibility.
+The goal is to leave the admission workflow **verified, consistent, secure, transactional, and production-ready across frontend, backend, and database layers.**

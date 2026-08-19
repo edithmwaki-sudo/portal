@@ -24,10 +24,8 @@ const optionalEmail = z
 export const studentFormSchema = z.object({
   // Admission (select values are strings — converted to numbers on submit)
   courseId: z.string().min(1, "Course is required"),
-  curriculumId: z.string().min(1, "Curriculum is required"),
   level: z.string().optional(),
   admDate: z.string().optional(),
-  status: studentStatusSchema,
 
   // Personal
   firstName: z

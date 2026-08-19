@@ -213,7 +213,7 @@ export class CoursesService {
   }
 
   async create(dto: CreateCourseDto, actorId: number) {
-    await this.assertUnique(dto.code);
+    await this.assertUnique(dto.code, dto.name);
     await this.assertRelations(
       dto.certificationAuthorityId,
       dto.certificationLevelId,
@@ -275,7 +275,7 @@ export class CoursesService {
 
   async update(id: number, dto: UpdateCourseDto, actorId: number) {
     const existing = await this.findLeanById(id);
-    await this.assertUnique(dto.code, id);
+    await this.assertUnique(dto.code, dto.name, id);
 
     const authorityId =
       dto.certificationAuthorityId ?? existing.certificationAuthorityId;
@@ -466,18 +466,39 @@ export class CoursesService {
 
   /* ------------------------- Guards ------------------------- */
 
-  private async assertUnique(code?: string, excludeId?: number): Promise<void> {
-    if (!code) return;
-    const existing = await this.prisma.course.findFirst({
-      where: {
-        code: { equals: code.trim(), mode: 'insensitive' },
-        deletedAt: null,
-        ...(excludeId ? { NOT: { id: excludeId } } : {}),
-      },
-      select: { id: true },
-    });
-    if (existing) {
-      throw new ConflictException('A course with this code already exists');
+  private async assertUnique(
+    code?: string,
+    name?: string,
+    excludeId?: number,
+  ): Promise<void> {
+    if (!code && !name) return;
+    if (code) {
+      const existingCode = await this.prisma.course.findFirst({
+        where: {
+          code: { equals: code.trim(), mode: 'insensitive' },
+          deletedAt: null,
+          ...(excludeId ? { NOT: { id: excludeId } } : {}),
+        },
+        select: { id: true },
+      });
+      if (existingCode) {
+        throw new ConflictException('A course with this code already exists');
+      }
+    }
+    if (name) {
+      const existingName = await this.prisma.course.findFirst({
+        where: {
+          name: { equals: name.trim(), mode: 'insensitive' },
+          deletedAt: null,
+          ...(excludeId ? { NOT: { id: excludeId } } : {}),
+        },
+        select: { id: true },
+      });
+      if (existingName) {
+        throw new ConflictException(
+          'A course with this name already exists. Course names are unique.',
+        );
+      }
     }
   }
 

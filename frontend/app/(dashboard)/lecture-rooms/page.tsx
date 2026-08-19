@@ -87,7 +87,7 @@ export default function LectureRoomsPage() {
             : undefined
         }
       />
-      <div className="mx-[50px] mb-[30px]">
+      <div className="mx-4 mb-4 sm:mx-6 sm:mb-6 lg:mx-[50px] lg:mb-[30px]">
         <div className="overflow-hidden rounded-lg bg-card shadow-lg shadow-black/5">
           <div className="border-b px-4 py-4">
             <div className="flex flex-wrap items-end justify-between gap-4">

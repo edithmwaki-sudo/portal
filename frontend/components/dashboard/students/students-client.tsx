@@ -297,7 +297,7 @@ export function StudentsClient() {
           { label: "Add Student", icon: Plus, href: "/student/create" },
         ]}
       />
-      <div className="mx-[50px] mb-[30px]">
+      <div className="mx-4 mb-4 sm:mx-6 sm:mb-6 lg:mx-[50px] lg:mb-[30px]">
         <div className="overflow-hidden rounded-lg bg-card shadow-lg shadow-black/5">
           <form
             className="flex flex-wrap items-center gap-2 border-b px-4 pb-4 pt-4"
@@ -326,7 +326,7 @@ export function StudentsClient() {
               value={status}
               onValueChange={(value) => setStatus(value as StatusFilter)}
             >
-              <SelectTrigger className="w-36">
+              <SelectTrigger size="sm" className="w-36">
                 <SelectValue placeholder="Status" />
               </SelectTrigger>
               <SelectContent>
@@ -340,7 +340,7 @@ export function StudentsClient() {
               value={level}
               onValueChange={(value) => setLevel(value as LevelFilter)}
             >
-              <SelectTrigger className="w-32">
+              <SelectTrigger size="sm" className="w-32">
                 <SelectValue placeholder="Level" />
               </SelectTrigger>
               <SelectContent>
@@ -353,7 +353,7 @@ export function StudentsClient() {
               </SelectContent>
             </Select>
             <Select value={courseId} onValueChange={setCourseId}>
-              <SelectTrigger className="w-56">
+              <SelectTrigger size="sm" className="w-56">
                 <SelectValue placeholder="All courses" />
               </SelectTrigger>
               <SelectContent>
@@ -366,7 +366,7 @@ export function StudentsClient() {
               </SelectContent>
             </Select>
             <Select value={curriculumId} onValueChange={setCurriculumId}>
-              <SelectTrigger className="w-52">
+              <SelectTrigger size="sm" className="w-52">
                 <SelectValue placeholder="All curricula" />
               </SelectTrigger>
               <SelectContent>

@@ -107,7 +107,7 @@ export async function getCourseAuthorityOptions(
   return response.data.options;
 }
 
-/** All active exam bodies (certification authorities) — preloads a cascade. */
+/** All active certification authorities — preloads a cascade. */
 export async function getAllCourseAuthorityOptions(
   limit = 50
 ): Promise<AsyncOption[]> {

@@ -17,6 +17,8 @@ export interface StudentFilters {
   courseId?: number;
   curriculumId?: number;
   level?: number;
+  /** Restrict to the profile owned by this user id (self-service scoping). */
+  userId?: number;
 }
 
 const STUDENT_INCLUDE = {
@@ -81,25 +83,46 @@ export class StudentsService {
       try {
         const { studentId, admissionNumber } = await this.prisma.$transaction(
           async (tx) => {
-            const cc = await tx.courseCurriculum.findFirst({
-              where: {
-                courseId: dto.courseId,
-                curriculumId: dto.curriculumId,
+            const course = await tx.course.findFirst({
+              where: { id: dto.courseId, deletedAt: null, isActive: true },
+              select: {
+                id: true,
+                initials: true,
+                code: true,
+                name: true,
+                certificationAuthorityId: true,
               },
+            });
+            if (!course) {
+              throw new BadRequestException(
+                'Selected course does not exist or is inactive',
+              );
+            }
+            if (
+              dto.authorityId != null &&
+              course.certificationAuthorityId !== dto.authorityId
+            ) {
+              throw new BadRequestException(
+                'Selected course does not belong to the selected certification authority',
+              );
+            }
+
+            const cc = await tx.courseCurriculum.findFirst({
+              where: { courseId: course.id, isActive: true },
               include: {
                 course: {
-                  select: { id: true, initials: true, code: true, name: true },
+                  select: {
+                    id: true,
+                    initials: true,
+                    code: true,
+                    name: true,
+                  },
                 },
               },
             });
             if (!cc) {
-              throw new NotFoundException(
-                `No course curriculum exists for course '${dto.courseId}' and curriculum '${dto.curriculumId}'`,
-              );
-            }
-            if (!cc.isActive) {
               throw new BadRequestException(
-                'The selected course curriculum is no longer active',
+                'No active curriculum is currently open for this course',
               );
             }
 
@@ -160,7 +183,7 @@ export class StudentsService {
                 courseId: cc.course.id,
                 level: dto.level ?? 1,
                 admDate,
-                status: dto.status ?? 'ACTIVE',
+                status: 'ACTIVE',
                 nextOfKinFirstName: dto.nextOfKinFirstName,
                 nextOfKinLastName: dto.nextOfKinLastName,
                 nextOfKinPhone: dto.nextOfKinPhone,
@@ -179,6 +202,7 @@ export class StudentsService {
                 academicSessionId: activeSession?.id ?? null,
                 academicYearId: enrolmentYearId,
                 enrolmentDate: admDate,
+                entryLevel: dto.level ?? 1,
                 status: 'ENROLLED',
                 createdBy: actorId,
                 updatedBy: actorId,
@@ -235,9 +259,9 @@ export class StudentsService {
     };
   }
 
-  async findOneById(id: number) {
+  async findOneById(id: number, scopedUserId?: number) {
     const profile = await this.prisma.studentProfile.findFirst({
-      where: { id, deletedAt: null },
+      where: { id, deletedAt: null, ...(scopedUserId ? { userId: scopedUserId } : {}) },
       include: STUDENT_INCLUDE,
     });
     if (!profile) {
@@ -377,8 +401,8 @@ export class StudentsService {
   }
 
   /** Printable admission-letter payload. */
-  async admissionLetter(id: number) {
-    const profile = await this.findOneById(id);
+  async admissionLetter(id: number, scopedUserId?: number) {
+    const profile = await this.findOneById(id, scopedUserId);
     const u = profile.user;
     const enrolment = profile.activeEnrolment;
 
@@ -508,6 +532,7 @@ export class StudentsService {
     if (filters.status) where.status = filters.status;
     if (filters.level) where.level = filters.level;
     if (filters.courseId) where.courseId = filters.courseId;
+    if (filters.userId) where.userId = filters.userId;
     if (filters.curriculumId) {
       where.courseEnrolments = {
         some: { deletedAt: null, courseCurriculumId: filters.curriculumId },
@@ -631,6 +656,16 @@ export class StudentsService {
     });
 
     return `${initials}/${String(count + 1).padStart(4, '0')}/${intakeYear}`;
+  }
+
+  /** Resolve a role's name from its id (used for self-service scoping). */
+  async resolveRoleName(roleId: number | null): Promise<string | null> {
+    if (roleId == null) return null;
+    const role = await this.prisma.role.findUnique({
+      where: { id: roleId },
+      select: { name: true },
+    });
+    return role?.name ?? null;
   }
 
   private async ensureStudentRoleId(

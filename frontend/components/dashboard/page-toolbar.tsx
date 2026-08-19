@@ -75,7 +75,7 @@ export function PageToolbar({
   }, [menuActions, pathname]);
 
   return (
-    <div className="mx-[50px] my-[30px] flex flex-col gap-3 rounded-lg bg-card px-6 py-4 shadow-lg shadow-black/5">
+    <div className="mx-4 my-4 flex flex-col gap-3 rounded-lg bg-card px-4 py-3 shadow-lg shadow-black/5 sm:mx-6 sm:my-6 sm:px-6 sm:py-4 lg:mx-[50px] lg:my-[30px]">
       <div className="flex min-w-0 items-center justify-between gap-4">
         <div className="flex min-w-0 flex-col gap-1">
           <h1 className="truncate text-2xl font-semibold tracking-tight">{title}</h1>
@@ -87,7 +87,7 @@ export function PageToolbar({
         <div className="flex shrink-0 items-center gap-2">
           {quickLinks && quickLinks.length > 0 && (
             <Select value={pathname} onValueChange={(href) => router.push(href)}>
-              <SelectTrigger className="w-[180px]">
+              <SelectTrigger size="sm" className="w-[180px]">
                 <SelectValue placeholder="Go to..." />
               </SelectTrigger>
               <SelectContent align="end">

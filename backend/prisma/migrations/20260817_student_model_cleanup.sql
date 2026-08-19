@@ -11,8 +11,9 @@ BEGIN;
 
 -- ------------------------------------------------------------------
 -- 1) Enrolment status enum (existing rows are lowercase 'enrolled')
--- ------------------------------------------------------------------
-CREATE TYPE "enrolment_status" AS ENUM ('ENROLLED', 'WITHDRAWN', 'COMPLETED', 'TRANSFERRED');
+-- NOTE: the type name MUST match the Prisma enum name ("EnrolmentStatus") —
+-- Prisma references the Postgres type verbatim and casing is significant.
+CREATE TYPE "EnrolmentStatus" AS ENUM ('ENROLLED', 'WITHDRAWN', 'COMPLETED', 'TRANSFERRED');
 
 UPDATE "course_enrolments" SET "status" = 'ENROLLED'
 WHERE "status" NOT IN ('ENROLLED', 'WITHDRAWN', 'COMPLETED', 'TRANSFERRED');
@@ -20,9 +21,9 @@ WHERE "status" NOT IN ('ENROLLED', 'WITHDRAWN', 'COMPLETED', 'TRANSFERRED');
 ALTER TABLE "course_enrolments" ALTER COLUMN "status" DROP DEFAULT;
 
 ALTER TABLE "course_enrolments"
-  ALTER COLUMN "status" TYPE "enrolment_status"
-  USING ("status"::text::enrolment_status),
-  ALTER COLUMN "status" SET DEFAULT 'ENROLLED';
+  ALTER COLUMN "status" TYPE "EnrolmentStatus"
+  USING ("status"::text::"EnrolmentStatus"),
+  ALTER COLUMN "status" SET DEFAULT 'ENROLLED'::"EnrolmentStatus";
 
 -- ------------------------------------------------------------------
 -- 2) Relax the course_enrolments unique -> composite index

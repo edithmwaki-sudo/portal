@@ -119,7 +119,7 @@ export default function FeeStatementsPage() {
           },
         ]}
       />
-      <div className="mx-[50px] mb-[30px]">
+      <div className="mx-4 mb-4 sm:mx-6 sm:mb-6 lg:mx-[50px] lg:mb-[30px]">
         <div className="overflow-hidden rounded-lg bg-card shadow-lg shadow-black/5">
           <div className="flex flex-col gap-3 border-b px-4 py-4 md:flex-row md:items-center">
             <div className="relative flex-1">
@@ -141,7 +141,7 @@ export default function FeeStatementsPage() {
                 setLoading(true);
               }}
             >
-              <SelectTrigger className="w-full md:w-52">
+              <SelectTrigger size="sm" className="w-full md:w-52">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>

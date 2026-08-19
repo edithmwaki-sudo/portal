@@ -274,7 +274,7 @@ model CertificationAuthorityGrade {
   @@map("certification_authority_grades")
 }
 
-// Academic setup: curricula tied to an exam body (authority). A curriculum
+// Academic setup: curricula tied to a certification authority. A curriculum
 // is activated/deactivated via an active toggle; startedAt / endedAt are
 // generated server-side on activation/deactivation.
 model Curriculum {
@@ -308,7 +308,7 @@ model Course {
   id                       Int       @id @default(autoincrement())
   code                     String    @unique @map("code") @db.VarChar(50)
   initials                 String    @map("initials") @db.VarChar(20)
-  name                     String    @map("name") @db.VarChar(255)
+  name                     String    @unique @map("name") @db.VarChar(255)
   durationMonths           Int?      @map("duration_months")
   description              String?   @map("description") @db.Text
   isActive                 Boolean   @default(true) @map("is_active")
@@ -443,6 +443,7 @@ model CourseEnrolment {
   academicSessionId  Int?      @map("academic_session_id")
   academicYearId     Int?      @map("academic_year_id")
   enrolmentDate      DateTime  @map("enrolment_date") @db.Date
+  entryLevel         Int       @default(1) @map("entry_level")
   status             EnrolmentStatus @default(ENROLLED) @map("status")
   remarks            String?   @map("remarks") @db.Text
   createdBy          Int?      @map("created_by")

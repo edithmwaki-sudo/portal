@@ -48,7 +48,7 @@ export default function EditFeeStructurePage() {
         title="Edit Fee Structure"
         description="Update the fee structure and its line items."
       />
-      <div className="mx-[50px] mb-[30px]">
+      <div className="mx-4 mb-4 sm:mx-6 sm:mb-6 lg:mx-[50px] lg:mb-[30px]">
         <div className="w-full rounded-lg bg-card p-6 shadow-lg shadow-black/5">
           {!id ? (
             <p className="py-8 text-center text-sm text-muted-foreground">

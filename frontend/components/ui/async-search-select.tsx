@@ -168,12 +168,14 @@ export function AsyncSearchSelect<T extends AsyncSearchOption>({
           aria-invalid={false}
           disabled={disabled}
           className={cn(
-            "h-10 w-full justify-between gap-2 px-3 font-normal",
+            "h-10 min-w-0 w-full justify-between gap-2 px-3 font-normal",
             !display && "text-muted-foreground",
             className
           )}
         >
-          <span className="truncate">{display ?? placeholder}</span>
+          <span className="min-w-0 flex-1 truncate">
+            {display ?? placeholder}
+          </span>
           {value ? (
             <span
               role="button"

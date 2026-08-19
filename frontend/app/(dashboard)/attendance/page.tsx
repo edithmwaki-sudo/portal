@@ -182,7 +182,7 @@ export default function AttendancePage() {
         title="Attendance"
         description="Mark and review class attendance for your assigned units."
       />
-      <div className="mx-[50px] mb-[30px] space-y-[30px]">
+      <div className="mx-4 mb-4 sm:mx-6 sm:mb-6 lg:mx-[50px] lg:mb-[30px] space-y-4 sm:space-y-6 lg:space-y-[30px]">
         <div className="overflow-hidden rounded-lg bg-card shadow-lg shadow-black/5">
           <div className="border-b px-4 py-4">
             <div className="flex flex-wrap items-end gap-4">
@@ -192,7 +192,7 @@ export default function AttendancePage() {
                   value={unitId ? String(unitId) : ""}
                   onValueChange={(value) => setUnitId(Number(value))}
                 >
-                  <SelectTrigger className="w-full">
+                  <SelectTrigger size="sm" className="w-full">
                     <SelectValue placeholder="Select a unit" />
                   </SelectTrigger>
                   <SelectContent>
@@ -227,7 +227,7 @@ export default function AttendancePage() {
                     value={status}
                     onValueChange={(value) => setStatus(value as Status)}
                   >
-                    <SelectTrigger className="w-full">
+                    <SelectTrigger size="sm" className="w-full">
                       <SelectValue placeholder="Status" />
                     </SelectTrigger>
                     <SelectContent>

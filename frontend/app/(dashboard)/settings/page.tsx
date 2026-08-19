@@ -21,7 +21,7 @@ export default function SettingsPage() {
         title="Settings"
         description="Manage your portal preferences."
       />
-      <div className="mx-[50px] mb-[30px] flex flex-col gap-4">
+      <div className="mx-4 mb-4 sm:mx-6 sm:mb-6 lg:mx-[50px] lg:mb-[30px] flex flex-col gap-4">
         <section className="rounded-lg bg-card p-6 shadow-lg shadow-black/5">
           <h2 className="mb-1 text-xl font-semibold tracking-tight">
             Appearance

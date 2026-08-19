@@ -3,6 +3,7 @@ import {
   Body,
   Controller,
   Delete,
+  ForbiddenException,
   Get,
   HttpCode,
   HttpStatus,
@@ -43,6 +44,7 @@ export class StudentsController {
   })
   @ApiOkResponse({ description: 'Paginated student list' })
   async findAll(
+    @CurrentUser() actor: AuthenticatedUser,
     @Query('page') page?: string,
     @Query('limit') limit?: string,
     @Query('search') search?: string,
@@ -62,6 +64,7 @@ export class StudentsController {
       courseId: courseId ? parseInt(courseId, 10) : undefined,
       curriculumId: curriculumId ? parseInt(curriculumId, 10) : undefined,
       level: level ? parseInt(level, 10) : undefined,
+      userId: await this.resolveSelfScope(actor),
     });
 
     return {
@@ -78,7 +81,13 @@ export class StudentsController {
   @RequirePermission(Permissions.canViewStudent)
   @ApiOperation({ summary: 'Preview the next admission number for a course' })
   @ApiOkResponse({ description: 'Next sequential admission number' })
-  async meta(@Query('courseId') courseId?: string) {
+  async meta(
+    @CurrentUser() actor: AuthenticatedUser,
+    @Query('courseId') courseId?: string,
+  ) {
+    if (await this.isStudentRole(actor)) {
+      throw new ForbiddenException('Students cannot preview admission numbers');
+    }
     const parsed = courseId ? parseInt(courseId, 10) : NaN;
     if (!Number.isInteger(parsed) || parsed <= 0) {
       throw new BadRequestException('A valid courseId query param is required');
@@ -91,6 +100,7 @@ export class StudentsController {
   @ApiOperation({ summary: 'Export students as CSV (respects filters)' })
   @ApiOkResponse({ description: 'CSV attachment' })
   async export(
+    @CurrentUser() actor: AuthenticatedUser,
     @Query('search') search?: string,
     @Query('status') status?: string,
     @Query('courseId') courseId?: string,
@@ -103,6 +113,7 @@ export class StudentsController {
       courseId: courseId ? parseInt(courseId, 10) : undefined,
       curriculumId: curriculumId ? parseInt(curriculumId, 10) : undefined,
       level: level ? parseInt(level, 10) : undefined,
+      userId: await this.resolveSelfScope(actor),
     });
     return new StreamableFile(Buffer.from(csv, 'utf8'), {
       type: 'text/csv; charset=utf-8',
@@ -114,16 +125,28 @@ export class StudentsController {
   @RequirePermission(Permissions.canViewStudent)
   @ApiOperation({ summary: 'Payload for a printable admission letter' })
   @ApiOkResponse({ description: 'Admission letter data' })
-  async admissionLetter(@Param('id', ParseIntPipe) id: number) {
-    return this.studentsService.admissionLetter(id);
+  async admissionLetter(
+    @Param('id', ParseIntPipe) id: number,
+    @CurrentUser() actor: AuthenticatedUser,
+  ) {
+    return this.studentsService.admissionLetter(
+      id,
+      await this.resolveSelfScope(actor),
+    );
   }
 
   @Get(':id')
   @RequirePermission(Permissions.canViewStudent)
   @ApiOperation({ summary: 'Get a single student' })
   @ApiOkResponse({ type: StudentResponseDto })
-  async findOne(@Param('id', ParseIntPipe) id: number) {
-    const student = await this.studentsService.findOneById(id);
+  async findOne(
+    @Param('id', ParseIntPipe) id: number,
+    @CurrentUser() actor: AuthenticatedUser,
+  ) {
+    const student = await this.studentsService.findOneById(
+      id,
+      await this.resolveSelfScope(actor),
+    );
     return plainToInstance(StudentResponseDto, student, {
       excludeExtraneousValues: true,
     });
@@ -167,5 +190,17 @@ export class StudentsController {
     @CurrentUser() actor: AuthenticatedUser,
   ): Promise<void> {
     await this.studentsService.remove(id, actor.userId);
+  }
+
+  /** True when the caller is a self-service student (scoped to their own record). */
+  private async isStudentRole(actor: AuthenticatedUser): Promise<boolean> {
+    return (await this.studentsService.resolveRoleName(actor.roleId)) === 'student';
+  }
+
+  /** Return the caller's user id when they are a student, else undefined. */
+  private async resolveSelfScope(
+    actor: AuthenticatedUser,
+  ): Promise<number | undefined> {
+    return (await this.isStudentRole(actor)) ? actor.userId : undefined;
   }
 }

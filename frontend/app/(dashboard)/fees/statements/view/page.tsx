@@ -167,7 +167,7 @@ export default function FeeStatementViewPage() {
           },
         ]}
       />
-      <div className="mx-[50px] mb-[30px] grid gap-6">
+      <div className="mx-4 mb-4 sm:mx-6 sm:mb-6 lg:mx-[50px] lg:mb-[30px] grid gap-4 sm:gap-6">
         {!id ? (
           <div className="rounded-lg bg-card p-6 text-center text-sm text-muted-foreground shadow-lg shadow-black/5">
             Missing student id.
@@ -206,7 +206,7 @@ export default function FeeStatementViewPage() {
                   setLoading(true);
                 }}
               >
-                <SelectTrigger className="w-full md:w-52">
+                <SelectTrigger size="sm" className="w-full md:w-52">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>

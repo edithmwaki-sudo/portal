@@ -61,7 +61,7 @@ export default function AdmissionLetterPage() {
         }
       `}</style>
 
-      <div className="mx-[50px] my-[30px] flex items-center justify-between rounded-lg bg-card px-6 py-4 shadow-lg shadow-black/5 print:hidden">
+      <div className="mx-4 my-4 flex items-center justify-between rounded-lg bg-card px-4 py-3 shadow-lg shadow-black/5 print:hidden sm:mx-6 sm:my-6 sm:px-6 sm:py-4 lg:mx-[50px] lg:my-[30px]">
         <div className="flex min-w-0 flex-col gap-1">
           <h1 className="truncate text-2xl font-semibold tracking-tight">
             Admission Letter
@@ -85,7 +85,7 @@ export default function AdmissionLetterPage() {
         </div>
       </div>
 
-      <div className="mx-[50px] mb-[30px]">
+      <div className="mx-4 mb-4 sm:mx-6 sm:mb-6 lg:mx-[50px] lg:mb-[30px]">
         {!id ? (
           <p className="py-8 text-center text-sm text-muted-foreground">
             Missing student id.

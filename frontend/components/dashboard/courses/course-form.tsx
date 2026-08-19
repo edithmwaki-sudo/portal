@@ -214,7 +214,7 @@ export function CourseForm({ course, onSuccess, onCancel }: CourseFormProps) {
               <RequiredLabel>Course Name</RequiredLabel>
               <FormControl>
                 <Input
-                  placeholder="e.g. ICT Technician Level 6"
+                  placeholder="e.g. Certificate in ICT, Diploma in ICT, ICT Technician Level 5, Computer Operator Grade III"
                   disabled={isSubmitting}
                   {...field}
                 />

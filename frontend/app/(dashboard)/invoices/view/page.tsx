@@ -132,7 +132,7 @@ export default function InvoiceViewPage() {
             : undefined
         }
       />
-      <div className="mx-[50px] mb-[30px] grid gap-6">
+      <div className="mx-4 mb-4 sm:mx-6 sm:mb-6 lg:mx-[50px] lg:mb-[30px] grid gap-4 sm:gap-6">
         {invalid ? (
           <div className="rounded-lg bg-card p-8 text-center shadow-lg shadow-black/5">
             <p className="text-sm text-muted-foreground">Missing invoice id.</p>

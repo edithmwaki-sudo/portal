@@ -337,7 +337,7 @@ export default function SessionCalendarPage() {
             : []),
         ]}
       />
-      <div className="mx-[50px] mb-[30px] space-y-[30px]">
+      <div className="mx-4 mb-4 sm:mx-6 sm:mb-6 lg:mx-[50px] lg:mb-[30px] space-y-4 sm:space-y-6 lg:space-y-[30px]">
         {canGenerate && (
           <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg bg-card px-6 py-4 shadow-lg shadow-black/5">
             <p className="text-sm text-muted-foreground">

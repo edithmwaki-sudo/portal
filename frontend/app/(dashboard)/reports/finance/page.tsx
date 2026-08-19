@@ -117,7 +117,7 @@ export default function FinanceReportsPage() {
           },
         ]}
       />
-      <div className="mx-[50px] mb-[30px] grid gap-6">
+      <div className="mx-4 mb-4 sm:mx-6 sm:mb-6 lg:mx-[50px] lg:mb-[30px] grid gap-4 sm:gap-6">
         {loading ? (
           <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
             {Array.from({ length: 6 }).map((_, index) => (

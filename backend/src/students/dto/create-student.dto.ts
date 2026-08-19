@@ -28,7 +28,7 @@ export type NextOfKinRelationship = (typeof NEXT_OF_KIN_RELATIONSHIPS)[number];
 
 export class CreateStudentDto {
   // Account — username (admission number) and default password are generated
-  // server-side; email is the student's login identifier.
+  // server-side; the admission number doubles as the student's login identifier.
   @IsEmail()
   @Length(3, 255)
   email: string;
@@ -150,11 +150,13 @@ export class CreateStudentDto {
   nextOfKinRelationship?: NextOfKinRelationship;
 
   // Admission
+  /** Filter/validation only — the course's certification authority. */
   @IsInt()
-  courseId: number;
+  @IsOptional()
+  authorityId?: number;
 
   @IsInt()
-  curriculumId: number;
+  courseId: number;
 
   @IsInt()
   @IsOptional()
@@ -165,8 +167,4 @@ export class CreateStudentDto {
   @IsDateString()
   @IsOptional()
   admDate?: string;
-
-  @IsEnum(STUDENT_STATUSES)
-  @IsOptional()
-  status?: StudentStatus;
 }

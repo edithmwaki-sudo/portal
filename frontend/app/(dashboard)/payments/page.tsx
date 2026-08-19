@@ -135,7 +135,7 @@ export default function PaymentsPage() {
           },
         ]}
       />
-      <div className="mx-[50px] mb-[30px]">
+      <div className="mx-4 mb-4 sm:mx-6 sm:mb-6 lg:mx-[50px] lg:mb-[30px]">
         <div className="overflow-hidden rounded-lg bg-card shadow-lg shadow-black/5">
           <form
             className="flex items-center gap-2 border-b px-4 pb-4 pt-4"
@@ -154,7 +154,7 @@ export default function PaymentsPage() {
               value={status}
               onValueChange={(value) => setStatus(value as StatusFilter)}
             >
-              <SelectTrigger className="w-40">
+              <SelectTrigger size="sm" className="w-40">
                 <SelectValue placeholder="Status" />
               </SelectTrigger>
               <SelectContent>

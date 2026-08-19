@@ -106,14 +106,16 @@ export interface CreateStudentPayload {
   nextOfKinAltPhone?: string;
   nextOfKinEmail?: string;
   nextOfKinRelationship?: string;
+  authorityId?: number;
   courseId: number;
-  curriculumId: number;
   level?: number;
   admDate?: string;
-  status?: StudentStatus;
 }
 
-export type UpdateStudentPayload = Partial<CreateStudentPayload>;
+export interface UpdateStudentPayload extends Partial<CreateStudentPayload> {
+  /** Management action only — not part of the admission flow. */
+  status?: StudentStatus;
+}
 
 export interface StudentFilters {
   page?: number;

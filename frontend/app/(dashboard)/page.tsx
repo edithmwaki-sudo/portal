@@ -91,7 +91,7 @@ export default function DashboardPage() {
         title="Dashboard"
         description="Overview of the Apex ERP"
       />
-      <div className="mx-[50px] mb-[30px]">
+      <div className="mx-4 mb-4 sm:mx-6 sm:mb-6 lg:mx-[50px] lg:mb-[30px]">
         {loading ? (
           <div className="grid gap-6 sm:grid-cols-2 xl:grid-cols-3">
             {Array.from({ length: 6 }).map((_, index) => (

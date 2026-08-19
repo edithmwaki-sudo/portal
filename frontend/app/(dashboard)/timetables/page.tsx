@@ -271,7 +271,7 @@ export default function TimetablesPage() {
             : undefined
         }
       />
-      <div className="mx-[50px] mb-[30px] space-y-[30px]">
+      <div className="mx-4 mb-4 sm:mx-6 sm:mb-6 lg:mx-[50px] lg:mb-[30px] space-y-4 sm:space-y-6 lg:space-y-[30px]">
         <div className="overflow-hidden rounded-lg bg-card shadow-lg shadow-black/5">
           <div className="border-b px-4 py-4">
             <div className="flex flex-wrap items-end gap-4">
@@ -281,7 +281,7 @@ export default function TimetablesPage() {
                   value={sessionId ? String(sessionId) : ""}
                   onValueChange={(value) => setSessionId(Number(value))}
                 >
-                  <SelectTrigger className="w-full">
+                  <SelectTrigger size="sm" className="w-full">
                     <SelectValue placeholder="Select a session" />
                   </SelectTrigger>
                   <SelectContent>

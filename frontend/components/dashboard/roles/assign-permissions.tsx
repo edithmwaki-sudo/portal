@@ -132,7 +132,7 @@ export function AssignPermissions({ roleId }: { roleId: number | null }) {
   return (
     <>
       <RolesToolbar />
-      <div className="mx-[50px] mb-[30px]">
+      <div className="mx-4 mb-4 sm:mx-6 sm:mb-6 lg:mx-[50px] lg:mb-[30px]">
         <div className="mb-4">
           <h2 className="text-lg font-semibold">
             {role?.displayName ?? role?.name ?? "Role"}
