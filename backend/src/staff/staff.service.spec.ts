@@ -22,6 +22,7 @@ interface PrismaMock {
   };
   department: { findMany: jest.Mock };
   $transaction: jest.Mock;
+  $queryRaw: jest.Mock;
 }
 
 const prismaMock: PrismaMock = {
@@ -41,6 +42,7 @@ const prismaMock: PrismaMock = {
     }
     return Array.isArray(input) ? Promise.all(input) : Promise.resolve(input);
   }),
+  $queryRaw: jest.fn(),
 };
 
 const auditMock = { log: jest.fn() };
@@ -163,6 +165,7 @@ describe('StaffService', () => {
       prismaMock.user.create.mockResolvedValue({ id: 10 });
       prismaMock.staffProfile.create.mockResolvedValue({ id: 1 });
       prismaMock.staffProfile.findFirst.mockResolvedValue(buildRow());
+      prismaMock.$queryRaw.mockResolvedValue([{ maxSeq: 0 }]);
 
       const result = await service.create(validDto(), 7);
 

@@ -97,6 +97,15 @@ export interface AsyncOption {
   label: string;
 }
 
+export interface CourseCurriculumOption {
+  id: number;
+  label: string;
+  courseId: number;
+  courseCode: string;
+  courseName: string;
+  cycleName: string;
+}
+
 export async function getCourseAuthorityOptions(
   search: string
 ): Promise<AsyncOption[]> {
@@ -135,17 +144,6 @@ export async function getCourseLevelOptions(
 ): Promise<AsyncOption[]> {
   const response = await apiClient.get<{ options: AsyncOption[] }>(
     "/courses/meta/levels",
-    { params: { authorityId, search, limit: 10 } }
-  );
-  return response.data.options;
-}
-
-export async function getCourseCurriculumOptions(
-  authorityId: number,
-  search: string
-): Promise<AsyncOption[]> {
-  const response = await apiClient.get<{ options: AsyncOption[] }>(
-    "/courses/meta/curricula",
     { params: { authorityId, search, limit: 10 } }
   );
   return response.data.options;
@@ -191,4 +189,21 @@ export async function getMyCourseDepartment(): Promise<{
     department: { id: number; name: string } | null;
   }>("/courses/meta/my-department");
   return response.data.department;
+}
+
+/** Active course curricula filtered by authority, level, curriculum — for student admission cascade. */
+export async function getCourseCurriculumOptions(filters: {
+  authorityId?: number;
+  levelId?: number;
+  curriculumId?: number;
+}): Promise<CourseCurriculumOption[]> {
+  const params: Record<string, number> = {};
+  if (filters.authorityId) params.authorityId = filters.authorityId;
+  if (filters.levelId) params.levelId = filters.levelId;
+  if (filters.curriculumId) params.curriculumId = filters.curriculumId;
+  const response = await apiClient.get<{ options: CourseCurriculumOption[] }>(
+    "/courses/meta/course-curricula",
+    { params }
+  );
+  return response.data.options;
 }

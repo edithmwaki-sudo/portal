@@ -8,7 +8,6 @@ import type { StudentStatus } from './create-student.dto';
 
 /** Course/authority context is locked on the enrolment once a student is admitted. */
 export class UpdateStudentDto extends OmitType(PartialType(CreateStudentDto), [
-  'courseId',
   'authorityId',
 ] as const) {
   /** Management action only — not part of the admission flow. */

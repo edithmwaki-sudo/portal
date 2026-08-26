@@ -30,16 +30,16 @@ import {
 import { AsyncSearchSelect } from "@/components/ui/async-search-select";
 import {
   getAllCourseAuthorityOptions,
-  getCourseCurriculaByCourse,
-  getCourses,
+  getAllCourseLevelOptions,
+  getAllCourseCurriculumOptions,
+  getCourseCurriculumOptions,
   type AsyncOption,
-  type Course,
+  type CourseCurriculumOption,
 } from "@/lib/api/courses";
 import {
   createStudent,
   getNextAdmissionNumber,
   updateStudent,
-  type CourseEnrolment,
   type CreateStudentPayload,
   type StudentResponse,
 } from "@/lib/api/students";
@@ -65,39 +65,6 @@ const RELATIONSHIP_OPTIONS = [
 
 const LEVEL_OPTIONS = [1, 2, 3, 4, 5, 6];
 
-function buildCourseFromEnrolment(
-  enrolment: CourseEnrolment | null
-): Course | null {
-  if (!enrolment || !enrolment.courseId) return null;
-  return {
-    id: enrolment.courseId,
-    code: enrolment.courseCode ?? "",
-    initials: enrolment.courseInitials ?? "",
-    name: enrolment.courseName ?? "",
-    durationMonths: null,
-    description: null,
-    isActive: true,
-    certificationAuthorityId: null,
-    certificationAuthorityCode: null,
-    certificationAuthorityName: enrolment.authorityName,
-    certificationLevelId: null,
-    certificationLevelCode: null,
-    certificationLevelName: enrolment.levelName,
-    departmentId: null,
-    departmentName: enrolment.departmentName,
-    curricula: [
-      {
-        id: enrolment.curriculumId ?? 0,
-        courseCurriculumId: enrolment.courseCurriculumId,
-        cycleName: enrolment.curriculumName ?? "",
-        isActive: true,
-      },
-    ],
-    createdAt: "",
-    updatedAt: "",
-  };
-}
-
 interface StudentFormProps {
   student?: StudentResponse;
   onSuccess?: (student: StudentResponse) => void;
@@ -117,19 +84,28 @@ export function StudentForm({
       : ""
   );
   const [authorityOptions, setAuthorityOptions] = useState<AsyncOption[]>([]);
-  const [courseOptions, setCourseOptions] = useState<Course[]>([]);
-  const [activeCurriculum, setActiveCurriculum] = useState<AsyncOption | null>(
-    () =>
-      student?.activeEnrolment?.curriculumId
-        ? {
-            id: student.activeEnrolment.curriculumId,
-            label: student.activeEnrolment.curriculumName ?? "",
-          }
-        : null
+  const [levelId, setLevelId] = useState<string>(() =>
+    student?.activeEnrolment?.certificationLevelId != null
+      ? String(student.activeEnrolment.certificationLevelId)
+      : ""
   );
-  const [selectedCourse, setSelectedCourse] = useState<Course | null>(() =>
-    student ? buildCourseFromEnrolment(student.activeEnrolment) : null
+  const [levelOptions, setLevelOptions] = useState<AsyncOption[]>([]);
+  const [curriculumId, setCurriculumId] = useState<string>(() =>
+    student?.activeEnrolment?.curriculumId != null
+      ? String(student.activeEnrolment.curriculumId)
+      : ""
   );
+  const [curriculumOptions, setCurriculumOptions] = useState<AsyncOption[]>([]);
+  const [courseCurriculumId, setCourseCurriculumId] = useState<string>(() =>
+    student?.activeEnrolment?.courseCurriculumId != null
+      ? String(student.activeEnrolment.courseCurriculumId)
+      : ""
+  );
+  const [courseCurriculumOptions, setCourseCurriculumOptions] = useState<
+    CourseCurriculumOption[]
+  >([]);
+  // In edit mode the cascade is locked until the user re-selects an authority.
+  const [cascadeArmed, setCascadeArmed] = useState(() => !isEditing);
   const [admissionPreview, setAdmissionPreview] = useState<string | null>(null);
 
   const form = useForm<StudentFormValues>({
@@ -138,10 +114,6 @@ export function StudentForm({
     reValidateMode: "onChange",
     defaultValues: student
       ? {
-          courseId:
-            student.activeEnrolment?.courseId != null
-              ? String(student.activeEnrolment.courseId)
-              : "",
           level: student.level != null ? String(student.level) : "1",
           admDate: student.admDate?.slice(0, 10) ?? "",
           firstName: student.user.firstName ?? "",
@@ -173,7 +145,6 @@ export function StudentForm({
             undefined,
         }
       : {
-          courseId: "",
           level: "1",
           admDate: new Date().toISOString().slice(0, 10),
           firstName: "",
@@ -205,8 +176,6 @@ export function StudentForm({
   });
 
   const isPwd = form.watch("isPwd");
-  const courseIdValue = form.watch("courseId");
-  const selectedCourseId = selectedCourse?.id ?? null;
 
   useEffect(() => {
     let cancelled = false;
@@ -222,86 +191,131 @@ export function StudentForm({
     };
   }, []);
 
+  // Load levels when authority changes
   useEffect(() => {
-    if (!courseIdValue) {
-      setActiveCurriculum(null);
+    if (!authorityId) {
+      setLevelOptions([]);
+      setLevelId("");
+      setCurriculumOptions([]);
+      setCurriculumId("");
+      setCourseCurriculumOptions([]);
+      setCourseCurriculumId("");
       return;
     }
     let cancelled = false;
-    getCourseCurriculaByCourse(Number(courseIdValue))
+    getAllCourseLevelOptions(Number(authorityId))
       .then((options) => {
-        if (!cancelled) {
-          setActiveCurriculum(options[0] ?? null);
-        }
+        if (!cancelled) setLevelOptions(options);
       })
       .catch(() => {
-        if (!cancelled) setActiveCurriculum(null);
+        if (!cancelled) setLevelOptions([]);
       });
     return () => {
       cancelled = true;
     };
-  }, [courseIdValue]);
+  }, [authorityId]);
 
-  const fetchCourseOptions = useCallback(
-    async (search: string) => {
-      if (!authorityId) return [];
-      const response = await getCourses({
-        page: 1,
-        limit: 10,
-        search,
-        certificationAuthorityId: Number(authorityId),
-        status: "active",
+  // Load curricula when authority changes
+  useEffect(() => {
+    if (!authorityId) {
+      setCurriculumOptions([]);
+      setCurriculumId("");
+      setCourseCurriculumOptions([]);
+      setCourseCurriculumId("");
+      return;
+    }
+    let cancelled = false;
+    getAllCourseCurriculumOptions(Number(authorityId))
+      .then((options) => {
+        if (!cancelled) setCurriculumOptions(options);
+      })
+      .catch(() => {
+        if (!cancelled) setCurriculumOptions([]);
       });
-      // Only courses that currently have an active curriculum are offerable.
-      const offered = response.items.filter((course) =>
-        course.curricula.some((curriculum) => curriculum.isActive)
-      );
-      setCourseOptions(offered);
-      return offered.map((course) => ({
-        id: course.id,
-        label: `${course.code} - ${course.name}`,
-      }));
-    },
-    [authorityId]
-  );
+    return () => {
+      cancelled = true;
+    };
+  }, [authorityId]);
+
+  // Load course curricula when authority, level, or curriculum changes
+  const fetchCourseCurriculumOptions = useCallback(async () => {
+    if (!authorityId) {
+      setCourseCurriculumOptions([]);
+      setCourseCurriculumId("");
+      return;
+    }
+    let cancelled = false;
+    const options = await getCourseCurriculumOptions({
+      authorityId: Number(authorityId),
+      levelId: levelId ? Number(levelId) : undefined,
+      curriculumId: curriculumId ? Number(curriculumId) : undefined,
+    });
+    if (!cancelled) {
+      setCourseCurriculumOptions(options);
+      // If current selection is no longer valid, reset
+      if (
+        courseCurriculumId &&
+        !options.some((opt) => String(opt.id) === courseCurriculumId)
+      ) {
+        setCourseCurriculumId("");
+      }
+    }
+  }, [authorityId, levelId, curriculumId, courseCurriculumId]);
+
+  useEffect(() => {
+    fetchCourseCurriculumOptions();
+  }, [fetchCourseCurriculumOptions]);
 
   function handleAuthorityChange(value: string | undefined) {
     setAuthorityId(value ?? "");
-    form.setValue("courseId", "", { shouldValidate: true });
-    setSelectedCourse(null);
-    setActiveCurriculum(null);
+    setCascadeArmed(true);
+    setLevelId("");
+    setCurriculumId("");
+    setCourseCurriculumId("");
   }
 
-  function handleCourseChange(value: string | undefined) {
-    form.setValue("courseId", value ?? "", { shouldValidate: true });
-    if (!value) {
-      setSelectedCourse(null);
-      setActiveCurriculum(null);
-      return;
-    }
-    const course = courseOptions.find((item) => String(item.id) === value);
-    setSelectedCourse(course ?? null);
+  function handleLevelChange(value: string | undefined) {
+    setLevelId(value ?? "");
+    setCourseCurriculumId("");
+  }
+
+  function handleCurriculumChange(value: string | undefined) {
+    setCurriculumId(value ?? "");
+    setCourseCurriculumId("");
+  }
+
+  function handleCourseCurriculumChange(value: string | undefined) {
+    setCourseCurriculumId(value ?? "");
   }
 
   useEffect(() => {
-    if (isEditing || !selectedCourseId) {
+    if (isEditing || !courseCurriculumId) {
       setAdmissionPreview(null);
       return;
     }
-    let cancelled = false;
-    getNextAdmissionNumber(selectedCourseId)
-      .then((meta) => {
-        if (!cancelled) setAdmissionPreview(meta.nextAdmissionNumber);
-      })
-      .catch(() => {
-        if (!cancelled) setAdmissionPreview(null);
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, [selectedCourseId, isEditing]);
+    const selected = courseCurriculumOptions.find(
+      (opt) => String(opt.id) === courseCurriculumId
+    );
+    if (selected) {
+      let cancelled = false;
+      getNextAdmissionNumber(selected.courseId)
+        .then((meta) => {
+          if (!cancelled) setAdmissionPreview(meta.nextAdmissionNumber);
+        })
+        .catch(() => {
+          if (!cancelled) setAdmissionPreview(null);
+        });
+      return () => {
+        cancelled = true;
+      };
+    }
+  }, [courseCurriculumId, isEditing, courseCurriculumOptions]);
 
   async function onSubmit(values: StudentFormValues) {
+    if (!courseCurriculumId) {
+      toast.error("Please select the certification authority, level, curriculum and course.");
+      return;
+    }
     setIsSubmitting(true);
     const payload: CreateStudentPayload = {
       email: values.email.trim(),
@@ -330,7 +344,9 @@ export function StudentForm({
       nextOfKinEmail: values.nextOfKinEmail?.trim() || undefined,
       nextOfKinRelationship: values.nextOfKinRelationship,
       authorityId: authorityId ? Number(authorityId) : undefined,
-      courseId: Number(values.courseId),
+      levelId: levelId ? Number(levelId) : undefined,
+      curriculumId: curriculumId ? Number(curriculumId) : undefined,
+      courseCurriculumId: Number(courseCurriculumId),
       level: values.level ? Number(values.level) : undefined,
       admDate: values.admDate || undefined,
     };
@@ -366,11 +382,11 @@ export function StudentForm({
     }
   }
 
-  return (
+return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="grid gap-6">
         <FormSection title="Admission Information">
-          <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-3">
+          <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-4">
             <FormItem>
               <RequiredLabel>Certification Authority</RequiredLabel>
               <FormControl>
@@ -384,44 +400,91 @@ export function StudentForm({
                   }
                   placeholder="Select certification authority"
                   searchPlaceholder="Search by code or name..."
-                  disabled={isSubmitting || isEditing}
+                  disabled={isSubmitting}
                   minChars={1}
                   emptyMessage="No active certification authorities found."
                 />
               </FormControl>
               <FormMessage />
             </FormItem>
-            <FormField
-              control={form.control}
-              name="courseId"
-              render={({ field }) => (
-                <FormItem>
-                  <RequiredLabel>Course</RequiredLabel>
-                  <FormControl>
-                    <AsyncSearchSelect
-                      value={field.value || undefined}
-                      onValueChange={handleCourseChange}
-                      getOptions={fetchCourseOptions}
-                      selectedLabel={
-                        student?.activeEnrolment
-                          ? `${student.activeEnrolment.courseCode} - ${student.activeEnrolment.courseName}`
-                          : undefined
-                      }
-                      placeholder={
-                        authorityId
-                          ? "Select course"
-                          : "Select certification authority first"
-                      }
-                      searchPlaceholder="Search by code or name..."
-                      disabled={isSubmitting || isEditing || !authorityId}
-                      minChars={1}
-                      emptyMessage="No offerable courses found for this certification authority."
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+            <FormItem>
+              <RequiredLabel>Certification Level</RequiredLabel>
+              <FormControl>
+                <AsyncSearchSelect<AsyncOption>
+                  value={levelId || undefined}
+                  onValueChange={handleLevelChange}
+                  getOptions={async () => levelOptions}
+                  preloadedOptions={levelOptions}
+                  selectedLabel={
+                    student?.activeEnrolment?.levelName ?? undefined
+                  }
+                  placeholder={
+                    authorityId && cascadeArmed
+                      ? "Select certification level"
+                      : "Select authority first"
+                  }
+                  searchPlaceholder="Search by name or code..."
+                  disabled={isSubmitting || !authorityId || !cascadeArmed}
+                  minChars={1}
+                  emptyMessage="No active levels for this authority."
+                />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+            <FormItem>
+              <RequiredLabel>Curriculum</RequiredLabel>
+              <FormControl>
+                <AsyncSearchSelect<AsyncOption>
+                  value={curriculumId || undefined}
+                  onValueChange={handleCurriculumChange}
+                  getOptions={async () => curriculumOptions}
+                  preloadedOptions={curriculumOptions}
+                  selectedLabel={
+                    student?.activeEnrolment?.curriculumName ?? undefined
+                  }
+                  placeholder={
+                    authorityId && cascadeArmed ? "Select curriculum" : "Select authority first"
+                  }
+                  searchPlaceholder="Search by cycle name..."
+                  disabled={isSubmitting || !authorityId || !cascadeArmed}
+                  minChars={1}
+                  emptyMessage="No active curricula for this authority."
+                />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+            <FormItem>
+              <RequiredLabel>Course</RequiredLabel>
+              <FormControl>
+                <AsyncSearchSelect<CourseCurriculumOption>
+                  value={courseCurriculumId || undefined}
+                  onValueChange={handleCourseCurriculumChange}
+                  getOptions={async () => courseCurriculumOptions}
+                  preloadedOptions={courseCurriculumOptions}
+                  selectedLabel={
+                    student?.activeEnrolment
+                      ? `${student.activeEnrolment.courseCode} — ${student.activeEnrolment.courseName} (${student.activeEnrolment.curriculumName})`
+                      : undefined
+                  }
+                  placeholder={
+                    authorityId && levelId && curriculumId
+                      ? "Select course"
+                      : "Complete the filters above"
+                  }
+                  searchPlaceholder="Search by course code or name..."
+                  disabled={
+                    isSubmitting ||
+                    !authorityId ||
+                    !cascadeArmed ||
+                    !levelId ||
+                    !curriculumId
+                  }
+                  minChars={1}
+                  emptyMessage="No courses match the selected filters."
+                />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
             <FormField
               control={form.control}
               name="level"
@@ -465,60 +528,60 @@ export function StudentForm({
             />
           </div>
 
-          {selectedCourse ? (
-            <div className="grid gap-3 rounded-lg border bg-muted/40 p-4 text-sm md:grid-cols-2 xl:grid-cols-4">
-              <div>
-                <span className="text-muted-foreground">Course</span>
-                <p className="font-medium">
-                  {selectedCourse.code} — {selectedCourse.name}
-                </p>
-              </div>
-              <div>
-                <span className="text-muted-foreground">Certification Authority</span>
-                <p className="font-medium">
-                  {selectedCourse.certificationAuthorityName ?? "—"}
-                </p>
-              </div>
-              <div>
-                <span className="text-muted-foreground">Certification Level</span>
-                <p className="font-medium">
-                  {selectedCourse.certificationLevelName ?? "—"}
-                </p>
-              </div>
-              <div>
-                <span className="text-muted-foreground">Department</span>
-                <p className="font-medium">
-                  {selectedCourse.departmentName ?? "—"}
-                </p>
-              </div>
-              <div>
-                <span className="text-muted-foreground">Curriculum</span>
-                <p className="font-medium">{activeCurriculum?.label ?? "—"}</p>
-              </div>
-              {isEditing ? (
-                <div>
-                  <span className="text-muted-foreground">Admission Number</span>
-                  <p className="font-mono font-semibold">
-                    {student?.admissionNumber ?? "—"}
-                  </p>
+          {courseCurriculumId ? (
+            (() => {
+              const selected = courseCurriculumOptions.find(
+                (opt) => String(opt.id) === courseCurriculumId
+              );
+              if (!selected) return null;
+              return (
+                <div className="grid gap-3 rounded-lg border bg-muted/40 p-4 text-sm md:grid-cols-2 xl:grid-cols-4">
+                  <div>
+                    <span className="text-muted-foreground">Course</span>
+                    <p className="font-medium">
+                      {selected.courseCode} — {selected.courseName}
+                    </p>
+                  </div>
+                  <div>
+                    <span className="text-muted-foreground">Certification Authority</span>
+                    <p className="font-medium">
+                      {student?.activeEnrolment?.authorityName ??
+                        authorityOptions.find((a) => String(a.id) === authorityId)?.label ??
+                        "—"}
+                    </p>
+                  </div>
+                  <div>
+                    <span className="text-muted-foreground">Certification Level</span>
+                    <p className="font-medium">
+                      {student?.activeEnrolment?.levelName ??
+                        levelOptions.find((l) => String(l.id) === levelId)?.label ??
+                        "—"}
+                    </p>
+                  </div>
+                  <div>
+                    <span className="text-muted-foreground">Curriculum</span>
+                    <p className="font-medium">
+                      {selected.cycleName}
+                    </p>
+                  </div>
+                  {isEditing ? (
+                    <div>
+                      <span className="text-muted-foreground">Admission Number</span>
+                      <p className="font-mono font-semibold">
+                        {student?.admissionNumber ?? "—"}
+                      </p>
+                    </div>
+                  ) : (
+                    <div>
+                      <span className="text-muted-foreground">Next Admission Number</span>
+                      <p className="font-mono font-semibold">
+                        {admissionPreview ?? "…"}
+                      </p>
+                    </div>
+                  )}
                 </div>
-              ) : (
-                <div>
-                  <span className="text-muted-foreground">Next Admission Number</span>
-                  <p className="font-mono font-semibold">
-                    {admissionPreview ?? "…"}
-                  </p>
-                </div>
-              )}
-              {selectedCourse.durationMonths ? (
-                <div>
-                  <span className="text-muted-foreground">Duration</span>
-                  <p className="font-medium">
-                    {selectedCourse.durationMonths} months
-                  </p>
-                </div>
-              ) : null}
-            </div>
+              );
+            })()
           ) : null}
         </FormSection>
 

@@ -152,14 +152,19 @@ export class StaffService {
 
     const roleId = await this.resolveRoleId(dto.role);
 
-    const profile = await this.prisma.$transaction(async (tx) => {
+    // Hash outside the transaction — bcrypt can exceed the interactive-tx
+    // timeout on cold start and roll the whole onboarding back.
+    const defaultPasswordHash = await hashPassword(DEFAULT_PASSWORD);
+
+    const profile = await this.prisma.$transaction(
+      async (tx) => {
       const employeeNumber = await this.buildNextEmployeeNumber(tx);
 
       const user = await tx.user.create({
         data: {
           username: employeeNumber,
           email: dto.email,
-          password: await hashPassword(DEFAULT_PASSWORD),
+          password: defaultPasswordHash,
           roleId,
           name: this.buildFullName(dto.firstName, dto.middleName, dto.lastName),
           firstName: dto.firstName,
@@ -217,7 +222,9 @@ export class StaffService {
           updatedBy: actorId,
         },
       });
-    });
+      },
+      { timeout: 15000 },
+    );
 
     await this.audit.log('staff.create', actorId, 'Staff', profile.id, {
       newValues: { employeeNumber: profile.employeeNumber, email: dto.email },

@@ -18,7 +18,14 @@ const prismaMock = {
     create: jest.fn(),
     findUnique: jest.fn(),
     update: jest.fn(),
+    updateMany: jest.fn(),
   },
+  $transaction: jest.fn((input: unknown) => {
+    if (typeof input === 'function') {
+      return (input as (tx: unknown) => unknown)(prismaMock);
+    }
+    return Array.isArray(input) ? Promise.all(input) : Promise.resolve(input);
+  }),
 };
 
 const jwtMock = {
@@ -107,12 +114,13 @@ describe('OtpService', () => {
         type: 'otp-login',
       });
       prismaMock.user.findUnique.mockResolvedValue({ id: 5, username: 'u' });
+      prismaMock.otpCode.updateMany.mockResolvedValue({ count: 1 });
     });
 
     it('verifies a correct code and marks the OTP used', async () => {
       const user = await service.verifyLoginOtp('challenge-token', '123456');
       expect(user).toEqual({ id: 5, username: 'u' });
-      expect(prismaMock.otpCode.update).toHaveBeenLastCalledWith(
+      expect(prismaMock.otpCode.updateMany).toHaveBeenLastCalledWith(
         expect.objectContaining({ data: { verifiedAt: expect.any(Date) } }),
       );
     });
@@ -178,6 +186,7 @@ describe('OtpService', () => {
         expiresAt: new Date(Date.now() + 60_000),
         verifiedAt: null,
       });
+      prismaMock.otpCode.updateMany.mockResolvedValue({ count: 0 });
       await expect(
         service.verifyLoginOtp('challenge-token', '123456'),
       ).rejects.toThrow('Too many attempts');
@@ -188,7 +197,7 @@ describe('OtpService', () => {
       await expect(
         service.verifyLoginOtp('challenge-token', '000000'),
       ).rejects.toThrow('Incorrect code');
-      expect(prismaMock.otpCode.update).toHaveBeenCalledWith(
+      expect(prismaMock.otpCode.updateMany).toHaveBeenCalledWith(
         expect.objectContaining({ data: { attempts: { increment: 1 } } }),
       );
     });

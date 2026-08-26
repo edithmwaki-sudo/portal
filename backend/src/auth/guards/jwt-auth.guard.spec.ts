@@ -29,7 +29,7 @@ describe('JwtAuthGuard', () => {
     reflectorMock.getAllAndOverride.mockReturnValue(undefined);
     const spy = jest
       .spyOn(JwtAuthGuard.prototype, 'canActivate')
-      .mockReturnValue('delegated');
+      .mockReturnValueOnce('delegated');
 
     (guard as any).canActivate = spy as any;
     const result = guard.canActivate(contextMock);

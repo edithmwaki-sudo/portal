@@ -107,7 +107,9 @@ export interface CreateStudentPayload {
   nextOfKinEmail?: string;
   nextOfKinRelationship?: string;
   authorityId?: number;
-  courseId: number;
+  levelId?: number;
+  curriculumId?: number;
+  courseCurriculumId: number;
   level?: number;
   admDate?: string;
 }

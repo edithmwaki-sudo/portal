@@ -441,6 +441,41 @@ export class CoursesService {
     }));
   }
 
+  /** Active course curricula filtered by authority, level, curriculum — for student admission cascade. */
+  async listCourseCurriculumOptionsFiltered(filters: {
+    authorityId?: number;
+    levelId?: number;
+    curriculumId?: number;
+  }) {
+    const { authorityId, levelId, curriculumId } = filters;
+    const rows = await this.prisma.courseCurriculum.findMany({
+      where: {
+        isActive: true,
+        course: {
+          ...(authorityId ? { certificationAuthorityId: authorityId } : {}),
+          ...(levelId ? { certificationLevelId: levelId } : {}),
+        },
+        ...(curriculumId ? { curriculumId } : {}),
+      },
+      orderBy: [
+        { course: { code: 'asc' } },
+        { curriculum: { cycleName: 'asc' } },
+      ],
+      include: {
+        course: { select: { id: true, code: true, name: true } },
+        curriculum: { select: { id: true, cycleName: true } },
+      },
+    });
+    return rows.map((row) => ({
+      id: row.id,
+      label: `${row.course.code} — ${row.course.name} (${row.curriculum.cycleName})`,
+      courseId: row.course.id,
+      courseCode: row.course.code,
+      courseName: row.course.name,
+      cycleName: row.curriculum.cycleName,
+    }));
+  }
+
   async listDepartmentOptions(search?: string, limit = 10) {
     const rows = await this.prisma.department.findMany({
       where: {

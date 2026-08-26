@@ -181,6 +181,40 @@ export class CoursesController {
     };
   }
 
+  @Get('meta/course-curricula')
+  @RequirePermission(...COURSE_FORM_PERMISSIONS)
+  @ApiOperation({
+    summary: 'Active course curricula filtered by authority, level, curriculum (student admission cascade)',
+  })
+  async metaCourseCurricula(
+    @Query('authorityId') authorityId?: string,
+    @Query('levelId') levelId?: string,
+    @Query('curriculumId') curriculumId?: string,
+  ) {
+    const filters: {
+      authorityId?: number;
+      levelId?: number;
+      curriculumId?: number;
+    } = {};
+    if (authorityId) {
+      const parsed = parseInt(authorityId, 10);
+      if (!Number.isNaN(parsed)) filters.authorityId = parsed;
+    }
+    if (levelId) {
+      const parsed = parseInt(levelId, 10);
+      if (!Number.isNaN(parsed)) filters.levelId = parsed;
+    }
+    if (curriculumId) {
+      const parsed = parseInt(curriculumId, 10);
+      if (!Number.isNaN(parsed)) filters.curriculumId = parsed;
+    }
+    return {
+      options: await this.coursesService.listCourseCurriculumOptionsFiltered(
+        filters,
+      ),
+    };
+  }
+
   @Get('meta/departments')
   @RequirePermission(...COURSE_FORM_PERMISSIONS)
   @ApiOperation({ summary: 'Active department options for the course form' })

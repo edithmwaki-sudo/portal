@@ -96,6 +96,7 @@ describe('RolesService', () => {
         displayName: 'Admin',
         createdAt: new Date(),
         updatedAt: new Date(),
+        rolePermissions: [],
       });
       prismaMock.rolePermission.findMany.mockResolvedValue([]);
       prismaMock.permission.findUnique.mockResolvedValue(null);
@@ -111,6 +112,7 @@ describe('RolesService', () => {
         displayName: 'Admin',
         createdAt: new Date(),
         updatedAt: new Date(),
+        rolePermissions: [],
       });
       prismaMock.rolePermission.findMany.mockResolvedValue([]);
       prismaMock.permission.findUnique.mockResolvedValue({

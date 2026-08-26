@@ -149,15 +149,27 @@ export class CreateStudentDto {
   @IsIn(NEXT_OF_KIN_RELATIONSHIPS)
   nextOfKinRelationship?: NextOfKinRelationship;
 
-  // Admission
-  /** Filter/validation only — the course's certification authority. */
+  // Admission — cascade: Authority → Level → Curriculum → CourseCurriculum
+  /** Filter only — certification authority for UI cascade. */
   @IsInt()
   @IsOptional()
   authorityId?: number;
 
+  /** Filter only — certification level for UI cascade. */
   @IsInt()
-  courseId: number;
+  @IsOptional()
+  levelId?: number;
 
+  /** Filter only — curriculum (cycle) for UI cascade. */
+  @IsInt()
+  @IsOptional()
+  curriculumId?: number;
+
+  /** Required — the actual course curriculum to enrol into. */
+  @IsInt()
+  courseCurriculumId: number;
+
+  /** Year of entry (1-6) — independent of certification level. */
   @IsInt()
   @IsOptional()
   @Min(1)

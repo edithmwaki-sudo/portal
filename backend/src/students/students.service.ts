@@ -79,55 +79,36 @@ export class StudentsService {
     const enrolmentYearId =
       activeSession?.academicYearId ?? activeYear?.id ?? null;
 
+    // Hash outside the transaction — bcrypt can exceed the interactive-tx
+    // timeout on cold start and roll the whole admission back.
+    const passwordHash = await hashPassword(dto.phone);
+
     for (let attempt = 0; attempt < 3; attempt += 1) {
       try {
         const { studentId, admissionNumber } = await this.prisma.$transaction(
           async (tx) => {
-            const course = await tx.course.findFirst({
-              where: { id: dto.courseId, deletedAt: null, isActive: true },
-              select: {
-                id: true,
-                initials: true,
-                code: true,
-                name: true,
-                certificationAuthorityId: true,
-              },
-            });
-            if (!course) {
-              throw new BadRequestException(
-                'Selected course does not exist or is inactive',
-              );
-            }
-            if (
-              dto.authorityId != null &&
-              course.certificationAuthorityId !== dto.authorityId
-            ) {
-              throw new BadRequestException(
-                'Selected course does not belong to the selected certification authority',
-              );
-            }
-
+            // Fetch the course curriculum with all relations needed for enrolment
             const cc = await tx.courseCurriculum.findFirst({
-              where: { courseId: course.id, isActive: true },
+              where: { id: dto.courseCurriculumId, isActive: true },
               include: {
                 course: {
-                  select: {
-                    id: true,
-                    initials: true,
-                    code: true,
-                    name: true,
+                  include: {
+                    authority: true,
+                    level: true,
+                    department: true,
                   },
                 },
+                curriculum: true,
               },
             });
             if (!cc) {
               throw new BadRequestException(
-                'No active curriculum is currently open for this course',
+                'Selected course curriculum does not exist or is inactive',
               );
             }
 
-            // Row lock serializes concurrent admissions for the same course so
-            // the sequential admission number stays race-safe.
+            // Row lock serializes concurrent admissions for the same course curriculum
+            // so the sequential admission number stays race-safe.
             await tx.$queryRaw`SELECT id FROM course_curricula WHERE id = ${cc.id} FOR UPDATE`;
 
             const nextNumber = await this.buildAdmissionNumber(
@@ -144,7 +125,7 @@ export class StudentsService {
               data: {
                 username: nextNumber,
                 email: dto.email,
-                password: await hashPassword(dto.phone),
+                password: passwordHash,
                 name: fullName,
                 firstName: dto.firstName,
                 middleName: dto.middleName ?? null,
@@ -214,6 +195,8 @@ export class StudentsService {
               admissionNumber: nextNumber,
             };
           },
+          // Cold-start pool warm-up + row-lock waits can exceed the 5s default.
+          { timeout: 15000 },
         );
 
         await this.audit.log('student.create', actorId, 'Student', studentId, {

@@ -6,6 +6,8 @@ import type { AuthenticatedUser } from '../../auth/interfaces/authenticated-user
 
 function makeContext(user?: AuthenticatedUser): ExecutionContext {
   return {
+    getHandler: () => (() => {}),
+    getClass: () => (() => {}),
     switchToHttp: () => ({
       getRequest: () => ({ user }),
     }),
