@@ -2,8 +2,6 @@ import { ValidationPipe } from '@nestjs/common';
 import { ClassSerializerInterceptor } from '@nestjs/common';
 import { NestFactory, Reflector } from '@nestjs/core';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
-import cluster from 'cluster';
-import * as os from 'os';
 import { Logger } from 'nestjs-pino';
 import helmet from 'helmet';
 import cookieParser from 'cookie-parser';
@@ -80,44 +78,36 @@ async function bootstrap() {
   app.useGlobalInterceptors(new ClassSerializerInterceptor(app.get(Reflector)));
   app.useGlobalFilters(new AllExceptionsFilter());
 
-  // API documentation (available at /api/docs).
-  const swaggerConfig = new DocumentBuilder()
-    .setTitle('Apex ERP API')
-    .setDescription(
-      'Authentication & authorization API for the School Management System',
-    )
-    .setVersion('1.0')
-    .addBearerAuth(
-      { type: 'http', scheme: 'bearer', bearerFormat: 'JWT' },
-      'access-token',
-    )
-    .addCookieAuth('access_token')
-    .build();
-  const document = SwaggerModule.createDocument(app, swaggerConfig);
-  SwaggerModule.setup('api/docs', app, document, {
-    swaggerOptions: { persistAuthorization: true },
-  });
+  // API documentation. Public in development; in production it is disabled
+  // unless explicitly opted into via ENABLE_SWAGGER=true (e.g. for a staged
+  // environment behind other protections). Override via env, not code.
+  if (
+    process.env.NODE_ENV !== 'production' ||
+    process.env.ENABLE_SWAGGER === 'true'
+  ) {
+    const swaggerConfig = new DocumentBuilder()
+      .setTitle('Apex ERP API')
+      .setDescription(
+        'Authentication & authorization API for the School Management System',
+      )
+      .setVersion('1.0')
+      .addBearerAuth(
+        { type: 'http', scheme: 'bearer', bearerFormat: 'JWT' },
+        'access-token',
+      )
+      .addCookieAuth('access_token')
+      .build();
+    const document = SwaggerModule.createDocument(app, swaggerConfig);
+    SwaggerModule.setup('api/docs', app, document, {
+      swaggerOptions: { persistAuthorization: true },
+    });
+  }
 
   await app.listen(process.env.PORT ?? 3000);
 }
 
-// Multi-process mode: fork one worker per logical CPU (override with WORKERS).
-// Each worker owns its own Prisma engine + connection pool, so throughput
-// scales with cores. Set WORKERS=1 to run a single process (default is all CPUs).
-if (cluster.isPrimary) {
-  const requested = Number(process.env.WORKERS);
-  const workerCount =
-    Number.isFinite(requested) && requested >= 1
-      ? Math.floor(requested)
-      : os.cpus().length;
-  console.log(`[primary ${process.pid}] forking ${workerCount} worker(s)`);
-  for (let i = 0; i < workerCount; i++) cluster.fork();
-  cluster.on('exit', (worker, code, signal) => {
-    console.log(
-      `[primary] worker ${worker.process.pid} exited (code=${code} signal=${signal}); restarting`,
-    );
-    cluster.fork();
-  });
-} else {
-  bootstrap();
-}
+// Single API process per container/instance. Heavy CPU work (PDF rendering)
+// already runs on a bounded worker-thread pool; background jobs belong to
+// dedicated workers, never to extra API processes. Scale horizontally by
+// running more instances behind a load balancer when measurements demand it.
+void bootstrap();

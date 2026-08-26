@@ -1,278 +1,650 @@
-------------------------------------------------------------
-# IMPROVED DATABASE DESIGN
-------------------------------------------------------------
+Absolutely. Since you're asking your coding agent to modify the project, I'd give it a prompt that tells it to act as a senior engineer, inspect before changing, preserve working functionality, and specifically separate API processes from background job workers.
 
-The Fees module must follow a reusable template architecture.
+You can paste this as the agent's main engineering task:
 
-A Fee Structure is a reusable template.
+Production Architecture Correction — NestJS, Prisma, Neon, PDF and Email Workers
+Production Architecture Correction — Senior Engineering Task
 
-It should NEVER be duplicated simply because another course uses the same fee.
+You are acting as a senior/staff backend engineer responsible for bringing this NestJS school ERP system to a production-grade architecture.
 
-Instead, a Fee Structure is assigned to one or many academic contexts through the CourseFeeAssignment table.
+Your job is NOT to blindly implement the requested changes. First inspect the existing repository, understand the current architecture, identify the relevant code paths, and then make the smallest safe set of changes necessary.
 
-This ensures normalization and prevents duplicated fee definitions.
+1. Primary architectural decision
 
-------------------------------------------------------------
-## FeeStructure
+The current application incorrectly uses Node.js cluster to create multiple NestJS/Prisma processes.
 
-Represents a reusable fee template.
+The current behavior is similar to:
 
-Examples
+Render 512 MiB
+└── Primary
+    ├── NestJS + Prisma worker 1
+    ├── NestJS + Prisma worker 2
+    ├── NestJS + Prisma worker 3
+    ├── ...
+    └── NestJS + Prisma worker 8
 
-- Diploma Regular Fee
-- Certificate Fee
-- January Intake Fee
-- Engineering Fee
-- International Students Fee
 
-Fields
+This causes excessive memory consumption because every worker initializes its own NestJS application and Prisma engine.
 
-- id
-- feeName (Unique)
-- description (Optional)
-- startDate
-- endDate
-- status (Active/Inactive)
-- createdBy
-- updatedBy
-- createdAt
-- updatedAt
-- deletedAt (Soft Delete)
+Render is currently reporting:
 
-Relationships
+[primary] forking 8 worker(s)
+Out of memory (used over 512Mi)
+No open ports detected
 
-FeeStructure
+Required architectural correction
 
-hasMany FeeItems
+The API must run as one NestJS process per container/instance.
 
-hasMany CourseFeeAssignments
+Remove the Node.js cluster implementation from the API application.
 
-------------------------------------------------------------
-## FeeItem
+Do NOT replace it with another process-spawning mechanism.
 
-Represents one charge within a Fee Structure.
+Do NOT introduce multiple Prisma instances merely to increase request throughput.
 
-Examples
+The application entry point should ultimately behave like:
 
-Tuition
+async function bootstrap() {
+  // application setup
+  await app.listen(process.env.PORT ?? 3000);
+}
 
-Library
+bootstrap();
 
-ICT
 
-Medical
+Remove:
 
-Registration
+cluster imports
+cluster.isPrimary
+cluster.fork()
+worker-count logic
+automatic worker restart logic
+WORKERS configuration if it exists solely for API clustering
 
-Examination
+Search the entire repository for:
 
-Internet
+cluster
+cluster.fork
+isPrimary
+WORKERS
 
-Attachment Fee
 
-Fields
+and determine whether each occurrence belongs to the obsolete API-clustering architecture.
 
-- id
-- feeStructureId
-- itemName
-- amount
-- displayOrder
-- createdAt
-- updatedAt
+Do not delete unrelated worker/job infrastructure if it already exists.
 
-Relationship
+2. IMPORTANT: Do not confuse API workers with background workers
 
-Many FeeItems belong to one FeeStructure.
+This is the central architectural correction.
 
-------------------------------------------------------------
-## CourseFeeAssignment
+There are two completely different workloads.
 
-Represents where a Fee Structure is used.
+API process
 
-Fields
+Responsible for:
 
-- id
-- courseId
-- curriculumId
-- academicYearId
-- academicSessionId
-- feeStructureId
-- effectiveFrom
-- effectiveTo (Nullable)
-- remarks (Optional)
-- status (Active/Inactive)
-- createdBy
-- updatedBy
-- createdAt
-- updatedAt
-- deletedAt
+HTTP requests
+Authentication
+Authorization
+CRUD
+Validation
+Business operations
+API responses
 
-Relationships
 
-Belongs To
+Run the NestJS API as one process per container.
 
-Course
+Background workers
 
-Curriculum
+Responsible for expensive/asynchronous work such as:
 
-AcademicYear
+PDF generation
+Bulk report generation
+Email sending
+Notifications
+Large exports
+Other long-running jobs
 
-AcademicSession
 
-FeeStructure
+These should NOT block HTTP requests.
 
-------------------------------------------------------------
-# NORMALIZATION RULES
+The desired architecture is:
 
-Fee Structures are reusable templates.
+Users
+  |
+  v
+NestJS API
+  |
+  +----> Neon PostgreSQL
+  |
+  +----> Job Queue
+            |
+            +----> PDF Worker
+            |
+            +----> Email Worker
 
-Do NOT duplicate a Fee Structure simply because another Course uses it.
 
-Multiple Courses may reference the same Fee Structure.
+If a queue/job system already exists in the repository, reuse it rather than introducing another system.
 
-Only the assignment changes.
+If one does not exist, inspect the existing dependencies and infrastructure before deciding what to introduce.
 
-------------------------------------------------------------
-# UNIQUE CONSTRAINTS
+Do not add Redis/BullMQ/etc. merely because it is popular. Choose the simplest production-appropriate solution compatible with the existing project and deployment environment.
 
-FeeStructure
+3. PDF generation
 
-Unique
+The system needs to support potentially large PDF workloads, including scenarios such as generating reports for approximately 2,000 students.
 
-feeName
+Do NOT generate thousands of PDFs synchronously inside an HTTP request.
 
-------------------------------------------------------------
+Bad architecture:
 
-CourseFeeAssignment
+POST /reports/generate
+        |
+        +--> generate PDF 1
+        +--> generate PDF 2
+        +--> ...
+        +--> generate PDF 2000
+        |
+        +--> finally respond
 
-Unique Composite Index
 
-(
-courseId,
-curriculumId,
-academicYearId,
-academicSessionId,
-status
-)
+Required architecture:
 
-Only ONE Active Fee Structure can exist for the same academic context.
+POST /reports/generate
+        |
+        +--> create job(s)
+        |
+        +--> return quickly
+                |
+                v
+             Job Queue
+                |
+                v
+           PDF Worker
+                |
+                v
+           File Storage
 
-------------------------------------------------------------
-# BUSINESS RULES
 
-A Fee Structure
+The API should be able to tell the caller that processing has been queued/in progress rather than keeping the HTTP connection open for the entire operation.
 
-• must contain at least one Fee Item.
+Implement controlled concurrency.
 
-Fee Item amount
+Do NOT allow an administrator action involving 2,000 PDFs to spawn 2,000 simultaneous PDF-generation processes/tasks.
 
-• cannot be negative.
+The worker must process jobs with bounded concurrency and support failure handling.
 
-Item Name
+4. Email architecture
 
-• cannot be duplicated within the same Fee Structure.
+Email must also be asynchronous.
 
-Deleting a Fee Structure
+Do NOT make important API requests wait for email delivery.
 
-• is prohibited if Active Course Fee Assignments exist.
+Bad:
 
-Instead
+Create student
+    |
+    v
+Send email
+    |
+    v
+Wait for provider
+    |
+    v
+Return HTTP response
 
-Deactivate it.
 
-Historical records must remain intact.
+Preferred:
 
-Fee Structures should never be permanently deleted.
+Create student
+    |
+    v
+Persist business data
+    |
+    v
+Queue email job
+    |
+    v
+Return HTTP response
 
-Soft Delete only.
 
-Course Fee Assignments are versioned.
+The email worker should handle:
 
-If a Fee changes for the next Academic Year,
+retries
+transient provider failures
+permanent failures
+logging
+job status
+idempotency where appropriate
+provider rate limits
+avoiding duplicate emails
 
-Create a NEW Assignment.
+For bulk email, process messages through a queue with controlled concurrency.
 
-Do NOT overwrite previous assignments.
+Do not create a giant synchronous loop that sends thousands of emails inside an API request.
 
-Students already billed must continue referencing the historical Fee Structure.
+5. Database architecture
 
-------------------------------------------------------------
-# VERSIONING
+The application uses:
 
-Example
+NestJS
+   |
+Prisma
+   |
+Neon PostgreSQL
 
-Fee Structure
 
-Diploma Regular Fee
+Keep Neon as the database.
 
-contains
+Do not introduce a local PostgreSQL server.
 
-Tuition
-Library
-ICT
-Medical
+Inspect the Prisma datasource configuration and verify that it is appropriate for Neon.
 
-Assignment 1
+Inspect:
 
-Diploma ICT
+schema.prisma
+Prisma initialization
+Prisma lifecycle management
+connection configuration
+migrations
+indexes
+frequently queried models
 
-Curriculum 2026
+Pay particular attention to connection management because multiple API instances and background workers may eventually exist.
 
-Academic Year 2026
+Do not blindly change connection parameters without understanding the current Neon configuration.
 
-Semester 1
+6. Scaling philosophy
 
-↓
+The target is not "8 workers."
 
-Diploma Regular Fee
+The target is an architecture that can scale based on actual measurements.
 
-Assignment 2
+Current architecture:
 
-Diploma Business
+Render instance
+└── 1 NestJS API process
+      |
+      +── Prisma
+      |
+      +── Neon
+      |
+      +── Job Queue
 
-Curriculum 2026
 
-Academic Year 2026
+Future architecture, if load testing proves it necessary:
 
-Semester 1
+                 Load Balancer
+                      |
+          +-----------+-----------+
+          |           |           |
+          v           v           v
+       API #1      API #2      API #3
+       1 process   1 process   1 process
+          |           |           |
+          +-----------+-----------+
+                      |
+                     Neon
 
-↓
+                     Queue
+                    /     \
+                   v       v
+             PDF Workers  Email Workers
 
-Diploma Regular Fee
 
-The Fee Structure is shared.
+Do not prematurely implement horizontal scaling.
 
-Only assignments differ.
+Do not assume 2,000 students means 8 API workers.
 
-------------------------------------------------------------
-# FUTURE EXTENSIBILITY
+Design for scalability while keeping the current deployment simple.
 
-Design the module so future additions require minimal changes.
+7. 200 requests/second consideration
 
-Examples
+The system may eventually need to support approximately 200 requests/second.
 
-✔ Student-specific Discounts
+Do not attempt to solve this by blindly increasing Node.js worker count.
 
-✔ Scholarships
+Instead inspect and optimize:
 
-✔ Bursaries
+Prisma query efficiency
+database indexes
+N+1 queries
+pagination
+unnecessary relations/includes
+transaction boundaries
+response payload sizes
+CPU-heavy operations
+caching opportunities
+connection management
+API latency
+authentication overhead
 
-✔ Installment Plans
+The correct scaling decision must ultimately come from load testing and observability.
 
-✔ Penalties
+Do not claim that the system supports 200 RPS unless it has actually been load tested.
 
-✔ Late Payment Charges
+8. File/PDF storage
 
-✔ Sponsorships
+Inspect how generated PDFs are currently stored.
 
-✔ Different Fees for Local vs International Students
+Avoid storing large binary PDF contents directly in PostgreSQL unless there is a deliberate architectural reason.
 
-✔ Per-unit Charges
+Prefer:
 
-✔ Hostel Fees
+Neon
+  |
+  +-- metadata
+  +-- status
+  +-- storage key/path
+  +-- ownership information
 
-✔ Transport Fees
+Object/File Storage
+  |
+  +-- actual PDF
 
-✔ Department-specific Charges
 
-The architecture should support these without redesigning the database.
+If the project already has a file-storage provider, reuse it.
+
+Do not introduce another storage provider unnecessarily.
+
+Ensure generated files respect authorization and tenant/school isolation.
+
+9. Security requirements
+
+While modifying the architecture, preserve and improve the existing security model.
+
+The current application already uses important protections such as:
+
+Helmet
+ValidationPipe
+whitelist validation
+forbidNonWhitelisted
+JWT secrets
+CORS
+cookie parsing
+global exception handling
+
+Do not weaken these.
+
+Inspect authentication and authorization carefully.
+
+In particular verify:
+
+Authentication
+    !=
+Authorization
+
+
+Every protected operation must verify that the authenticated user is authorized to access or modify the requested resource.
+
+If this is a multi-school/multi-tenant system, verify that one school's users cannot access another school's data through manipulated IDs or API requests.
+
+Inspect:
+
+JWT handling
+refresh tokens
+cookies
+roles
+permissions
+ownership checks
+school/tenant scoping
+password hashing
+audit logging
+rate limiting
+sensitive information in logs
+
+Do not expose secrets in logs or source code.
+
+10. Swagger
+
+Inspect the current Swagger configuration.
+
+The application currently exposes:
+
+/api/docs
+
+
+Determine whether this should be publicly accessible in production.
+
+Do not unnecessarily remove Swagger from development.
+
+If production protection is appropriate, implement it in a way consistent with the existing authentication/deployment architecture.
+
+11. Error handling
+
+Inspect:
+
+AllExceptionsFilter
+
+
+and ensure that:
+
+internal errors are logged appropriately
+sensitive internal details are not exposed to clients
+HTTP responses remain consistent
+background job failures are separately observable
+errors preserve useful debugging context
+
+Do not swallow exceptions.
+
+12. Observability
+
+The project already uses nestjs-pino.
+
+Preserve structured logging.
+
+Where appropriate, make important operations traceable using identifiers such as:
+
+requestId
+userId
+schoolId
+jobId
+studentId
+
+
+Do not log:
+
+passwords
+JWTs
+refresh tokens
+secrets
+sensitive personal information unnecessarily
+
+For background processing, make sure operators can determine:
+
+job created
+job started
+job completed
+job retried
+job failed
+
+13. Agentic workflow — MUST FOLLOW
+
+Do not immediately start modifying files.
+
+Follow this sequence.
+
+Phase 1 — Inspect
+
+First inspect:
+
+package.json
+main.ts
+app.module.ts
+schema.prisma
+Prisma service
+authentication modules
+email modules
+PDF/report modules
+file-storage modules
+queue/job modules
+Dockerfile
+render.yaml
+deployment configuration
+environment configuration
+
+
+Also search the repository for:
+
+cluster
+WORKERS
+fork
+pdf
+PDF
+email
+mail
+queue
+bull
+bullmq
+redis
+PrismaClient
+DATABASE_URL
+
+Phase 2 — Produce an architecture assessment
+
+Before making significant changes, identify:
+
+Current API process architecture
+Current PDF processing architecture
+Current email architecture
+Current queue/job architecture
+Current Prisma/Neon architecture
+Current file-storage architecture
+Current deployment configuration
+Existing security concerns
+Existing scalability bottlenecks
+Any existing functionality that must not be broken
+
+Clearly distinguish:
+
+Must fix now
+Should improve now
+Future optimization
+
+Phase 3 — Implement the minimum safe correction
+
+At minimum:
+
+remove API clustering
+ensure one NestJS process starts correctly
+remove obsolete WORKERS configuration
+preserve process.env.PORT
+preserve Prisma/Neon connectivity
+preserve authentication
+preserve CORS/security
+preserve existing business functionality
+
+Then implement or improve background processing only where the existing codebase requires it.
+
+Do not rewrite unrelated modules.
+
+Phase 4 — Verify
+
+Run the appropriate:
+
+lint
+typecheck
+unit tests
+integration tests
+build
+
+
+If available, run a production-equivalent startup test.
+
+Verify that:
+
+NestJS starts
+Prisma initializes
+Neon connection works
+PORT is respected
+Swagger behaves as intended
+authentication works
+PDF functionality works
+email functionality works
+
+
+Also verify there is no remaining accidental API clustering.
+
+Phase 5 — Review your own changes
+
+Before declaring completion, review the diff as a senior engineer.
+
+Ask:
+
+Did I introduce unnecessary complexity?
+Did I break existing behavior?
+Did I create a new database connection problem?
+Did I accidentally make PDF generation synchronous?
+Did I accidentally make email synchronous?
+Can a bulk operation overwhelm memory?
+Can jobs be duplicated?
+Are failed jobs recoverable?
+Are authorization boundaries preserved?
+Are secrets protected?
+Is the application still deployable on a 512 MiB Render instance?
+Can the architecture scale horizontally later?
+
+Fix issues found during this review.
+
+14. Important constraints
+
+Do NOT:
+
+add 8 API workers
+reintroduce Node cluster
+spawn one process per PDF
+send thousands of emails synchronously
+put large PDFs directly into PostgreSQL without justification
+blindly add Redis
+blindly add BullMQ
+rewrite the entire project
+change working authentication without justification
+change database architecture without inspection
+claim performance numbers without load testing
+hide errors to make tests pass
+remove security controls merely to simplify deployment
+
+Prefer:
+
+simple
+observable
+testable
+recoverable
+secure
+scalable
+
+
+over unnecessary complexity.
+
+Definition of done
+
+The work is complete when:
+
+the API runs as one NestJS process per container
+cluster is removed from API startup
+WORKERS is no longer required
+Render can successfully detect the configured port
+the application no longer immediately exceeds the 512 MiB memory limit because of API clustering
+Prisma connects correctly to Neon
+normal HTTP operations remain synchronous and fast
+PDF generation is handled asynchronously when it is a heavy operation
+email delivery is handled asynchronously
+background work has controlled concurrency
+failures can be retried or reported
+existing authentication/authorization remains intact
+existing business functionality remains intact
+tests/build/lint/typecheck pass
+the architecture can later scale horizontally without introducing API clustering
+no unnecessary infrastructure has been added
+
+At the end, provide a concise engineering report containing:
+
+What was wrong
+What was changed
+Why the changes are correct
+Files changed
+Tests/checks performed
+Any remaining risks
+Recommended next steps
+
+Do not declare success merely because the code compiles. Verify the actual architecture and deployment behavior.
