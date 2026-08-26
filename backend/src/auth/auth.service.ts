@@ -318,10 +318,7 @@ export class AuthService {
     const accessToken = this.signAccessToken(user, sessionUuid);
     const { raw, hash } = await this.buildRefreshToken(user.id, sessionUuid);
 
-    const ttlMinutes = rememberMe
-      ? this.int('JWT_REFRESH_EXPIRES_IN_MINUTES', 30 * 24 * 60)
-      : this.int('SHORT_SESSION_MINUTES', 12 * 60);
-    const expiresAt = new Date(Date.now() + ttlMinutes * 60_000);
+    const expiresAt = new Date(Date.now() + this.refreshTtlSeconds() * 1000);
 
     await this.prisma.$transaction([
       this.prisma.session.create({
@@ -376,8 +373,7 @@ export class AuthService {
           refreshTokenHash: hash,
           lastUsedAt: new Date(),
           expiresAt: new Date(
-            Date.now() +
-              this.int('JWT_REFRESH_EXPIRES_IN_MINUTES', 30 * 24 * 60) * 60_000,
+            Date.now() + this.refreshTtlSeconds() * 1000,
           ),
         },
       }),
